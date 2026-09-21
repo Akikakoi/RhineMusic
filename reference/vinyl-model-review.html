@@ -1,0 +1,249 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>黑胶唱片袋 · 资产核对</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eae5e1;color:#292c28;font:14px MiSans,Arial,"Microsoft YaHei",sans-serif}
+main{max-width:1700px;margin:auto;padding:28px}
+h1{font-size:22px;margin:0 0 10px}
+p{color:#676962;line-height:1.7;max-width:1150px;margin:0 0 6px}
+nav{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:22px 0}
+button{padding:9px 13px;border:1px solid #b7b9b0;background:transparent;color:inherit;font:inherit;cursor:pointer}
+button[aria-pressed=true]{background:#353b30;color:#f1f0e8;border-color:#353b30}
+label{display:flex;gap:9px;align-items:center;font-size:13px}
+input[type=range]{width:190px}
+.grid{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:20px}
+article{border-top:1px solid #c3c1b7;padding-top:12px}
+h2{font-size:14.5px;font-weight:600;margin:0 0 3px}
+small{color:#8b8a82;display:block;margin-bottom:10px}
+.view{height:400px;background:#e4e0da;position:relative;cursor:grab;touch-action:none}
+.view:active{cursor:grabbing}
+.view canvas{width:100%!important;height:100%!important;display:block}
+pre{font:12px/1.75 monospace;white-space:pre-wrap;color:#5f6159;margin-top:26px;border-top:1px solid #c3c1b7;padding-top:14px}
+body[data-theme=dark]{background:#1b1b17;color:#ece9e4}
+body[data-theme=dark] p,body[data-theme=dark] small,body[data-theme=dark] pre{color:#a9a79e}
+body[data-theme=dark] article,body[data-theme=dark] pre{border-color:#3b3b34}
+body[data-theme=dark] .view{background:#23231e}
+body[data-theme=dark] button{border-color:#565650}
+body[data-theme=dark] button[aria-pressed=true]{background:#ece9e4;color:#1b1b17;border-color:#ece9e4}
+@media(max-width:1200px){.grid{grid-template-columns:1fr}}
+</style>
+<main>
+<h1>黑胶唱片袋 · 资产核对</h1>
+<p>资产：<code>public/assets/vinyl-sleeve.glb</code>（阵列与详情）与 <code>vinyl-sleeve-assembly.glb</code>（360° 查看器）。滑套右侧开口，抽取时唱片沿 +X 滑出。全部面尺寸按现有卡片 5.0 × 3.7，滑套厚 0.36。</p>
+<nav>
+  <button data-view="oblique" aria-pressed="true">斜向观察</button>
+  <button data-view="front">正面</button>
+  <button data-view="edge">侧薄边</button>
+  <label>唱片滑出 <input id="slide" type="range" min="0" max="2.9" step="0.05" value="2.3"></label>
+  <button id="theme">暗色主题</button>
+  <button id="spin" aria-pressed="false">自动旋转</button>
+</nav>
+<section class="grid">
+  <article><h2>阵列姿态</h2><small>3 列 × 4 行，行距 0.62（与现有阵列一致）</small><div class="view" data-kind="array"></div></article>
+  <article><h2>抽取姿态</h2><small>卡片升至特写位，唱片从右侧滑出</small><div class="view" data-kind="detail"></div></article>
+  <article><h2>拆解模型</h2><small>vinyl-sleeve-assembly.glb，厚度已放大 3× 便于观察层叠</small><div class="view" data-kind="assembly"></div></article>
+</section>
+<pre id="status">正在载入模型…</pre>
+</main>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createArchiveLighting} from '/src/archive-lighting.ts';
+
+const PAPER = 0xeae5e1, PAPER_DARK = 0x1b1b17;
+const LANE_PITCH = 5.2, ROW_PITCH = 0.62;
+const status = document.querySelector('#status');
+
+async function loadModel(url) {
+  const gltf = await new GLTFLoader().loadAsync(url);
+  gltf.scene.updateMatrixWorld(true);
+  const group = new THREE.Group();
+  const report = [];
+  gltf.scene.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+    const mesh = new THREE.Mesh(
+      object.geometry.clone().applyMatrix4(object.matrixWorld),
+      object.material,
+    );
+    mesh.userData.surface = object.material.name.replace(/\.\d+$/, '');
+    mesh.userData.assemblyPart = object.userData.assemblyPart;
+    mesh.name = object.name;
+    group.add(mesh);
+    report.push(`${object.material.name.padEnd(18)} ${String(object.userData.assemblyPart ?? '-').padEnd(15)} ${String(object.geometry.attributes.position.count).padStart(6)} vtx  ${object.name}`);
+  });
+  return {group, report};
+}
+
+const {group: sleeve, report} = await loadModel('/assets/vinyl-sleeve.glb');
+const {group: assembly, report: assemblyReport} = await loadModel('/assets/vinyl-sleeve-assembly.glb');
+
+const recordParts = [];
+sleeve.traverse((mesh) => {
+  if (['Vinyl_Record', 'Vinyl_Label'].includes(mesh.userData.surface)) recordParts.push(mesh);
+});
+
+function buildArray() {
+  const group = new THREE.Group();
+  for (let lane = -1; lane <= 1; lane++) {
+    for (let row = 0; row < 4; row++) {
+      const item = sleeve.clone(true);
+      item.position.set(lane * LANE_PITCH, 0, -row * ROW_PITCH);
+      group.add(item);
+    }
+  }
+  return group;
+}
+function buildDetail() {
+  const group = new THREE.Group();
+  group.add(sleeve.clone(true));
+  return group;
+}
+const EXPLODE = {cover:2.6, fasteners:1.1, 'optical-lenses':1.5, 'optical-core':0.5, substrate:-1.1, carrier:-2.6};
+function buildAssembly() {
+  const group = new THREE.Group();
+  for (const mesh of assembly.children) {
+    const item = new THREE.Mesh(mesh.geometry.clone(), mesh.material);
+    item.userData = {...mesh.userData};
+    item.position.z = EXPLODE[mesh.userData.assemblyPart] ?? 0;
+    group.add(item);
+  }
+  return group;
+}
+
+const builders = {array:buildArray, detail:buildDetail, assembly:buildAssembly};
+const stages = [];
+for (const view of document.querySelectorAll('.view')) {
+  const renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(PAPER);
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 220);
+  createArchiveLighting(renderer, scene, 'baseline');
+  view.appendChild(renderer.domElement);
+  const group = builders[view.dataset.kind]();
+  const size = new THREE.Box3().setFromObject(group).getSize(new THREE.Vector3());
+  scene.add(group);
+  stages.push({view, renderer, scene, camera, group, size, center:new THREE.Vector3(), kind:view.dataset.kind});
+}
+
+// 取景要跟着滑出与拆解后的实际范围走，否则唱片会被裁掉。
+function measure(stage) {
+  const box = new THREE.Box3().setFromObject(stage.group);
+  stage.size = box.getSize(new THREE.Vector3());
+  stage.center = box.getCenter(new THREE.Vector3());
+}
+for (const stage of stages) measure(stage);
+
+const look = {yaw:-0.5, pitch:0.22, spin:false};
+const presets = {
+  oblique:{yaw:-0.5, pitch:0.22, distance:1.16},
+  front:{yaw:0, pitch:0.04, distance:1.1},
+  edge:{yaw:-1.14, pitch:0.16, distance:1.1},
+};
+let preset = presets.oblique;
+let slide = 2.3;
+
+function applySlide() {
+  for (const stage of stages) {
+    if (stage.kind !== 'detail') continue;
+    for (const mesh of stage.group.children[0].children) {
+      if (['Vinyl_Record', 'Vinyl_Label'].includes(mesh.userData.surface)) mesh.position.x = slide;
+    }
+    measure(stage);
+  }
+}
+function frame(stage) {
+  const width = stage.view.clientWidth, height = stage.view.clientHeight;
+  if (!width || !height) return false;
+  stage.renderer.setSize(width, height, false);
+  stage.camera.aspect = width / height;
+  const tan = Math.tan(THREE.MathUtils.degToRad(stage.camera.fov) / 2);
+  const distance = Math.max(stage.size.y / 2 / tan, stage.size.x / 2 / (tan * stage.camera.aspect)) * preset.distance;
+  const target = stage.kind === 'array'
+    ? new THREE.Vector3(0, 0, -ROW_PITCH * 1.4)
+    : new THREE.Vector3(stage.center.x * .55, stage.center.y * .35, 0);
+  const dir = new THREE.Vector3(
+    Math.sin(look.yaw) * Math.cos(look.pitch),
+    Math.sin(look.pitch),
+    Math.cos(look.yaw) * Math.cos(look.pitch),
+  );
+  stage.camera.position.copy(target).add(dir.multiplyScalar(distance));
+  stage.camera.lookAt(target);
+  stage.camera.updateProjectionMatrix();
+  return true;
+}
+let queued = false;
+function draw() {
+  queued = false;
+  for (const stage of stages) {
+    if (frame(stage)) stage.renderer.render(stage.scene, stage.camera);
+  }
+}
+const queue = () => { if (!queued) { queued = true; requestAnimationFrame(draw); } };
+
+let dragging = null;
+for (const stage of stages) {
+  stage.view.addEventListener('pointerdown', (event) => {
+    dragging = {x:event.clientX, y:event.clientY};
+    stage.view.setPointerCapture(event.pointerId);
+  });
+  stage.view.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    look.yaw -= (event.clientX - dragging.x) * .009;
+    look.pitch = THREE.MathUtils.clamp(look.pitch + (event.clientY - dragging.y) * .006, -.6, .7);
+    dragging = {x:event.clientX, y:event.clientY};
+    queue();
+  });
+  const stop = () => { dragging = null; };
+  stage.view.addEventListener('pointerup', stop);
+  stage.view.addEventListener('pointercancel', stop);
+}
+document.querySelectorAll('[data-view]').forEach((button) => {
+  button.onclick = () => {
+    preset = presets[button.dataset.view];
+    look.yaw = preset.yaw; look.pitch = preset.pitch;
+    document.querySelectorAll('[data-view]').forEach((other) => other.setAttribute('aria-pressed', String(other === button)));
+    queue();
+  };
+});
+document.querySelector('#slide').oninput = (event) => { slide = Number(event.target.value); applySlide(); queue(); };
+document.querySelector('#theme').onclick = (event) => {
+  const dark = document.body.dataset.theme !== 'dark';
+  document.body.dataset.theme = dark ? 'dark' : 'light';
+  const background = new THREE.Color(dark ? PAPER_DARK : PAPER);
+  for (const stage of stages) stage.scene.background = background;
+  event.currentTarget.textContent = dark ? '亮色主题' : '暗色主题';
+  queue();
+};
+document.querySelector('#spin').onclick = (event) => {
+  look.spin = !look.spin;
+  event.currentTarget.setAttribute('aria-pressed', String(look.spin));
+};
+addEventListener('resize', queue);
+
+await document.fonts.ready;
+applySlide();
+queue();
+status.textContent = [
+  `vinyl-sleeve.glb · ${sleeve.children.length} 网格，唱片组 ${recordParts.length} 个（Vinyl_Record / Vinyl_Label，抽取时沿 +X 移动）`,
+  '',
+  '表面名 · 拆解组 · 顶点数 · 网格名',
+  ...report,
+  '',
+  `vinyl-sleeve-assembly.glb · ${assembly.children.length} 网格（按 部件__表面 合并，厚度 ×3）`,
+  ...assemblyReport,
+  '',
+  '核对要点：材质名与拆解组已写入 userData；滑套右侧开口，唱片滑出时不与纸板相交；阵列姿态下纸套不透明，行列分层干净。',
+].join('\n');
+
+let previous = performance.now();
+function loop(now) {
+  const delta = Math.min((now - previous) / 1000, .05);
+  previous = now;
+  if (look.spin) { look.yaw += delta * .5; queue(); }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script></html>

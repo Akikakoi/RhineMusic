@@ -1,0 +1,465 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rhine Music · 卡片实体候选</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eae5e1;color:#292c28;font:14px MiSans,Arial,"Microsoft YaHei",sans-serif}
+main{max-width:1780px;margin:auto;padding:30px 28px 60px}
+h1{font-size:23px;margin:0 0 10px;letter-spacing:.01em}
+p{color:#676962;line-height:1.75;max-width:1100px;margin:0 0 8px}
+nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:22px 0 26px}
+button{padding:9px 14px;border:1px solid #b7b9b0;background:transparent;color:inherit;font:inherit;cursor:pointer}
+button[aria-pressed=true]{background:#353b30;color:#f1f0e8;border-color:#353b30}
+.hint{color:#8b8a82;font-size:12.5px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+article{border-top:1px solid #c3c1b7;padding-top:14px}
+h2{font-size:15px;font-weight:600;margin:0 0 4px;letter-spacing:.02em}
+h2.section{font-size:17px;margin:34px 0 8px;border-top:1px solid #c3c1b7;padding-top:22px}
+.tag{font-size:12px;color:#8b8a82;margin:0 0 12px}
+.view{height:400px;position:relative;background:#e4e0da;cursor:grab;touch-action:none}
+.view:active{cursor:grabbing}
+.view canvas{width:100%!important;height:100%!important;display:block}
+ul{list-style:none;margin:16px 0 0;padding:0;font-size:12.5px;line-height:1.85;color:#5c5e57}
+li{display:flex;gap:10px;border-bottom:1px solid #dcd8d1;padding:5px 0}
+li b{flex:0 0 74px;font-weight:600;color:#292c28}
+.verdict{margin-top:14px;font-size:12.5px;line-height:1.8;color:#4c4e48;border-left:2px solid #c9a15c;padding-left:11px}
+pre{font:12px/1.7 monospace;white-space:pre-wrap;color:#6a6c65;margin-top:30px;border-top:1px solid #c3c1b7;padding-top:14px}
+body[data-theme=dark]{background:#1b1b17;color:#ece9e4}
+body[data-theme=dark] p,body[data-theme=dark] .tag,body[data-theme=dark] .hint,body[data-theme=dark] ul,body[data-theme=dark] pre{color:#a9a79e}
+body[data-theme=dark] li b{color:#ece9e4}
+body[data-theme=dark] article,body[data-theme=dark] pre{border-color:#3b3b34}
+body[data-theme=dark] li{border-color:#33332d}
+body[data-theme=dark] .view{background:#23231e}
+body[data-theme=dark] button{border-color:#565650}
+body[data-theme=dark] button[aria-pressed=true]{background:#ece9e4;color:#1b1b17;border-color:#ece9e4}
+body[data-theme=dark] .verdict{color:#c9c7bf}
+@media(max-width:1080px){.cards{grid-template-columns:1fr}.view{height:340px}}
+</style>
+<main>
+<h1>Rhine Music · 卡片实体候选</h1>
+<p>三种候选都按现有档案卡的面尺寸（宽 5.0 × 高 3.7 世界单位）与同一套环境贴图、灯光（baseline）渲染，可直接顶替阵列卡片。标签使用真实曲目数据。正式模型在选定形态后走 Blender MCP 制作，本页只做形态与材质比较。</p>
+<p class="hint">在任意画面上拖动可同步旋转三个实体；斜视角便于判断厚度与折射层次。</p>
+<nav>
+  <button data-view="oblique" aria-pressed="true">斜向观察</button>
+  <button data-view="front">正面</button>
+  <button data-view="low">低角度</button>
+  <button id="spin" aria-pressed="false">自动旋转</button>
+  <button id="theme">暗色主题</button>
+  <button id="reset">复位</button>
+</nav>
+<section class="cards">
+  <article>
+    <h2>01 · 磁带盒</h2>
+    <p class="tag">透明外壳 + 双卷磁带 + 纸质标签</p>
+    <div class="view" data-entity="cassette"></div>
+    <ul>
+      <li><b>面尺寸</b><span>5.00 × 3.15（含标签带）</span></li>
+      <li><b>厚度</b><span>0.62，约现有档案盒的两倍</span></li>
+      <li><b>材质</b><span>透射玻璃壳、纸标签、哑光塑料卷</span></li>
+      <li><b>内构</b><span>上盖／下盖／双卷／磁带条／标签，五组可拆解</span></li>
+      <li><b>揭示</b><span>磨砂变清晰直接作用于外壳，磁带在内部显现</span></li>
+      <li><b>阵列</b><span>行距 0.62 需复核；标签带宽，远读性好</span></li>
+    </ul>
+    <p class="verdict">最贴合现有档案盒的透明磨砂语言与解密揭示动效，替换成本最低。</p>
+  </article>
+  <article>
+    <h2>02 · 黑胶唱片袋</h2>
+    <p class="tag">纸质滑套 + 半抽出的黑胶唱片</p>
+    <div class="view" data-entity="vinyl"></div>
+    <ul>
+      <li><b>面尺寸</b><span>5.00 × 3.70（天然正方形）</span></li>
+      <li><b>厚度</b><span>0.36 套 + 唱片，阵列最省空间</span></li>
+      <li><b>材质</b><span>哑光卡纸、黑色乙烯基、杏金中心标签</span></li>
+      <li><b>内构</b><span>滑套／唱片／中心标签，三组；层次较少</span></li>
+      <li><b>揭示</b><span>纸质不透明，磨砂变清晰无处作用，需改为抽拉揭示</span></li>
+      <li><b>阵列</b><span>不透明卡片，阵列遮挡关系更干净</span></li>
+    </ul>
+    <p class="verdict">播放中让唱片转起来最有表现力，但会丢掉现有玻璃解密的招牌动效。</p>
+  </article>
+  <article>
+    <h2>03 · CD 盒</h2>
+    <p class="tag">透明薄盒 + 内页封面 + 虹彩光盘</p>
+    <div class="view" data-entity="cd"></div>
+    <ul>
+      <li><b>面尺寸</b><span>5.00 × 3.70（原比例 1.42:1，轻微拉伸）</span></li>
+      <li><b>厚度</b><span>0.42，介于两者之间</span></li>
+      <li><b>材质</b><span>薄玻璃壳、铜版内页、虹彩光盘</span></li>
+      <li><b>内构</b><span>盒盖／托盘／内页／光盘／卡扣，五组规整</span></li>
+      <li><b>揭示</b><span>内页封面承担专辑视觉，磨砂变清晰同样适用</span></li>
+      <li><b>阵列</b><span>厚度最规整，斜视虹彩反光在阵列里最出彩</span></li>
+    </ul>
+    <p class="verdict">兼顾玻璃语言与封面视觉，厚度与结构最像"档案盒的下一代"。</p>
+  </article>
+</section>
+<h2 class="section">阵列观感</h2>
+<p class="hint">三列 × 四行、行距 0.62，与现有阵列一致；视角约 19° 仰角、同向斜视。</p>
+<section class="cards">
+  <article>
+    <div class="view" data-entity="cassette" data-grid="1"></div>
+    <ul>
+      <li><b>读性</b><span>标签带正对镜头，远读清晰；0.62 厚度在斜视下略拥挤</span></li>
+    </ul>
+  </article>
+  <article>
+    <div class="view" data-entity="vinyl" data-grid="1"></div>
+    <ul>
+      <li><b>读性</b><span>不透明卡纸，行列分层最干净；抽出唱片在阵列中会互相穿插</span></li>
+    </ul>
+  </article>
+  <article>
+    <div class="view" data-entity="cd" data-grid="1"></div>
+    <ul>
+      <li><b>读性</b><span>厚度与间隙比例最接近现有档案盒，封面与光盘区分明显</span></li>
+    </ul>
+  </article>
+</section>
+<pre id="status">正在准备场景…</pre>
+</main>
+<script type="module">
+import * as THREE from 'three';
+import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {createArchiveLighting} from '/src/archive-lighting.ts';
+
+const PAPER = 0xe9e5dd, PAPER_DARK = 0x1b1b17;
+const W = 5, H = 3.7;
+const track = {no:'RM-002', title:'歌に形はないけれど', artist:'doriko feat. 初音ミク', time:'05:32', cat:'RHINE-002'};
+
+const font = (size, weight = 500) => `${weight} ${size}px MiSans,"Microsoft YaHei",sans-serif`;
+function canvasTexture(w, h, draw) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  draw(ctx, w, h);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
+/* 01 磁带盒 · 标签面 */
+const cassetteLabel = canvasTexture(1024, 320, (ctx, w, h) => {
+  ctx.fillStyle = '#efece4'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = 'rgba(60,58,52,.06)';
+  for (let y = 0; y < h; y += 7) ctx.fillRect(0, y, w, 1);
+  ctx.fillStyle = '#2b2e29'; ctx.font = font(26, 600);
+  ctx.fillText('RHINE MUSIC', 40, 54);
+  ctx.fillStyle = '#8d8a80'; ctx.font = font(19, 400);
+  ctx.fillText('AUDIO ARCHIVE · SIDE A', 214, 54);
+  ctx.strokeStyle = 'rgba(60,58,52,.34)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(40, 80); ctx.lineTo(w - 40, 80); ctx.stroke();
+  ctx.fillStyle = '#232620'; ctx.font = font(44, 600);
+  ctx.fillText(track.title, 40, 168);
+  ctx.fillStyle = '#5f6159'; ctx.font = font(25, 400);
+  ctx.fillText(track.artist, 40, 214);
+  ctx.fillStyle = '#8d8a80'; ctx.font = font(22, 400);
+  ctx.fillText(track.no, 40, 282);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#3d403a'; ctx.font = font(30, 500);
+  ctx.fillText(track.time, w - 40, 282);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#c9a15c'; ctx.beginPath(); ctx.arc(w - 66, 54, 13, 0, Math.PI * 2); ctx.fill();
+});
+
+/* 02 黑胶 · 套面印刷 */
+const sleevePrint = canvasTexture(1024, 760, (ctx, w, h) => {
+  ctx.fillStyle = '#e6e1d8'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#dcd6cb'; ctx.fillRect(70, 70, w - 140, h - 210);
+  ctx.fillStyle = '#c9a15c'; ctx.globalAlpha = .85;
+  ctx.fillRect(70, 70, w - 140, 14); ctx.globalAlpha = 1;
+  ctx.fillStyle = '#2b2e29'; ctx.font = font(58, 600);
+  ctx.fillText(track.title, 106, 300);
+  ctx.fillStyle = '#5f6159'; ctx.font = font(32, 400);
+  ctx.fillText(track.artist, 106, 356);
+  ctx.beginPath(); ctx.arc(200, 560, 78, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(43,46,41,.12)'; ctx.fill();
+  ctx.fillStyle = '#8d8a80'; ctx.font = font(24, 400);
+  ctx.fillText(track.cat, 106, h - 150);
+  ctx.textAlign = 'right';
+  ctx.fillText('SIDE A · 33⅓ RPM', w - 106, h - 150);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#2b2e29'; ctx.font = font(26, 600);
+  ctx.fillText('RHINE MUSIC', 106, h - 66);
+});
+
+/* 03 CD · 内页封面 */
+const cdCover = canvasTexture(900, 660, (ctx, w, h) => {
+  ctx.fillStyle = '#e9e5dd'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#2b2e29'; ctx.fillRect(0, 0, w, 250);
+  ctx.fillStyle = '#c9a15c'; ctx.fillRect(0, 250, w, 12);
+  ctx.fillStyle = '#efece4'; ctx.font = font(18, 400);
+  ctx.fillText('RHINE MUSIC · AUDIO ARCHIVE', 46, 60);
+  ctx.fillStyle = '#2b2e29'; ctx.font = font(46, 600);
+  ctx.fillText(track.title, 46, 356);
+  ctx.fillStyle = '#5f6159'; ctx.font = font(28, 400);
+  ctx.fillText(track.artist, 46, 408);
+  ctx.fillStyle = '#8d8a80'; ctx.font = font(22, 400);
+  ctx.fillText(`${track.no}   ·   ${track.time}`, 46, 470);
+  ctx.fillStyle = 'rgba(43,46,41,.08)'; ctx.fillRect(46, 520, w - 92, 96);
+});
+
+/* 04 材质 */
+const glassShell = () => new THREE.MeshPhysicalMaterial({
+  color:0xf6f4ef, transmission:.94, thickness:.42, roughness:.1, ior:1.45, metalness:0,
+  clearcoat:.75, clearcoatRoughness:.24, envMapIntensity:1.1,
+});
+const paperMat = (map) => new THREE.MeshStandardMaterial({map, color:0xffffff, roughness:.86, metalness:0});
+const plasticMat = (color, roughness = .5) => new THREE.MeshStandardMaterial({color, roughness, metalness:.05});
+const amberMat = () => new THREE.MeshStandardMaterial({color:0xd2a054, roughness:.34, metalness:.2, emissive:0x6b4410, emissiveIntensity:.45});
+const vinylMat = () => new THREE.MeshPhysicalMaterial({color:0x121214, roughness:.3, metalness:.06, clearcoat:.85, clearcoatRoughness:.22, sheen:.4, sheenColor:new THREE.Color(0x6b6a70)});
+
+const grooveTexture = canvasTexture(1024, 1024, (ctx, w, h) => {
+  ctx.fillStyle = '#111113'; ctx.fillRect(0, 0, w, h);
+  const cx = w / 2, cy = h / 2;
+  for (let r = 190; r < 500; r += 4.2) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(150,150,160,${0.05 + ((r * 7) % 11) / 260})`;
+    ctx.lineWidth = 1.4; ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(cx, cy, 186, 0, Math.PI * 2);
+  ctx.fillStyle = '#d2a054'; ctx.fill();
+  ctx.fillStyle = '#2b2e29'; ctx.textAlign = 'center'; ctx.font = font(26, 600);
+  ctx.fillText('RHINE', cx, cy - 8);
+  ctx.font = font(18, 400); ctx.fillText('002 · 33⅓', cx, cy + 26);
+});
+
+/* 05 实体 */
+function buildCassette() {
+  const group = new THREE.Group();
+  const depth = 0.62, height = 3.15;
+  group.add(new THREE.Mesh(new RoundedBoxGeometry(W, height, depth, 4, 0.09), glassShell()));
+  const cavity = new THREE.Mesh(new THREE.BoxGeometry(W - 0.42, height - 0.42, 0.08), plasticMat(0x33362f, .72));
+  cavity.position.z = -0.17; group.add(cavity);
+  const tape = new THREE.MeshStandardMaterial({color:0x3a2f28, roughness:.62, metalness:.08});
+  const hub = plasticMat(0xe4dfd5, .46);
+  for (const side of [-1, 1]) {
+    const reel = new THREE.Group();
+    reel.position.set(side * 1.28, 0.44, 0);
+    const wound = new THREE.Mesh(new THREE.CylinderGeometry(0.82, 0.82, 0.3, 56), tape);
+    wound.rotation.x = Math.PI / 2; reel.add(wound);
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.38, 40), hub);
+    core.rotation.x = Math.PI / 2; reel.add(core);
+    for (let i = 0; i < 3; i++) {
+      const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.07, 0.3), hub);
+      spoke.rotation.z = (i * Math.PI) / 3; reel.add(spoke);
+    }
+    group.add(reel);
+  }
+  const bridge = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.13, 0.26), tape);
+  bridge.position.set(0, 0.44, 0.06); group.add(bridge);
+  const label = new THREE.Mesh(new THREE.BoxGeometry(4.16, 1.3, 0.05), paperMat(cassetteLabel));
+  label.position.set(0, -0.92, depth / 2 + 0.015); group.add(label);
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(W - 0.5, 0.075, 0.03), amberMat());
+  strip.position.set(0, height / 2 - 0.16, depth / 2 + 0.018); group.add(strip);
+  const screw = plasticMat(0xbdb8ac, .35);
+  for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 18), screw);
+    pin.rotation.x = Math.PI / 2;
+    pin.position.set(sx * (W / 2 - 0.3), sy * (height / 2 - 0.28), depth / 2 + 0.01);
+    group.add(pin);
+  }
+  return group;
+}
+
+function buildVinyl() {
+  const group = new THREE.Group();
+  const depth = 0.36;
+  const sleeve = new THREE.Mesh(new RoundedBoxGeometry(W, H, depth, 3, 0.035), plasticMat(0xe2ddd3, .88));
+  group.add(sleeve);
+  const print = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.36, H - 0.36), paperMat(sleevePrint));
+  print.position.z = depth / 2 + 0.006; group.add(print);
+  const disc = new THREE.Group();
+  disc.position.set(2.75, 0.02, -0.22);
+  const vinyl = vinylMat();
+  const record = new THREE.Mesh(new THREE.CylinderGeometry(1.78, 1.78, 0.075, 96), [
+    vinyl, new THREE.MeshPhysicalMaterial({map:grooveTexture, roughness:.3, metalness:.1, clearcoat:.9, clearcoatRoughness:.2}),
+    new THREE.MeshPhysicalMaterial({color:0x121214, roughness:.34, metalness:.06}),
+  ]);
+  record.rotation.x = Math.PI / 2; disc.add(record);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.79, 0.03, 12, 96), plasticMat(0x2a2a2e, .4));
+  disc.add(ring);
+  disc.rotation.z = -0.12;
+  group.add(disc);
+  const edge = new THREE.Mesh(new THREE.BoxGeometry(0.05, H - 0.5, 0.24), amberMat());
+  edge.position.set(-W / 2 + 0.05, 0, 0); group.add(edge);
+  return group;
+}
+
+function buildCase() {
+  const group = new THREE.Group();
+  const depth = 0.42;
+  group.add(new THREE.Mesh(new RoundedBoxGeometry(W, H, depth, 3, 0.05), glassShell()));
+  const booklet = new THREE.Mesh(new RoundedBoxGeometry(W - 0.5, H - 0.5, 0.06, 2, 0.02), paperMat(cdCover));
+  booklet.position.z = -0.06; group.add(booklet);
+  const tray = new THREE.Mesh(new THREE.BoxGeometry(W - 0.42, H - 0.42, 0.05), plasticMat(0x2f322c, .68));
+  tray.position.z = -0.16; group.add(tray);
+  const disc = new THREE.Group();
+  disc.position.set(1.92, -0.08, 0.24);
+  const iridescent = new THREE.MeshPhysicalMaterial({
+    color:0xf2efe8, metalness:.9, roughness:.16, iridescence:1, iridescenceIOR:1.42,
+    iridescenceThicknessRange:[100, 680], clearcoat:1, clearcoatRoughness:.1,
+  });
+  const platter = new THREE.Mesh(new THREE.CylinderGeometry(1.72, 1.72, 0.05, 96), [plasticMat(0xd9d5cc, .3), iridescent, iridescent]);
+  platter.rotation.x = Math.PI / 2; disc.add(platter);
+  const hubRing = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.035, 12, 64), amberMat());
+  hubRing.position.z = 0.03; disc.add(hubRing);
+  const hole = new THREE.Mesh(new THREE.CircleGeometry(0.38, 48), new THREE.MeshBasicMaterial({color:0xe4e0d8}));
+  hole.position.z = 0.035; disc.add(hole);
+  disc.rotation.z = 0.22;
+  group.add(disc);
+  const spine = new THREE.Mesh(new THREE.BoxGeometry(0.09, H - 0.6, 0.02), amberMat());
+  spine.position.set(-W / 2 + 0.07, 0, depth / 2 - 0.05); group.add(spine);
+  return group;
+}
+
+/* 06 场景 */
+const builders = {cassette:buildCassette, vinyl:buildVinyl, cd:buildCase};
+const LANE_PITCH = 5.2, ROW_PITCH = 0.62, GRID_ROWS = 4;
+function buildGrid(build) {
+  const group = new THREE.Group();
+  for (let lane = -1; lane <= 1; lane++) {
+    for (let row = 0; row < GRID_ROWS; row++) {
+      const item = build();
+      item.position.set(lane * LANE_PITCH, 0, -row * ROW_PITCH);
+      group.add(item);
+    }
+  }
+  return group;
+}
+
+const stages = [];
+for (const view of document.querySelectorAll('.view')) {
+  const grid = view.dataset.grid === '1';
+  const renderer = new THREE.WebGLRenderer({antialias:true, alpha:false});
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(PAPER);
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 220);
+  createArchiveLighting(renderer, scene, 'baseline');
+  view.appendChild(renderer.domElement);
+  const group = grid ? buildGrid(builders[view.dataset.entity]) : builders[view.dataset.entity]();
+  if (!grid) {
+    const center = new THREE.Box3().setFromObject(group).getCenter(new THREE.Vector3());
+    for (const child of group.children) child.position.sub(center);
+  }
+  const size = new THREE.Box3().setFromObject(group).getSize(new THREE.Vector3());
+  scene.add(group);
+  stages.push({
+    view, renderer, scene, camera, group, size,
+    fixed: grid ? {distance:15.5, target:new THREE.Vector3(0, -0.12, -ROW_PITCH * 1.4)} : null,
+  });
+}
+
+const look = {yaw:-0.46, pitch:0.2, spin:false};
+const presets = {
+  oblique:{yaw:-0.46, pitch:0.2, distance:1.3},
+  front:{yaw:0, pitch:0.03, distance:1.22},
+  low:{yaw:-0.3, pitch:-0.26, distance:1.3},
+};
+let preset = presets.oblique;
+
+function frame(stage) {
+  const width = stage.view.clientWidth, height = stage.view.clientHeight;
+  if (!width || !height) return false;
+  stage.renderer.setSize(width, height, false);
+  stage.camera.aspect = width / height;
+  const fov = THREE.MathUtils.degToRad(stage.camera.fov);
+  const tan = Math.tan(fov / 2);
+  const distance = stage.fixed
+    ? stage.fixed.distance
+    : Math.max(stage.size.y / 2 / tan, stage.size.x / 2 / (tan * stage.camera.aspect)) * preset.distance;
+  const target = stage.fixed ? stage.fixed.target : new THREE.Vector3(0, 0, 0);
+  const dir = new THREE.Vector3(
+    Math.sin(look.yaw) * Math.cos(look.pitch),
+    Math.sin(look.pitch),
+    Math.cos(look.yaw) * Math.cos(look.pitch),
+  );
+  stage.camera.position.copy(target).add(dir.multiplyScalar(distance));
+  stage.camera.lookAt(target);
+  stage.camera.updateProjectionMatrix();
+  stage.group.rotation.set(0, 0, 0);
+  return true;
+}
+
+let queued = false;
+function draw() {
+  queued = false;
+  for (const stage of stages) {
+    if (!frame(stage)) continue;
+    stage.renderer.render(stage.scene, stage.camera);
+  }
+  status.textContent = ready ? loaded : '正在准备场景…';
+}
+const queue = () => { if (!queued) { queued = true; requestAnimationFrame(draw); } };
+
+/* 07 交互 */
+let dragging = null;
+for (const stage of stages) {
+  stage.view.addEventListener('pointerdown', (event) => {
+    dragging = {x:event.clientX, y:event.clientY};
+    stage.view.setPointerCapture(event.pointerId);
+  });
+  stage.view.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    look.yaw -= (event.clientX - dragging.x) * .009;
+    look.pitch = THREE.MathUtils.clamp(look.pitch + (event.clientY - dragging.y) * .006, -.55, .62);
+    dragging = {x:event.clientX, y:event.clientY};
+    queue();
+  });
+  const stop = () => { dragging = null; };
+  stage.view.addEventListener('pointerup', stop);
+  stage.view.addEventListener('pointercancel', stop);
+}
+document.querySelectorAll('[data-view]').forEach((button) => {
+  button.onclick = () => {
+    preset = presets[button.dataset.view];
+    look.yaw = preset.yaw; look.pitch = preset.pitch;
+    document.querySelectorAll('[data-view]').forEach((other) => other.setAttribute('aria-pressed', String(other === button)));
+    queue();
+  };
+});
+const spin = document.querySelector('#spin');
+spin.onclick = () => { look.spin = !look.spin; spin.setAttribute('aria-pressed', String(look.spin)); };
+document.querySelector('#theme').onclick = (event) => {
+  const dark = document.body.dataset.theme !== 'dark';
+  document.body.dataset.theme = dark ? 'dark' : 'light';
+  const background = new THREE.Color(dark ? PAPER_DARK : PAPER);
+  for (const stage of stages) stage.scene.background = background;
+  event.currentTarget.textContent = dark ? '亮色主题' : '暗色主题';
+  queue();
+};
+document.querySelector('#reset').onclick = () => {
+  preset = presets.oblique; look.yaw = preset.yaw; look.pitch = preset.pitch;
+  look.spin = false; spin.setAttribute('aria-pressed', 'false');
+  document.querySelectorAll('[data-view]').forEach((other) => other.setAttribute('aria-pressed', String(other.dataset.view === 'oblique')));
+  queue();
+};
+addEventListener('resize', queue);
+
+const status = document.querySelector('#status');
+let ready = false, loaded = '';
+try {
+  await document.fonts.ready;
+  await document.fonts.load(font(46, 600));
+  ready = true;
+  draw();
+  loaded = [
+    '已载入 · 三个实体同一套灯光、环境贴图与相机距离，可直接横向比较。',
+    '尺寸基准：面 5.00 × 高 3.70 世界单位；磁带盒面高 3.15、厚 0.62；唱片袋厚 0.36（含半抽出唱片 ≤ 0.72）；CD 盒厚 0.42。',
+    '标签使用真实曲目数据（歌に形はないけれど · 05:32）。正式模型选定形态后走 Blender MCP 制作，源文件与生成脚本保留在 art/。',
+  ].join('\n');
+  status.textContent = loaded;
+} catch (error) {
+  status.textContent = String(error);
+  console.error(error);
+}
+
+let previous = performance.now();
+function loop(now) {
+  const delta = Math.min((now - previous) / 1000, .05);
+  previous = now;
+  if (look.spin) { look.yaw += delta * .55; queue(); }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script></html>

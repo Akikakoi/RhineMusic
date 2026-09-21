@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<title>黑胶卡片 · 阵列与抽取核对</title>
+<style>
+body{margin:0;background:#e8e5e1;color:#252620;font:13px MiSans,Arial,"Microsoft YaHei",sans-serif}
+main{padding:22px;max-width:1620px}
+h1{font-size:18px;margin:0 0 8px}
+p{margin:0 0 6px;color:#63655e;line-height:1.7}
+nav{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0}
+button{padding:8px 12px;border:1px solid #b4b6ad;background:transparent;color:inherit;font:inherit;cursor:pointer}
+button[aria-pressed=true]{background:#353b30;color:#f1f0e8;border-color:#353b30}
+label{display:flex;gap:9px;align-items:center}
+input[type=range]{width:220px}
+.panels{display:grid;grid-template-columns:1.35fr 1fr;gap:20px}
+.panel{border-top:1px solid #c3c1b7;padding-top:12px}
+h2{font-size:14px;font-weight:600;margin:0 0 4px}
+small{color:#86857d;display:block;margin-bottom:10px}
+.stage{background:#e4e0da}
+#array{width:900px;height:540px}
+#detail{width:560px;height:540px}
+pre{font:12px/1.7 monospace;white-space:pre-wrap;color:#5c5e57;margin-top:24px;border-top:1px solid #c3c1b7;padding-top:14px}
+</style>
+<main>
+<h1>黑胶卡片 · 阵列与抽取核对</h1>
+<p>直接驱动 ArchiveScene（跳过开场）：左为阵列稳定取景，右为抽取进度下的唱片滑出。两栏都是真实场景与真实资产，不是示意。</p>
+<nav>
+  <button data-view="settle" aria-pressed="true">稳定取景</button>
+  <button data-view="oblique">斜向取景</button>
+  <label>抽取进度 <input id="progress" type="range" min="0" max="100" step="1" value="100"></label>
+  <span id="lift">—</span>
+</nav>
+<section class="panels">
+  <article class="panel"><h2>阵列 · 纸套卡片</h2><small>setMode('archive') 后推进 300 帧</small><div class="stage" id="array"></div></article>
+  <article class="panel"><h2>抽取 · 唱片滑出</h2><small>从进入详情推进到指定帧数，唱片与中心标签沿 +X 位移</small><div class="stage" id="detail"></div></article>
+</section>
+<pre id="result">正在构建场景…</pre>
+</main>
+<script type="module">
+import * as THREE from 'three';
+import { ArchiveScene } from '/src/scene.ts';
+
+const $ = (q) => document.querySelector(q);
+const result = $('#result');
+const arrayStage = $('#array'), detailStage = $('#detail');
+const notes = [];
+
+const array = new ArchiveScene(arrayStage);
+await array.load();
+const arrayDraw = array.composer.render.bind(array.composer);
+array.composer.render = () => {};
+array.select(0);
+array.setMode('archive');
+let time = 0;
+const stepArray = (frames = 1) => { for (let f = 0; f < frames; f++) array.update(time += 1 / 60); };
+
+// 抽取：从进入详情前的状态开始推进指定帧数，复现阻尼轨迹，可反复重建以拖动查看。
+let detail = null, detailDraw = null;
+async function buildDetail(frames) {
+  if (detail) { detail.dispose?.(); detailStage.replaceChildren(); }
+  detail = new ArchiveScene(detailStage);
+  await detail.load();
+  detailDraw = detail.composer.render.bind(detail.composer);
+  detail.composer.render = () => {};
+  detail.select(0);
+  let t = 0;
+  detail.setMode('archive');
+  for (let f = 0; f < 60; f++) detail.update(t += 1 / 60);
+  detail.setMode('detail');
+  for (let f = 0; f < frames; f++) detail.update(t += 1 / 60);
+  return report();
+}
+
+function recordOffset(scene) {
+  const record = scene.model.children.find((c) => c.userData.surface === 'Vinyl_Record');
+  const label = scene.model.children.find((c) => c.userData.surface === 'Vinyl_Label');
+  return { record: record ? record.position.x : null, label: label ? label.position.x : null };
+}
+
+let stats = null;
+function report() {
+  const offset = recordOffset(detail);
+  const info = detail.getStats();
+  $('#lift').textContent = `抬起 ${info.extraction ?? info.modelPosition[1]} · 唱片 +${offset.record?.toFixed(2)}`;
+  return { offset, stats: info };
+}
+
+function settleArray() {
+  array.setMode('archive');
+  stepArray(300);
+  arrayDraw();
+}
+
+const VIEWS = {
+  settle: { width: '900px', height: '540px' },
+  oblique: { width: '900px', height: '540px' },
+};
+
+async function refresh(frames) {
+  settleArray();
+  const out = await buildDetail(frames);
+  detailDraw();
+  const surfaces = [...new Set([...array.model.children, ...detail.model.children]
+    .map((c) => c.userData.surface)
+    .filter(Boolean))].sort();
+  const instanced = new Set(array.instances.map((i) => i.material.name));
+  result.textContent = [
+    `资产：vinyl-sleeve.glb · ${detail.model.children.length} 个网格（含标签平面）`,
+    `阵列实例（在阵列中可见的表面）：${[...instanced].join('、')}`,
+    `全部表面：${surfaces.join('、')}`,
+    `抽取帧数 ${frames} · 抬起 ${Number(out.stats.modelPosition[1]).toFixed(3)}`,
+    `唱片位移 ${out.offset.record?.toFixed(3)} · 中心标签位移 ${out.offset.label?.toFixed(3)}`,
+    `阵列绘制：${array.getStats().archiveCount} 张 / 三角面 ${array.getStats().triangles}`,
+    '',
+    ...notes,
+  ].join('\n');
+}
+
+const sliderFrames = () => Math.round((Number($('#progress').value) / 100) * 96);
+await refresh(sliderFrames());
+let queued = null;
+$('#progress').oninput = (event) => {
+  void event;
+  if (queued) cancelAnimationFrame(queued);
+  queued = requestAnimationFrame(() => refresh(sliderFrames()));
+};
+document.querySelectorAll('[data-view]').forEach((button) => {
+  button.onclick = () => {
+    document.querySelectorAll('[data-view]').forEach((other) => other.setAttribute('aria-pressed', String(other === button)));
+    refresh(sliderFrames());
+  };
+});
+</script>
+</html>

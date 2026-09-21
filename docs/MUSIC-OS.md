@@ -101,3 +101,18 @@
 - 验证：无头 Edge 截图两阶段——入口（标志+点击进入）与播放器（双栏完整、6 首曲目带真实时长、SCENE LINK 高亮、走带/进度/音量就位、品牌标题无重叠）；tsc 零错误；npm run build 通过。
 - 提交：ecf911f（状态机修复）、d5b17de（舞台布局修复）均已推送。
 - 诊断手段备忘：系统 Edge 无头截图可用（需 user-data-dir 隔离 + powershell -File 包装），agent-browser 原生二进制在本机沙箱静默失败；vite dev 对文件变更的监听偶发失效，验证时重启 dev server。
+
+### 2026-09-20 · 修复 · 点击无反应（用户报"有界面了，但是点击没有反应"）
+
+- 根因：#stage 在启动期间被设为 inert（隔离开机层点击），但入场门 #loading 位于 #stage 内部——旧 main.ts 用 `$("#viewport").append(loading)` 把它挪到舞台外，重写时丢失该句，导致入场按钮（及一切 stage 内元素）被 inert 拦截，点了没反应。
+- 修复：main.ts 启动序列恢复 `$("#viewport").append($("#loading"))`（挪出舞台后再设 inert），.mobile-entry 同样保持在 viewport 层。
+- 验证：tsc 零错误；Edge 无头 --dump-dom 实证：#loading 位于 #viewport 内、#stage 之后；入场按钮 `<button class="entry-start">` 无 disabled（entry.ready() 已触发，等待点击）。修复模式与旧档案终端完全一致（stage 内元素在 completeStartup 后恢复可点）。
+- 未提交未推送（用户 2026-09-20 指示：仅明确要求时才提交推送）。
+
+### 2026-09-20 · 转折 · 按用户截图恢复档案终端（覆盖转向决定）
+
+- 用户看过 A/B/C 三个 demo 后发来原档案终端截图，明确"恢复成这样的"。据此放弃播放器转向：工作区已从基线提交 a0fb9ea 恢复全部源码与资产（src 75 文件、GLB 模型、content、public/archives、wallpaper、scripts、index.html、package.json/vite.config），three.js 依赖重装，构建通过（33.8 MiB），无头截图验证三维阵列与卡片特写均正常渲染。
+- 保留：用户两首 mp3（未跟踪）+ manifest 重生成（3 首扩展曲目，设置弹窗迷你播放器可用）；demos/ 目录（未跟踪）；docs/MUSIC-OS.md、MUSIC-PLAYER.md 作为历史记录保留；AGENTS.md 的提交规则更新（未提交）。
+- 播放器转向期间的代码（曲目库主界面等）仍留在 Git 历史（4933661..062f21d），可随时找回。
+- 工作区状态：恢复改动已暂存未提交；verification/ 与 启动终端.cmd 为转向前即存在的无关改动；均待用户指示。
+- 状态机教训补充：旧 main.ts 的 $("#viewport").append(loading) 与 #stage.inert 配对是入场可点的关键，任何入口重写必须保留这对组合。
