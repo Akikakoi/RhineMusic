@@ -20,15 +20,18 @@ import { ModelViewer } from "./model-viewer";
 import { ContentTransition, SurfaceTransition } from "./ui-transitions";
 import { BootSequence } from "./boot";
 import { loadBootWebfonts } from "./boot-lettering";
-import { wrap, type ArchiveNavigation } from "./archive-loop";
+import { wrap, sameCell, type ArchiveNavigation } from "./archive-loop";
 import {
   records,
   categories,
   archiveColumns,
   columnFiles,
   fileLocation,
+  formatDuration,
 } from "./data";
 import { TerminalAudio } from "./audio";
+import { loadLyrics, activeLyric, formatLyricTime, type LyricLine } from "./lyrics";
+import { appendPlayLog, clearPlayLog, formatPlayTime, readPlayLog } from "./play-log";
 import { audioSettingsMarkup } from "./audio-settings";
 import { StartupGate } from "./startup";
 import { isWallpaper, wallpaperHost, wallpaperFrame, type WallpaperProperties } from "./wallpaper";
@@ -54,8 +57,8 @@ $("#stage").innerHTML = `
   <div id="boot-background" class="boot-background"><svg viewBox="0 0 1920 1080" preserveAspectRatio="none"><g fill="none" stroke="#fff" stroke-width="3"><path d="M-210 705C-45 705 182 704 247 567C337 377 99 306 4 435S27 680 169 631C309 584 227 314 279 111S568-113 568-113"/><path d="M1560-80C1374 114 1671 168 1601 323S1371 367 1431 480S1692 666 1559 787S1329 886 1498 1130"/><circle cx="1450" cy="648" r="346"/><circle cx="1450" cy="648" r="348"/></g></svg></div>
   <header class="brand">${brandHeading}</header>
   <nav class="system-nav" aria-label="系统导航">
-    <button data-action="search"><span class="nav-glyph">⌕</span> ARCHIVE INDEX <span class="key">/</span></button>
-    <button data-action="saved" aria-label="查看收藏档案" title="收藏档案">＋ SAVED <span id="saved-count">00</span></button>
+    <button data-action="search"><span class="nav-glyph">⌕</span> TRACK INDEX <span class="key">/</span></button>
+    <button data-action="saved" aria-label="查看收藏曲目" title="收藏曲目">＋ SAVED <span id="saved-count">00</span></button>
     <button class="settings-button" data-action="settings" aria-label="系统设置" title="系统设置"><span class="settings-glyph" aria-hidden="true">◷</span><span class="settings-label">设置</span></button>
   </nav>
   <button id="skip" class="skip" data-action="skip">ENTER SYSTEM <span>↗</span></button>
@@ -68,17 +71,17 @@ $("#stage").innerHTML = `
   </section>
   <svg id="inspection-marks" viewBox="0 0 1920 1080" aria-hidden="true"><path id="inspection-lines"/><g id="inspection-corners"></g><circle id="inspection-point" r="1.8"/></svg>
   <div id="inspection-text" aria-hidden="true">CONFIDENTIALITY:<strong>GENERAL BUSINESS USE</strong></div>
-  <section id="archive-ui" class="archive-ui" aria-label="档案选择">
-    <div class="archive-callout"><div class="eyebrow">INTERNAL DATABASE <span>／</span> <span id="archive-category">机构档案</span></div><button class="file-title" data-action="open">FILE NUMBER: <span id="selected-id">X-<span id="selected-code">001</span></span><span class="file-open">↗</span></button><div class="callout-rule"><i></i></div><div class="file-summary"><span id="selected-title">莱茵生命</span><span id="selected-clearance">BUSINESS AREA</span></div><button class="read-file" data-action="open">ACCESS FILE <span>→</span></button></div>
-    <div id="hover-label" class="hover-label" hidden>X-<span id="hover-code">001</span> / <span id="hover-title"></span></div>
-    <div class="archive-counter"><span class="tiny-label">ARCHIVE / SELECT</span><div><span id="selected-number">01</span><i>/</i><span class="count-total">12</span></div></div>
-    <div class="archive-navigation"><button data-action="prev" aria-label="上一个档案">↑</button><div id="file-ticks" class="file-ticks"></div><button data-action="next" aria-label="下一个档案">↓</button></div>
-    <div class="column-navigation"><button data-action="column-prev" aria-label="上一列">←</button><div><span id="column-number">COLUMN <span id="column-index">03</span> / 05</span><strong id="column-name">机构档案</strong></div><button data-action="column-next" aria-label="下一列">→</button></div>
-    <div class="archive-hint"><kbd>←</kbd> <kbd>→</kbd> 切换列 <span>／</span> <kbd>↑</kbd> <kbd>↓</kbd> 前后档案 <span>／</span> <kbd>ENTER</kbd> 读取</div>
+  <section id="archive-ui" class="archive-ui" aria-label="曲目选择">
+    <div class="archive-callout"><div class="eyebrow">AUDIO ARCHIVE <span>／</span> <span id="archive-category">观测室</span></div><button class="file-title" data-action="open">TRACK NUMBER: <span id="selected-id">RM-<span id="selected-code">001</span></span><span class="file-open">↗</span></button><div class="callout-rule"><i></i></div><div class="file-summary"><span id="selected-title">AMBIENCE</span><span id="selected-clearance">READY</span></div><button class="read-file" data-action="open">PLAY TRACK <span>→</span></button></div>
+    <div id="hover-label" class="hover-label" hidden>RM-<span id="hover-code">001</span> / <span id="hover-title"></span></div>
+    <div class="archive-counter"><span class="tiny-label">TRACK / SELECT</span><div><span id="selected-number">01</span><i>/</i><span class="count-total">12</span></div></div>
+    <div class="archive-navigation"><button data-action="prev" aria-label="上一首曲目">↑</button><div id="file-ticks" class="file-ticks"></div><button data-action="next" aria-label="下一首曲目">↓</button></div>
+    <div class="column-navigation"><button data-action="column-prev" aria-label="上一列">←</button><div><span id="column-number">COLUMN <span id="column-index">03</span> / 05</span><strong id="column-name">观测室</strong></div><button data-action="column-next" aria-label="下一列">→</button></div>
+    <div class="archive-hint"><kbd>←</kbd> <kbd>→</kbd> 切换列 <span>／</span> <kbd>↑</kbd> <kbd>↓</kbd> 前后曲目 <span>／</span> <kbd>ENTER</kbd> 播放</div>
   </section>
-  <section id="detail-ui" class="detail-ui" aria-label="档案内容" hidden>
-    <button class="back-button" data-action="back">← <span>ARCHIVE OVERVIEW</span><small>ESC</small></button>
-    <div class="object-caption"><span id="object-id">NO.001</span><div>INTERNAL DATABASE</div><small>DRAG TO INSPECT <span>↔</span></small><button class="viewer-open" data-action="model-viewer">360° 查看文档模型 <span>↗</span></button></div>
+  <section id="detail-ui" class="detail-ui" aria-label="曲目信息" hidden>
+    <button class="back-button" data-action="back">← <span>TRACK OVERVIEW</span><small>ESC</small></button>
+    <div class="object-caption"><span id="object-id">NO.001</span><div>AUDIO ARCHIVE</div><small>DRAG TO INSPECT <span>↔</span></small><button class="viewer-open" data-action="model-viewer">360° 查看模型 <span>↗</span></button></div>
     <article id="detail-content" class="detail-content"></article>
   </section>
   <div class="powered">POWERED BY <b>RHINE LAB</b><i></i></div>
@@ -103,9 +106,12 @@ let mode: Mode = "boot",
   ready = false;
 let modal: "search" | "saved" | "settings" | null = null,
   searchQuery = "",
-  filter = "全部档案";
+  filter = "全部曲目";
 let activeTab = "overview";
 const reviewParams = new URLSearchParams(location.search);
+// 复核入口可指定初始页签，便于逐页对照（?scene=detail&tab=notes）；进入详情后即恢复常规行为。
+let reviewTab: string | null = reviewParams.get("tab");
+if (reviewTab) activeTab = reviewTab;
 let frozenTime =
   reviewParams.get("freeze") === "1"
     ? Number(reviewParams.get("time") ?? 0)
@@ -212,6 +218,15 @@ let musicSuppressed = false;
 function configureAudio() { audio.configure({ ...prefs, music: prefs.music && !musicSuppressed }); }
 configureAudio();
 const reviewEntry = reviewParams.has("scene") || reviewParams.has("time") || reviewParams.get("review") === "1";
+// 复核模式暴露只读状态，供 scripts/check-playback.mjs 这类交互检查读取真实播放与投影情况。
+if (reviewEntry) {
+  const debug = window as unknown as {
+    rhineMusicState: () => ReturnType<TerminalAudio["musicState"]>;
+    rhineSceneStats: () => ReturnType<ArchiveScene["getStats"]> | null;
+  };
+  debug.rhineMusicState = () => audio.musicState();
+  debug.rhineSceneStats = () => scene?.getStats() ?? null;
+}
 let started = false;
 const loading = $("#loading");
 // The entry screen uses the actual viewport, including portrait phones; the
@@ -372,11 +387,17 @@ function setMode(next: Mode) {
   scene?.setMode(next === "boot" ? "hidden" : next);
   if (next !== "boot") {
     bootSequence.reset();
-    $(".file-title").firstChild!.textContent = "FILE NUMBER: ";
+    $(".file-title").firstChild!.textContent = "TRACK NUMBER: ";
     $("#stage").dataset.boot = "done";
   }
   if (next === "detail" && previousMode !== "detail") {
-    renderDetail();
+    // 详情面板每次进入都会重建，渲染异常不应该静默留下空面板。
+    try {
+      renderDetail();
+    } catch (error) {
+      console.error(error);
+      notify("曲目信息渲染失败，请刷新终端");
+    }
     pendingDetailFocus = true;
     if (!scene) {
       $("#detail-content").style.opacity = "1";
@@ -388,8 +409,12 @@ function setMode(next: Mode) {
 function select(index: number, navigation?: ArchiveNavigation) {
   selected = (index + records.length) % records.length;
   columnMemory[fileLocation(selected).lane] = selected;
-  if (mode === "detail") setMode("archive");
-  activeTab = "overview";
+  // 换曲目时回到播放页签；只在详情里重选才重置，避免吃掉复核入口指定的初始页签。
+  if (mode === "detail") {
+    setMode("archive");
+    activeTab = reviewTab ?? "overview";
+    reviewTab = null;
+  }
   scene?.select(selected, navigation);
   updateSelection(navigation);
   const columnMove = navigation && "axis" in navigation && navigation.axis === "lane";
@@ -398,22 +423,58 @@ function select(index: number, navigation?: ArchiveNavigation) {
 function stepFile(direction: number) {
   const files = columnFiles(fileLocation(selected).lane);
   if (files.length < 2) return;
-  select(
-    files[(files.indexOf(selected) + direction + files.length) % files.length],
-    { axis: "row", direction },
-  );
+  const index = files[(files.indexOf(selected) + direction + files.length) % files.length];
+  const navigation = { axis: "row" as const, direction };
+  if (mode === "detail") swapInDetail(index, navigation);
+  else {
+    select(index, navigation);
+    selectForPlayback();
+  }
 }
 function stepColumn(direction: number) {
   const lane = fileLocation(selected).lane;
   const next = wrap(lane + direction, archiveColumns.length);
-  select(columnMemory[next], { axis: "lane", direction });
+  const navigation = { axis: "lane" as const, direction };
+  if (mode === "detail") swapInDetail(columnMemory[next], navigation);
+  else {
+    select(columnMemory[next], navigation);
+    selectForPlayback();
+  }
+}
+/** 详情内换曲目：留在详情，只换卡片封面与右栏内容（不再回落到阵列预览）。 */
+function swapInDetail(index: number, navigation?: ArchiveNavigation) {
+  selected = (index + records.length) % records.length;
+  columnMemory[fileLocation(selected).lane] = selected;
+  scene?.swapSelection(selected, navigation);
+  updateSelection(navigation);
+  renderDetail();
+  selectForPlayback();
+}
+let selectionPlayTimer: ReturnType<typeof setTimeout> | undefined;
+/**
+ * 选曲即成为播放目标：停顿片刻后切到该曲目并起播。
+ * 停顿是为了连续浏览时不反复重启音频；设置里关闭了音乐、或本来就是这首时不动作。
+ */
+function selectForPlayback() {
+  clearTimeout(selectionPlayTimer);
+  const index = playlistIndex(records[selected]);
+  if (index < 0 || !prefs.music) return;
+  if (audio.musicState().track === index && audio.musicState().playing) return;
+  selectionPlayTimer = setTimeout(() => {
+    if (playlistIndex(records[selected]) !== index) return;
+    prefs.musicTrack = index;
+    saveAudioPrefs();
+    audio.setPaused(false);
+    updateMusicPanel();
+    updatePlaybackPanel();
+  }, 350);
 }
 function updateSelection(navigation?: ArchiveNavigation) {
   const r = records[selected];
   const { lane } = fileLocation(selected);
   const files = columnFiles(lane);
   selectionTitle.update({ text: r.title, animated: !prefs.reduced && mode === "archive" });
-  clearanceTitle.update({ text: r.clearance, animated: !prefs.reduced && mode === "archive" });
+  clearanceTitle.update({ text: r.pending ? "PENDING" : "READY", animated: !prefs.reduced && mode === "archive" });
   categoryTitle.update({ text: r.category, animated: !prefs.reduced && mode === "archive" });
   const direction =
     navigation && "axis" in navigation
@@ -422,7 +483,8 @@ function updateSelection(navigation?: ArchiveNavigation) {
         : "down"
       : "auto";
   selectedCode.update({
-    value: Number(r.id.slice(2)),
+    // 曲目 id 是 RM-002 这种三字符前缀，直接 slice(2) 会把连字符一起取进来变成 -2。
+    value: Number(r.id.split("-").pop() ?? 0),
     animated: !prefs.reduced && mode === "archive",
     direction,
   });
@@ -475,6 +537,7 @@ function openFile() {
   if (!ready) return;
   closeModal(() => {
     setMode("detail");
+    selectForPlayback();
     audio.play("open");
   });
 }
@@ -488,8 +551,8 @@ function toggleSaved() {
   $("#saved-count").textContent = String(saved.size).padStart(2, "0");
   const button = $<HTMLButtonElement>('[data-action="bookmark"]');
   const added = saved.has(id);
-  button.firstChild!.textContent = added ? "− REMOVE FROM SAVED" : "＋ SAVE ARCHIVE";
-  button.querySelector("span")!.textContent = added ? "已收藏" : "收藏档案";
+  button.firstChild!.textContent = added ? "− REMOVE FROM SAVED" : "＋ SAVE TRACK";
+  button.querySelector("span")!.textContent = added ? "已收藏" : "收藏曲目";
   button.setAttribute("aria-pressed", String(added));
   bookmarkFeedback?.cancel();
   if (!prefs.reduced) bookmarkFeedback = button.animate(
@@ -497,28 +560,172 @@ function toggleSaved() {
     { duration: 220, easing: "ease-out" },
   );
   audio.play("confirm");
-  notify(saved.has(id) ? "档案已加入收藏" : "已取消收藏");
+  notify(saved.has(id) ? "曲目已加入收藏" : "已取消收藏");
 }
 function renderDetail() {
   tabTransition.cancel();
   const r = records[selected];
+  const playable = !r.pending;
   $("#object-id").textContent = "NO." + String(selected + 1).padStart(3, "0");
   $("#detail-content").innerHTML = `
-  <div class="detail-kicker"><span>FILE ${r.id}</span><span>${escapeHtml(r.clearance)}</span></div>
-  <h2>${escapeHtml(r.en)}</h2><div class="detail-title-cn">${escapeHtml(r.title)}<span>${escapeHtml(r.category)}</span></div>
+  <div class="detail-kicker"><span>TRACK ${r.id}</span><span>${playable ? "READY" : "PENDING"}</span></div>
+  <h2 class="${r.title.length > 16 ? "compact" : ""}">${escapeHtml(r.title)}</h2><div class="detail-title-cn">${escapeHtml(r.artist)}<span>${escapeHtml(r.category)}</span></div>
   <div class="detail-rule"></div>
-  <dl class="metadata"><div><dt>DEPARTMENT / 科室</dt><dd>${escapeHtml(r.department)}</dd></div><div><dt>COLLECTION / 编目范围</dt><dd>${escapeHtml(r.date)}</dd></div><div><dt>RELATED / 相关人物</dt><dd>${escapeHtml(r.lead)}</dd></div><div><dt>STATUS / 状态</dt><dd><i></i>${r.clearance === "RESTRICTED" ? "目录访问" : "已归档 · 可读取"}</dd></div></dl>
-  <div class="detail-tabs" role="tablist"><button id="tab-overview" class="active" role="tab" aria-controls="tab-panel" aria-selected="true" data-tab="overview">01 <span>概述</span></button><button id="tab-notes" role="tab" aria-controls="tab-panel" aria-selected="false" data-tab="notes">02 <span>研究记录</span></button><button id="tab-history" role="tab" aria-controls="tab-panel" aria-selected="false" data-tab="history">03 <span>访问日志</span></button><i class="tab-indicator" aria-hidden="true"></i></div>
+  <dl class="metadata"><div><dt>COLLECTION / 曲库分类</dt><dd>${escapeHtml(r.category)}</dd></div><div><dt>DURATION / 时长</dt><dd>${formatDuration(r.duration)}</dd></div><div><dt>SOURCE / 音源</dt><dd class="metadata-file" title="${playable ? escapeHtml(r.file ?? "") : ""}">${playable ? escapeHtml(r.file ?? "") : "尚未入库"}</dd></div><div><dt>STATUS / 状态</dt><dd><i></i>${playable ? "可播放 · 本地音源" : "占位曲目 · 待入库"}</dd></div></dl>
+  <div class="detail-tabs" role="tablist"><button id="tab-overview" class="active" role="tab" aria-controls="tab-panel" aria-selected="true" data-tab="overview">01 <span>播放</span></button><button id="tab-notes" role="tab" aria-controls="tab-panel" aria-selected="false" data-tab="notes">02 <span>歌词</span></button><button id="tab-history" role="tab" aria-controls="tab-panel" aria-selected="false" data-tab="history">03 <span>播放记录</span></button><i class="tab-indicator" aria-hidden="true"></i></div>
   <div id="tab-panel" class="tab-panel" role="tabpanel">${overview()}</div>
-  <div class="detail-actions"><button class="solid-button" data-action="bookmark">${saved.has(r.id) ? "− REMOVE FROM SAVED" : "＋ SAVE ARCHIVE"}<span>${saved.has(r.id) ? "已收藏" : "收藏档案"}</span></button><a class="export-button" href="${assetUrl(`archives/RHINE-LAB-${r.id}.txt`)}" download="RHINE-LAB-${r.id}.txt" aria-label="导出 ${r.id} 档案">EXPORT <span>↓</span></a></div>
-  <div class="detail-footnote"><a href="${escapeHtml(r.source)}" target="_blank" rel="noopener">设定参考 ↗</a><span>${String(selected + 1).padStart(3, "0")} / ${String(records.length).padStart(3, "0")}</span></div>`;
+  <div class="detail-actions"><button class="solid-button" data-action="bookmark">${saved.has(r.id) ? "− REMOVE FROM SAVED" : "＋ SAVE TRACK"}<span>${saved.has(r.id) ? "已收藏" : "收藏曲目"}</span></button>${playable ? `<button class="solid-button" data-action="play-track">${playingTrack() ? "❚❚ PAUSE" : "▶ PLAY"}<span>${playingTrack() ? "暂停" : "播放"}</span></button>` : `<button class="solid-button" disabled>▶ PENDING<span>尚未入库</span></button>`}</div>
+  ${playable ? "" : `<div class="detail-footnote"><span>占位曲目，仅用于填满五列阵列，没有音源</span><span>${String(selected + 1).padStart(3, "0")} / ${String(records.length).padStart(3, "0")}</span></div>`}`;
   $("#detail-content").setAttribute("tabindex", "-1");
   $('[data-action="bookmark"]').setAttribute("aria-pressed", String(saved.has(r.id)));
   documentDecryption.reset($("#detail-content"), prefs.reduced || !scene || scene.decryptionFrame.phase === "clear");
   setTab(activeTab, false);
+  updatePlaybackPanel();
+}
+/** 选中曲目是否就是音频引擎正在播放的那一条。 */
+function playingTrack() {
+  const state = audio.musicState();
+  return state.playing && state.wanted === playlistIndex(records[selected]);
+}
+/** 曲目标题与音频播放列表的对应关系：仅已入库曲目能命中。 */
+function playlistIndex(track: (typeof records)[number]) {
+  if (track.pending) return -1;
+  return audio.musicState().tracks.findIndex((item) => item.title === track.title);
 }
 function overview() {
-  return `<div class="panel-label">ABSTRACT / 摘要</div><p>${escapeHtml(records[selected].abstract)}</p>`;
+  const r = records[selected];
+  return `<div class="panel-label">NOW PLAYING</div>
+  <div class="now-playing"><strong>${escapeHtml(r.title)}</strong></div>
+  <input id="playback-seek" class="playback-seek" type="range" min="0" max="1000" step="1" value="0" aria-label="播放进度" ${playingTrack() ? "" : "disabled"} />
+  <div class="playback-time"><span id="playback-elapsed">00:00</span><span id="playback-duration">${formatDuration(r.duration)}</span></div>
+  <div class="playback-transport">
+    <button data-action="play-prev" aria-label="上一首">◀◀</button>
+    <button class="playback-transport-main" data-action="play-track" aria-label="播放或暂停">${playingTrack() ? "❚❚" : "▶"}</button>
+    <button data-action="play-next" aria-label="下一首">▶▶</button>
+    <button data-action="play-loop" aria-pressed="${prefs.musicLoop === "one"}" aria-label="循环模式">${prefs.musicLoop === "one" ? "↻ 单曲" : "↻ 列表"}</button>
+  </div>
+  <p class="playback-note">${r.pending ? "占位曲目：音源尚未入库，等待后续补充真实文件与时长。" : "音源来自 public/audio，与设置中的迷你播放器共用同一条音频链路。"}</p>`;
+}
+/** 把音频引擎的播放状态写回面板；播放列表里没有的曲目保持静默。 */
+function updatePlaybackPanel() {
+  const seek = document.querySelector<HTMLInputElement>("#playback-seek");
+  if (!seek) return;
+  const r = records[selected];
+  const index = playlistIndex(r);
+  const state = audio.musicState();
+  const active = index >= 0 && state.wanted === index;
+  const progress = active && state.duration > 0 ? Math.min(1, state.time / state.duration) : 0;
+  seek.disabled = !active;
+  if (active && !musicSeeking) seek.value = String(Math.round(progress * 1000));
+  seek.style.setProperty("--seek-progress", `${(progress * 100).toFixed(2)}%`);
+  const elapsed = document.querySelector("#playback-elapsed");
+  if (elapsed) elapsed.textContent = active ? formatDuration(state.time) : "00:00";
+  const duration = document.querySelector("#playback-duration");
+  if (duration)
+    duration.textContent = active && state.duration > 0 ? formatDuration(state.duration) : formatDuration(r.duration);
+  const main = document.querySelector<HTMLButtonElement>(".playback-transport-main");
+  if (main) main.textContent = playingTrack() ? "❚❚" : "▶";
+  const action = document.querySelector<HTMLButtonElement>('.detail-actions [data-action="play-track"]');
+  if (action?.firstChild) {
+    const playing = playingTrack();
+    action.firstChild.textContent = playing ? "❚❚ PAUSE" : "▶ PLAY";
+    const label = action.querySelector("span");
+    if (label) label.textContent = playing ? "暂停" : "播放";
+  }
+  const loop = document.querySelector<HTMLButtonElement>('[data-action="play-loop"]');
+  if (loop) {
+    loop.textContent = prefs.musicLoop === "one" ? "↻ 单曲" : "↻ 列表";
+    loop.setAttribute("aria-pressed", String(prefs.musicLoop === "one"));
+  }
+}
+/** 详情面板的走带控制：与设置里的迷你播放器共用同一条音频链路。 */
+function controlPlayback(action: string) {
+  const index = playlistIndex(records[selected]);
+  if (action === "loop") {
+    prefs.musicLoop = prefs.musicLoop === "one" ? "all" : "one";
+    saveAudioPrefs();
+    updatePlaybackPanel();
+    return;
+  }
+  if (index < 0) {
+    notify("该曲目尚未入库，暂时无法播放");
+    return;
+  }
+  if (action === "track") {
+    const state = audio.musicState();
+    if (state.wanted === index && state.playing) audio.setPaused(true);
+    else {
+      prefs.musicTrack = index;
+      saveAudioPrefs();
+      audio.setPaused(false);
+    }
+  } else if (action === "prev" || action === "next") {
+    prefs.musicTrack = index;
+    saveAudioPrefs();
+    audio.skip(action === "prev" ? -1 : 1);
+  }
+  updateMusicPanel();
+  updatePlaybackPanel();
+}
+/** 歌词页签：有 LRC 时按播放进度高亮并滚动；没有则说明原因。 */
+function lyricsMarkup(track: (typeof records)[number]) {
+  if (!track.lyrics)
+    return `<div class="panel-label">LYRICS / 歌词</div><p class="playback-note">${track.pending ? "占位曲目暂无歌词。" : "该曲目尚未关联歌词文件。在 content/tracks.json 里为曲目补上 lyrics 字段即可。"}</p>`;
+  return `<div class="panel-label">LYRICS / 歌词</div><div id="lyrics-panel" class="lyrics-panel"><p class="playback-note">正在载入歌词…</p></div>`;
+}
+let lyricLines: LyricLine[] | null = null;
+let lyricTrackId = "";
+async function hydrateLyrics(track: (typeof records)[number]) {
+  const panel = document.querySelector<HTMLElement>("#lyrics-panel");
+  if (!panel) return;
+  const lines = await loadLyrics(track.lyrics ? assetUrl(`lyrics/${track.lyrics}`) : null);
+  if (!document.body.contains(panel)) return;
+  lyricLines = lines;
+  lyricTrackId = track.id;
+  if (!lines) {
+    panel.innerHTML = `<p class="playback-note">歌词文件未能载入。</p>`;
+    return;
+  }
+  panel.innerHTML = lines
+    .map(
+      (line, index) =>
+        `<p class="lyric-line" data-line="${index}"><span>${formatLyricTime(line.time)}</span>${escapeHtml(line.text)}</p>`,
+    )
+    .join("");
+  updateLyricsHighlight(audio.musicState());
+}
+/** 只有「选中的曲目正在播放」时才有实时行；否则列出全部歌词供阅读。 */
+function updateLyricsHighlight(state: ReturnType<TerminalAudio["musicState"]>) {
+  const panel = document.querySelector<HTMLElement>("#lyrics-panel");
+  if (!panel || !lyricLines || lyricTrackId !== records[selected].id) return;
+  const index = playlistIndex(records[selected]);
+  const synced = index >= 0 && state.wanted === index && state.playing;
+  const active = synced ? activeLyric(lyricLines, state.time) : -1;
+  panel.querySelectorAll<HTMLElement>(".lyric-line").forEach((line, i) => {
+    line.classList.toggle("active", i === active);
+  });
+  panel.classList.toggle("synced", synced);
+  if (!synced || active < 0) return;
+  const current = panel.querySelector<HTMLElement>(`[data-line="${active}"]`);
+  if (!current) return;
+  const top = current.offsetTop - panel.clientHeight / 2 + current.clientHeight / 2;
+  panel.scrollTo({ top: Math.max(0, top), behavior: prefs.reduced ? "auto" : "smooth" });
+}
+/** 播放记录页签：本机保存的真实起播记录。 */
+function historyMarkup(track: (typeof records)[number]) {
+  const entries = readPlayLog();
+  const rows = entries.length
+    ? entries
+        .slice(0, 12)
+        .map(
+          (entry) =>
+            `<div class="log-row"><span>${formatPlayTime(entry.at)}</span><span>${escapeHtml(entry.artist)}</span><b>${escapeHtml(entry.title)}</b></div>`,
+        )
+        .join("")
+    : `<p class="playback-note">本次终端还没有播放记录。播放任意曲目后，这里会按时间列出曲名与歌手。</p>`;
+  return `<div class="panel-label">PLAY LOG / 播放记录</div>${rows}
+  <div class="play-log-foot"><span>本机记录 ${entries.length} 条 · 当前曲目 ${playingTrack() ? "播放中" : "未播放"}</span><button data-action="clear-log">清空记录</button></div>
+  <p class="log-note">记录保存在当前浏览器，不随曲目库同步；占位曲目无法播放，因此不会出现在这里。当前查看 ${escapeHtml(track.artist)}。</p>`;
 }
 function setTab(tab: string, sound = true) {
   if (sound && tab === activeTab) return;
@@ -536,22 +743,10 @@ function setTab(tab: string, sound = true) {
   indicator.style.transform = `translateX(${tabButton.offsetLeft}px) scaleX(${tabButton.offsetWidth})`;
   $("#tab-panel").setAttribute("aria-labelledby", tabButton.id);
   $("#tab-panel").innerHTML =
-    tab === "overview"
-      ? overview()
-      : tab === "notes"
-        ? `<div class="panel-label">RESEARCH NOTES / 研究记录</div><ol class="research-notes">${r.findings.map((f, i) => `<li><span>${String(i + 1).padStart(2, "0")}</span>${escapeHtml(f)}</li>`).join("")}</ol>`
-        : `<div class="panel-label">ACCESS LOG / 本次访问</div>${accessLog
-            .filter((entry) => entry.id === r.id)
-            .slice(0, 4)
-            .map(
-              (entry) =>
-                `<div class="log-row"><span>${entry.time}</span><span>JOYCE MOORE</span><b>READ AUTHORIZED</b></div>`,
-            )
-            .join(
-              "",
-            )}<p class="log-note">本次会话已通过身份验证。档案内容以当前终端可访问范围展示。</p>`;
+    tab === "overview" ? overview() : tab === "notes" ? lyricsMarkup(r) : historyMarkup(r);
   $("#tab-panel").scrollTop = 0;
   documentDecryption.refresh();
+  if (tab === "notes") void hydrateLyrics(r);
   if (sound) {
     tabTransition.reveal($("#tab-panel"), prefs.reduced);
     audio.play("ui-tick");
@@ -576,7 +771,7 @@ function openModal(kind: NonNullable<typeof modal>) {
   modalClosing = false;
   modal = kind;
   searchQuery = "";
-  filter = "全部档案";
+  filter = "全部曲目";
   audio.play("page-open");
   renderModal();
 }
@@ -605,7 +800,7 @@ function renderModal() {
   if (!modal) return;
   modalTransition?.dispose();
   $("#modal-root").innerHTML =
-    `<div class="modal-backdrop"><section class="terminal-modal ${modal === "settings" ? "settings-modal" : ""}" role="dialog" aria-modal="true" aria-label="${modal === "settings" ? "系统设置" : modal === "saved" ? "收藏档案" : "档案检索"}"><div class="modal-top"><span>RHINE LAB / ${modal === "settings" ? "SYSTEM PREFERENCES" : "ARCHIVE DIRECTORY"}</span><button data-action="close-modal" aria-label="关闭窗口">CLOSE <span>×</span></button></div>${modal === "settings" ? settingsMarkup() : `<h2>${modal === "saved" ? "SAVED ARCHIVES" : "ARCHIVE INDEX"}<small>${modal === "saved" ? "收藏档案" : "内部档案检索"}</small></h2><div class="search-field"><span>⌕</span><input id="archive-search" type="search" autocomplete="off" placeholder="输入档案编号、名称或科室" aria-label="检索档案"/><span class="key">ESC</span></div><div class="category-filters">${categories.map((c, i) => `<button data-filter="${escapeHtml(c)}" class="${i === 0 ? "active" : ""}">${escapeHtml(c)}</button>`).join("")}</div><div class="result-header"><span>FILE / 档案</span><span>DEPARTMENT / 科室</span><span>ACCESS</span></div><div id="search-results" class="search-results"></div><div class="modal-bottom"><span id="result-count"></span><span>INTERNAL DATABASE <i>●</i> CONNECTED</span></div>`}</section></div>`;
+    `<div class="modal-backdrop"><section class="terminal-modal ${modal === "settings" ? "settings-modal" : ""}" role="dialog" aria-modal="true" aria-label="${modal === "settings" ? "系统设置" : modal === "saved" ? "收藏曲目" : "曲库检索"}"><div class="modal-top"><span>RHINE MUSIC / ${modal === "settings" ? "SYSTEM PREFERENCES" : "AUDIO DIRECTORY"}</span><button data-action="close-modal" aria-label="关闭窗口">CLOSE <span>×</span></button></div>${modal === "settings" ? settingsMarkup() : `<h2>${modal === "saved" ? "SAVED TRACKS" : "TRACK INDEX"}<small>${modal === "saved" ? "收藏曲目" : "内部曲库检索"}</small></h2><div class="search-field"><span>⌕</span><input id="archive-search" type="search" autocomplete="off" placeholder="输入曲目编号、名称或歌手" aria-label="检索曲目"/><span class="key">ESC</span></div><div class="category-filters">${categories.map((c, i) => `<button data-filter="${escapeHtml(c)}" class="${i === 0 ? "active" : ""}">${escapeHtml(c)}</button>`).join("")}</div><div class="result-header"><span>TRACK / 曲目</span><span>COLLECTION / 分类</span><span>STATUS</span></div><div id="search-results" class="search-results"></div><div class="modal-bottom"><span id="result-count"></span><span>AUDIO ARCHIVE <i>●</i> CONNECTED</span></div>`}</section></div>`;
   const backdrop = $(".modal-backdrop");
   backdrop.hidden = true;
   modalTransition = new SurfaceTransition(backdrop, $(".terminal-modal"));
@@ -632,8 +827,8 @@ function renderResults() {
     .filter(
       ({ r }) =>
         (modal !== "saved" || saved.has(r.id)) &&
-        (filter === "全部档案" || r.category === filter) &&
-        `${r.id} ${r.title} ${r.en} ${r.department} ${r.lead}`
+        (filter === "全部曲目" || r.category === filter) &&
+        `${r.id} ${r.title} ${r.artist} ${r.category}`
           .toLowerCase()
           .includes(searchQuery.toLowerCase()),
     );
@@ -641,12 +836,12 @@ function renderResults() {
     ? results
         .map(
           ({ r, i }) =>
-            `<button class="result-row" data-result="${i}"><span class="result-name"><b>${r.id}</b><span>${escapeHtml(r.title)}<small>${escapeHtml(r.en)}</small></span>${saved.has(r.id) ? "<i>＋</i>" : ""}</span><span>${escapeHtml(r.department)}</span><span>${r.clearance === "RESTRICTED" ? "CATALOG ONLY" : "AUTHORIZED"} <i>↗</i></span></button>`,
+            `<button class="result-row" data-result="${i}"><span class="result-name"><b>${r.id}</b><span>${escapeHtml(r.title)}<small>${escapeHtml(r.artist)}</small></span>${saved.has(r.id) ? "<i>＋</i>" : ""}</span><span>${escapeHtml(r.category)}</span><span>${r.pending ? "PENDING" : "READY"} <i>↗</i></span></button>`,
         )
         .join("")
-    : `<div class="empty-results"><span>∅</span><strong>${modal === "saved" && !searchQuery ? "尚无收藏档案" : "没有匹配的档案"}</strong><p>${modal === "saved" && !searchQuery ? "读取档案时，选择 SAVE ARCHIVE 将其保存在此处。" : "尝试其他名称、档案编号，或切换科室分类。"}</p><button data-action="reset-search">${modal === "saved" ? "查看全部档案 →" : "重置检索 →"}</button></div>`;
+    : `<div class="empty-results"><span>∅</span><strong>${modal === "saved" && !searchQuery ? "尚无收藏曲目" : "没有匹配的曲目"}</strong><p>${modal === "saved" && !searchQuery ? "选中曲目后，选择 SAVE TRACK 将其保存在此处。" : "尝试其他曲名、曲目编号，或切换曲库分类。"}</p><button data-action="reset-search">${modal === "saved" ? "查看全部曲目 →" : "重置检索 →"}</button></div>`;
   $("#result-count").textContent =
-    `${String(results.length).padStart(2, "0")} RECORDS FOUND`;
+    `${String(results.length).padStart(2, "0")} TRACKS FOUND`;
 }
 function updateQualitySummary() {
   const summary = document.querySelector("#quality-summary");
@@ -668,9 +863,11 @@ function settingsMarkup() {
 let musicSeeking = false;
 document.addEventListener("pointerdown", (e) => {
   const target = e.target as HTMLElement | null;
-  if (target?.dataset?.musicSeek !== undefined) musicSeeking = true;
+  // 设置里的迷你播放器与详情面板的进度条共用这个标记，拖动期间不回写数值。
+  if (target?.dataset?.musicSeek !== undefined || target?.id === "playback-seek") musicSeeking = true;
 });
 window.addEventListener("pointerup", () => { musicSeeking = false; });
+window.addEventListener("pointercancel", () => { musicSeeking = false; });
 function updateMusicPanel() {
   const panel = document.querySelector(".music-player");
   if (!panel) return;
@@ -716,7 +913,47 @@ function updateMusicPanel() {
     if (!musicSeeking) seek.value = String(state.duration > 0 ? Math.round((state.time / state.duration) * 1000) : 0);
   }
 }
-window.addEventListener("rhine-music-state", updateMusicPanel);
+let lastPlayedTrack = -1;
+let followingPlayback = false;
+window.addEventListener("rhine-music-state", () => {
+  updateMusicPanel();
+  updatePlaybackPanel();
+  const state = audio.musicState();
+  if (!state.playing || state.track < 0) {
+    // 停止后清空，便于再次播放同一曲目时重新记录、重新跟随。
+    lastPlayedTrack = -1;
+    updateLyricsHighlight(state);
+    return;
+  }
+  // 只在「播放的曲目真的换了」时处理：否则选曲后音频尚未切换的那几帧，
+  // 每次状态刷新都会把选择拉回上一首，和用户的选择互相抢。
+  if (state.track === lastPlayedTrack) {
+    updateLyricsHighlight(state);
+    return;
+  }
+  lastPlayedTrack = state.track;
+  const playing = state.tracks[state.track];
+  const index = records.findIndex((item) => item.title === playing.title);
+  if (index < 0) {
+    updateLyricsHighlight(state);
+    return;
+  }
+  appendPlayLog({ id: records[index].id, title: playing.title, artist: records[index].artist, at: Date.now() });
+  if (mode === "detail" && activeTab === "history") setTab("history", false);
+  // 播放列表切歌（面板上的上一首／下一首、设置里的迷你播放器）时，
+  // 阵列选择、卡片封面与右栏一起跟随；在详情里就地替换，不把用户踢回阵列。
+  if (index !== selected && !followingPlayback) {
+    followingPlayback = true;
+    try {
+      if (mode === "detail") swapInDetail(index);
+      else select(index);
+    } finally {
+      followingPlayback = false;
+    }
+    updatePlaybackPanel();
+  }
+  updateLyricsHighlight(state);
+});
 document.addEventListener("input", (e) => {
   const slider = e.target as HTMLInputElement;
   if (slider.dataset.quality) {
@@ -731,6 +968,15 @@ document.addEventListener("input", (e) => {
   }
   if (volume.dataset.musicSeek !== undefined) {
     audio.seek(Number(volume.value) / 1000);
+  }
+  if (volume.id === "playback-seek") {
+    // 详情面板的进度条：拖动即在播放下调整位置，同时立刻回显时间。
+    const fraction = Number(volume.value) / 1000;
+    audio.seek(fraction);
+    volume.style.setProperty("--seek-progress", `${(fraction * 100).toFixed(2)}%`);
+    const state = audio.musicState();
+    const elapsed = document.querySelector("#playback-elapsed");
+    if (elapsed && state.duration > 0) elapsed.textContent = formatDuration(fraction * state.duration);
   }
   if ((e.target as HTMLElement).id === "archive-search") {
     searchQuery = (e.target as HTMLInputElement).value;
@@ -786,12 +1032,14 @@ document.addEventListener("click", (e) => {
   if (!el) return;
   if (el.dataset.select) {
     select(Number(el.dataset.select));
+    selectForPlayback();
     return;
   }
   if (el.dataset.result) {
     const index = Number(el.dataset.result);
     closeModal(() => {
       select(index);
+      selectForPlayback();
       openFile();
     });
     return;
@@ -853,10 +1101,15 @@ document.addEventListener("click", (e) => {
   }
   if (action === "close-modal") closeModal();
   if (action === "bookmark") toggleSaved();
+  if (action === "clear-log") {
+    clearPlayLog();
+    setTab("history", false);
+    notify("播放记录已清空");
+  }  if (action?.startsWith("play-")) controlPlayback(action.slice(5));
   if (action === "reset-search") {
     modal = "search";
     searchQuery = "";
-    filter = "全部档案";
+    filter = "全部曲目";
     renderModal();
   }
   if (action === "replay" || action === "restart") {
@@ -993,7 +1246,7 @@ function bootFrame(t: number) {
   $(".file-title").firstChild!.textContent =
     step === "array"
       ? "SELECTING FILES...".slice(0, Math.max(0, Math.floor((t - 21.94) * 18)))
-      : "FILE NUMBER: ";
+      : "TRACK NUMBER: ";
   $("#stage").style.setProperty(
     "--entry-opacity",
     String(ease((t - 21.9) / 0.13)),
@@ -1071,7 +1324,14 @@ function bindScene(scene: ArchiveScene, cell?: { lane: number; row: number }) {
     scene.select(selected, cell ? { cell } : undefined);
     scene.onSelect = (i, cell) => {
       if (mode !== "archive" || modal || viewer?.isOpen) return;
+      // 再次点击已经抬起的那张卡片 = 进入播放界面。选中格位的阵列实例是隐藏的，
+      // 能在该格位命中的只有抽取模型本身，因此按格位判断即可区分「点自己」与「点别的卡片」。
+      if (cell && sameCell(cell, scene.selectedCellSnapshot)) {
+        openFile();
+        return;
+      }
       select(i, cell ? { cell } : undefined);
+      selectForPlayback();
     };
     scene.onNavigate = (axis, direction) => {
       if (mode !== "archive" || modal || viewer?.isOpen) return;
@@ -1088,7 +1348,7 @@ function bindScene(scene: ArchiveScene, cell?: { lane: number; row: number }) {
       }
       const animated = !prefs.reduced && mode === "archive";
       hoverCode.update({
-        value: Number(records[i].id.slice(2)),
+        value: Number(records[i].id.split("-").pop() ?? 0),
         animated: !label.hidden && animated,
       });
       hoverTitle.update({ text: records[i].title, animated: !label.hidden && animated });
@@ -1145,6 +1405,7 @@ async function toggleThree() {
     next.setPresentationVisible(false, true);
     await next.load();
     next.setMode(mode === "detail" ? "detail" : "archive");
+    next.setTrackLabels(false);
     bindScene(next, resumeSelection === selected ? resumeCell : undefined);
     next.revealImmediately();
     scene = next;
@@ -1182,7 +1443,11 @@ async function start() {
       document.fonts.load("600 20px MiSans", "SYNTHESIZE INFORMATION ANALYSIS OS"),
       document.fonts.load("700 20px MiSans", "RHINE LAB WELCOME TO INTERNAL DATABASE"),
     ]);
-    if (scene) bindScene(scene);
+    if (scene) {
+      // 主界面不要曲名索引签（用户 2026-09-21 定）：场景机制保留，默认整排隐藏。
+      scene.setTrackLabels(false);
+      bindScene(scene);
+    }
     savePrefs();
     ready = true;
     select(0);

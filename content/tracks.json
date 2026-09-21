@@ -1,0 +1,49 @@
+{
+  "columns": ["观测室", "收录曲", "电子实验", "夜间频率", "特别收录"],
+  "tracks": [
+    { "id": "RM-001", "title": "AMBIENCE", "artist": "RHINE LAB AUDIO", "category": "观测室", "duration": 53.3, "file": "atmosphere.ogg", "pending": false, "lyrics": "RM-001.lrc" },
+    { "id": "RM-002", "title": "MOTIF", "artist": "RHINE LAB AUDIO", "category": "观测室", "duration": 53.3, "file": "motif.ogg", "pending": false },
+    { "id": "RM-003", "title": "PULSE", "artist": "RHINE LAB AUDIO", "category": "观测室", "duration": 53.3, "file": "pulse.ogg", "pending": false },
+    { "id": "RM-004", "title": "OBSERVATORY-PREVIEW", "artist": "RHINE LAB AUDIO", "category": "观测室", "duration": 53.4, "file": "observatory-preview.mp3", "pending": false, "lyrics": "RM-004.lrc" },
+    { "id": "RM-005", "title": "低温循环", "artist": "RHINE LAB AUDIO", "category": "观测室", "duration": null, "file": null, "pending": true },
+    { "id": "RM-006", "title": "玻璃与光", "artist": "RHINE LAB AUDIO", "category": "观测室", "duration": null, "file": null, "pending": true },
+    { "id": "RM-007", "title": "轨道残响", "artist": "RHINE LAB AUDIO", "category": "观测室", "duration": null, "file": null, "pending": true },
+    { "id": "RM-008", "title": "白噪之下", "artist": "RHINE LAB AUDIO", "category": "观测室", "duration": null, "file": null, "pending": true },
+
+    { "id": "RM-009", "title": "DORIKO、初音ミク - 歌に形はないけれど", "artist": "doriko feat. 初音ミク", "category": "收录曲", "duration": 332.3, "file": "doriko、初音ミク - 歌に形はないけれど.mp3", "pending": false },
+    { "id": "RM-010", "title": "坏苹果（车载DJ版）", "artist": "车载 DJ 版", "category": "收录曲", "duration": 459.7, "file": "坏苹果（车载dj版）.mp3", "pending": false },
+    { "id": "RM-011", "title": "雨声与旧磁带", "artist": "市声采样", "category": "收录曲", "duration": null, "file": null, "pending": true },
+    { "id": "RM-012", "title": "深夜频道", "artist": "市声采样", "category": "收录曲", "duration": null, "file": null, "pending": true },
+    { "id": "RM-013", "title": "蓝调采样", "artist": "市声采样", "category": "收录曲", "duration": null, "file": null, "pending": true },
+    { "id": "RM-014", "title": "午后回声", "artist": "市声采样", "category": "收录曲", "duration": null, "file": null, "pending": true },
+    { "id": "RM-015", "title": "纸飞机", "artist": "市声采样", "category": "收录曲", "duration": null, "file": null, "pending": true },
+    { "id": "RM-016", "title": "第十三月", "artist": "市声采样", "category": "收录曲", "duration": null, "file": null, "pending": true },
+
+    { "id": "RM-017", "title": "脉冲序列 II", "artist": "振荡器室", "category": "电子实验", "duration": null, "file": null, "pending": true },
+    { "id": "RM-018", "title": "相位漂移", "artist": "振荡器室", "category": "电子实验", "duration": null, "file": null, "pending": true },
+    { "id": "RM-019", "title": "振荡器 07", "artist": "振荡器室", "category": "电子实验", "duration": null, "file": null, "pending": true },
+    { "id": "RM-020", "title": "反馈回路", "artist": "振荡器室", "category": "电子实验", "duration": null, "file": null, "pending": true },
+    { "id": "RM-021", "title": "方波花园", "artist": "振荡器室", "category": "电子实验", "duration": null, "file": null, "pending": true },
+    { "id": "RM-022", "title": "采样坍缩", "artist": "振荡器室", "category": "电子实验", "duration": null, "file": null, "pending": true },
+    { "id": "RM-023", "title": "数字雨", "artist": "振荡器室", "category": "电子实验", "duration": null, "file": null, "pending": true },
+    { "id": "RM-024", "title": "零点漂移", "artist": "振荡器室", "category": "电子实验", "duration": null, "file": null, "pending": true },
+
+    { "id": "RM-025", "title": "零点电台", "artist": "夜间值班", "category": "夜间频率", "duration": null, "file": null, "pending": true },
+    { "id": "RM-026", "title": "长波回声", "artist": "夜间值班", "category": "夜间频率", "duration": null, "file": null, "pending": true },
+    { "id": "RM-027", "title": "静默协议", "artist": "夜间值班", "category": "夜间频率", "duration": null, "file": null, "pending": true },
+    { "id": "RM-028", "title": "凌晨三点", "artist": "夜间值班", "category": "夜间频率", "duration": null, "file": null, "pending": true },
+    { "id": "RM-029", "title": "短波干扰", "artist": "夜间值班", "category": "夜间频率", "duration": null, "file": null, "pending": true },
+    { "id": "RM-030", "title": "雨水频率", "artist": "夜间值班", "category": "夜间频率", "duration": null, "file": null, "pending": true },
+    { "id": "RM-031", "title": "空频道", "artist": "夜间值班", "category": "夜间频率", "duration": null, "file": null, "pending": true },
+    { "id": "RM-032", "title": "信号漂移", "artist": "夜间值班", "category": "夜间频率", "duration": null, "file": null, "pending": true },
+
+    { "id": "RM-033", "title": "未命名母带 01", "artist": "母带室", "category": "特别收录", "duration": null, "file": null, "pending": true },
+    { "id": "RM-034", "title": "观测室（现场版）", "artist": "母带室", "category": "特别收录", "duration": null, "file": null, "pending": true },
+    { "id": "RM-035", "title": "主题动机（钢琴）", "artist": "母带室", "category": "特别收录", "duration": null, "file": null, "pending": true },
+    { "id": "RM-036", "title": "玻璃音色研究", "artist": "母带室", "category": "特别收录", "duration": null, "file": null, "pending": true },
+    { "id": "RM-037", "title": "三轨混音实验", "artist": "母带室", "category": "特别收录", "duration": null, "file": null, "pending": true },
+    { "id": "RM-038", "title": "档案主题（延长）", "artist": "母带室", "category": "特别收录", "duration": null, "file": null, "pending": true },
+    { "id": "RM-039", "title": "呼吸循环", "artist": "母带室", "category": "特别收录", "duration": null, "file": null, "pending": true },
+    { "id": "RM-040", "title": "尾声 · 归位", "artist": "母带室", "category": "特别收录", "duration": null, "file": null, "pending": true }
+  ]
+}

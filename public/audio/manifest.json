@@ -1,3 +1,19 @@
 {
-  "tracks": []
+  "tracks": [
+    {
+      "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+      "title": "DORIKO、初音ミク - 歌に形はないけれど",
+      "subtitle": ""
+    },
+    {
+      "file": "observatory-preview.mp3",
+      "title": "OBSERVATORY-PREVIEW",
+      "subtitle": ""
+    },
+    {
+      "file": "坏苹果（车载dj版）.mp3",
+      "title": "坏苹果（车载DJ版）",
+      "subtitle": ""
+    }
+  ]
 }

@@ -764,7 +764,8 @@ export class TerminalAudio {
   };
   seek(fraction: number) {
     const el = this.player;
-    if (!el || this.activeTrack < 0 || this.playerPaused) return;
+    // 暂停时也允许定位：位置先记下，恢复播放就从这里开始。
+    if (!el || this.activeTrack < 0) return;
     const duration =
       Number.isFinite(el.duration) && el.duration > 0 ? el.duration : LOOP_SECONDS;
     el.currentTime = clamp(fraction) * duration;

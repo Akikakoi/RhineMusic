@@ -19,7 +19,7 @@ import { applyTextureQuality, resizeQuality } from "./quality-renderer";
 import { CardAppearance } from "./appearance";
 import { configureInternalOptics } from "./internal-optics";
 import { DecryptionController } from "./decryption";
-import { fileAtSlot, fileLocation } from "./data";
+import { fileAtSlot, fileLocation, records, formatDuration } from "./data";
 import {
   cellKey,
   sameCell,
@@ -38,6 +38,12 @@ import { archiveFraming } from "./viewport-layout";
 import { ArchiveDrag, ArchivePlaneMomentum, type DragAxis, type DragProjection, type DragPosition } from "./archive-drag";
 import { assetUrl as publicAsset } from "./asset-url";
 import {
+  ATLAS_COLUMNS,
+  ATLAS_ROWS,
+  drawTrackAtlas,
+  trackUv,
+} from "./track-atlas";
+import {
   archiveWave,
   extraction,
   baselineSelectionWave,
@@ -55,6 +61,20 @@ const ease = (t: number) => {
   t = THREE.MathUtils.clamp(t, 0, 1);
   return t * t * t * (t * (t * 6 - 15) + 10);
 };
+// 唱片滑出滑套右侧开口的最大行程（世界单位）。预览抬起阶段保持全收。
+// 详情构图里右栏紧贴卡片右边缘，行程越长越会被面板盖住；这里收到能让唱片
+// 明确露出一截即可，不再追求整张抽出。
+const RECORD_SLIDE = 1.85;
+const RECORD_SLIDE_START = 0.6;
+// 曲名索引签：像档案架上的立牌，从卡片顶面立起、上端略向后仰。
+// 默认阵列相机几乎与卡片平齐，平放的顶签在这个角度会压成一条线（用户所见
+// 的"透明细条"），立牌则始终有正对相机的面。材质不要叠加 themeMaterial 或
+// 自定义 customProgramCacheKey——与 onBeforeCompile UV 注入组合时实例网格
+// 会整体静默消失（排查记录见 verification/TRACK-LABELS.md）。
+const TAB_WIDTH = 3.9;
+const TAB_SLANT = 1.5;   // 立牌斜边长
+const TAB_TILT = -18;     // 上端向后仰角（度）
+
 export class ArchiveScene {
   private inputEvents = new AbortController();
   private presence = 1;
@@ -78,6 +98,11 @@ export class ArchiveScene {
     this.model.clear();
     this.outgoing = [];
     this.instances = [];
+    this.tabAtlas?.dispose();
+    this.tabAtlas = undefined;
+    this.tabMesh = undefined;
+    this.tabUv = undefined;
+    this.tabUvUpdates = undefined;
     this.assemblyTemplate?.then(disposeThreeTree).catch(() => {});
     this.assemblyTemplate = undefined;
     this.light.shadow.map?.dispose();
@@ -186,6 +211,14 @@ export class ArchiveScene {
   private looping = false;
   private coordinateOrigin: ArchiveCell = { lane: 0, row: 0 };
   private lift = { value: 0, velocity: 0 };
+  // 曲名索引签：与卡片共用实例矩阵，只额外携带每实例的图集 UV 与悬停亮度。
+  private tabMesh?: THREE.InstancedMesh;
+  private tabUv?: THREE.InstancedBufferAttribute;
+  private tabUvUpdates?: InstanceUpdates;
+  private tabAtlas?: THREE.CanvasTexture;
+  // 抽取进度驱动的唱片滑出（RhineMusic）：记录索引与当前位移。
+  private recordBasis: { mesh: THREE.Mesh; home: THREE.Vector3 }[] = [];
+  private recordSlide = 0;
   private rail = { value: 0, velocity: 0 };
   private shoulder = { value: 12, velocity: 0 };
   private laneFocus = { value: 2, velocity: 0 };
@@ -328,7 +361,7 @@ export class ArchiveScene {
     this.composer.addPass(new OutputPass());
     this.bindPointer();
   }
-  async load(assetUrl = publicAsset("assets/archive-cassette.glb")) {
+  async load(assetUrl = publicAsset("assets/vinyl-sleeve.glb")) {
     this.labelMark.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(labelMarkSvg)}`;
     await this.labelMark.decode();
     const gltf = await new GLTFLoader().loadAsync(
@@ -392,9 +425,52 @@ export class ArchiveScene {
         mat.metalness = 0.08;
       }
       configureInternalOptics(name, mat);
+      // RhineMusic · 黑胶唱片袋：纸质滑套不透明，磨砂揭示对模型不再生效；
+      // 抽取由唱片沿 +X 滑出承担（见 updateRecordSlide）。
+      if (name === "Sleeve_Paper") {
+        mat.color.set("#ded8cb");
+        mat.roughness = 0.84;
+        mat.metalness = 0;
+        mat.transmission = 0;
+      }
+      if (name === "Sleeve_Liner") {
+        mat.color.set("#e7e1d5");
+        mat.roughness = 0.9;
+        mat.metalness = 0;
+        mat.transmission = 0;
+      }
+      if (name === "Vinyl_Record") {
+        // 黑胶要读起来是「黑」，环境反射压低，否则在大尺寸下会变成一块灰盘。
+        mat.color.set("#0e0e11");
+        mat.roughness = 0.42;
+        mat.metalness = 0.05;
+        mat.clearcoat = 0.5;
+        mat.clearcoatRoughness = 0.35;
+        mat.envMapIntensity = 0.35;
+        mat.transmission = 0;
+      }
+      if (name === "Vinyl_Label") {
+        mat.color.set("#d2a054");
+        mat.roughness = 0.5;
+        mat.metalness = 0.1;
+        mat.transmission = 0;
+      }
+      if (name === "Amber_Lightguide") {
+        mat.color.set("#d2a054");
+        mat.roughness = 0.34;
+        mat.metalness = 0.2;
+        mat.transmission = 0;
+      }
       if (name === "Carbon_Ink") continue;
       const selectedMesh = new THREE.Mesh(geom, mat);
       selectedMesh.userData.surface = name;
+      // 唱片与中心标签单独记录，抽取时沿 +X 滑出滑套右侧开口。
+      if (name === "Vinyl_Record" || name === "Vinyl_Label") {
+        this.recordBasis.push({
+          mesh: selectedMesh,
+          home: selectedMesh.position.clone(),
+        });
+      }
       selectedMesh.castShadow = name === "Optical_Diffuser";
       selectedMesh.receiveShadow = true;
       this.model.add(selectedMesh);
@@ -407,6 +483,7 @@ export class ArchiveScene {
           "Titanium_Fasteners",
           "Index_Inlay",
           "Optical_Diffuser",
+          "Sleeve_Paper",
         ].includes(name)
       ) {
         this.appearance.register(name, mat);
@@ -454,6 +531,10 @@ export class ArchiveScene {
         arrayMat.color.set("#e4d6c5");
         arrayMat.metalness = 0.05;
       }
+      if (name === "Sleeve_Paper") {
+        arrayMat.color.set("#d6d0c3");
+        arrayMat.roughness = 0.87;
+      }
       this.appearance.register(name, mat, arrayMat);
       this.themeAttribute ??= new THREE.InstancedBufferAttribute(new Float32Array(count), 1).setUsage(THREE.DynamicDrawUsage);
       geom.setAttribute("archiveTheme", this.themeAttribute);
@@ -467,14 +548,63 @@ export class ArchiveScene {
       this.instances.push(inst);
       this.scene.add(inst);
     }
+    // 曲名索引签：整组卡片共用一张图集，每张卡片靠自己的 UV 偏移取到对应曲名。
+    // 几何顶点预先抬到卡片顶面上方约 1.1（贴着顶面会被自身卡片在浅视角下遮挡，
+    // 浮起后整块可见，形似立放的索引卡），并直接复用卡片的实例矩阵——抬升、
+    // 波浪、倾斜全都自动跟随，不需要额外的矩阵计算。
+    // 注意：材质上不要叠加 themeMaterial 与自定义 customProgramCacheKey——
+    // 它们与下面的 onBeforeCompile UV 注入组合时，实例网格会整体不可见且
+    // 不报任何着色器错误（排查记录见 verification/TRACK-LABELS.md）。
+    this.tabAtlas = new THREE.CanvasTexture(drawTrackAtlas());
+    this.tabAtlas.colorSpace = THREE.SRGBColorSpace;
+    this.tabAtlas.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+    const tilt = (TAB_TILT * Math.PI) / 180;
+    const tabGeometry = new THREE.PlaneGeometry(TAB_WIDTH, TAB_SLANT);
+    // 立牌：面朝前上方，上端向后仰，底边落在卡片顶面后缘
+    tabGeometry.rotateX(tilt);
+    tabGeometry.translate(
+      0,
+      3.78 + (TAB_SLANT / 2) * Math.cos(-tilt),
+      0.1 - (TAB_SLANT / 2) * Math.sin(-tilt),
+    );
+    this.tabUv = new THREE.InstancedBufferAttribute(
+      new Float32Array(count * 2),
+      2,
+    ).setUsage(THREE.DynamicDrawUsage);
+    tabGeometry.setAttribute("tabUv", this.tabUv);
+    const tabMaterial = new THREE.MeshBasicMaterial({
+      map: this.tabAtlas,
+      toneMapped: false,
+      fog: false,
+    });
+    tabMaterial.onBeforeCompile = (shader) => {
+      const cols = ATLAS_COLUMNS.toFixed(1);
+      const rows = ATLAS_ROWS.toFixed(1);
+      shader.vertexShader = `attribute vec2 tabUv;\n${shader.vertexShader}`;
+      // 直接改写贴图 UV：three 用 vMapUv 采样 map。u 翻转是因为俯视时
+      // 平面局部 +x 与观察方向相反，不翻转文字会左右镜像。
+      shader.vertexShader = shader.vertexShader.replace(
+        "#include <uv_vertex>",
+        `#include <uv_vertex>\n#ifdef USE_MAP\nvMapUv = vec2(1.0 - uv.x, uv.y) * vec2(1.0 / ${cols}, 1.0 / ${rows}) + tabUv;\n#endif`,
+      );
+    };
+    const tab = new THREE.InstancedMesh(tabGeometry, tabMaterial, count);
+    tab.instanceMatrix =
+      this.instances[0]?.instanceMatrix ??
+      tab.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    tab.frustumCulled = false;
+    this.tabMesh = tab;
+    // this.instances.push(tab); // A/B：不推入，保持满容量 count
+    this.scene.add(tab);
+    // 滑套正面印刷区：4.4 × 2.6，画布比例与之一致，避免文字被拉伸。
     this.labelCanvas.width = 1024;
-    this.labelCanvas.height = 440;
+    this.labelCanvas.height = 605;
     this.labelTexture = new THREE.CanvasTexture(this.labelCanvas);
     this.labelTexture.colorSpace = THREE.SRGBColorSpace;
     this.labelTexture.anisotropy =
       this.renderer.capabilities.getMaxAnisotropy();
     const label = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.99, 0.46),
+      new THREE.PlaneGeometry(4.4, 2.6),
       new THREE.MeshBasicMaterial({
         map: this.labelTexture,
         toneMapped: false,
@@ -482,7 +612,7 @@ export class ArchiveScene {
         depthWrite: false,
       }),
     );
-    label.position.set(-1.36, 3.04, 0.255);
+    label.position.set(0, 1.75, 0.245);
     this.model.add(label);
     this.appearance.prepare(this.model);
     this.appearance.apply(this.model, 0);
@@ -673,6 +803,81 @@ export class ArchiveScene {
       this.pendingPulse.row -= shift.row;
     }
   }
+  /** 把正在抽取的卡片留一份在旧格位，用于平滑归位（换选与原地换选共用）。 */
+  private detachOutgoing(cell: ArchiveCell) {
+    const group = this.model.clone(true);
+    // 归位的旧卡片不能带着滑出的唱片回到阵列。
+    for (const child of group.children) {
+      if (
+        child.userData.surface === "Vinyl_Record" ||
+        child.userData.surface === "Vinyl_Label"
+      )
+        child.position.x = 0;
+    }
+    const label = group.children[group.children.length - 1] as THREE.Mesh;
+    const canvas = document.createElement("canvas");
+    // 画布尺寸必须跟当前标签画布一致，否则复制出来的封面会被压扁。
+    canvas.width = this.labelCanvas.width;
+    canvas.height = this.labelCanvas.height;
+    canvas.getContext("2d")!.drawImage(this.labelCanvas, 0, 0);
+    const map = new THREE.CanvasTexture(canvas);
+    map.colorSpace = THREE.SRGBColorSpace;
+    label.material = new THREE.MeshBasicMaterial({
+      map,
+      toneMapped: false,
+      transparent: true,
+      depthWrite: false,
+    });
+    // Clone carries the selected label material by reference. Replace it
+    // before installing appearance shaders, so theme hooks are not appended
+    // to the original label a second time on every selection.
+    this.appearance.prepare(group);
+    this.appearance.apply(group, ease(this.lift.value / 0.4));
+    this.appearance.setClarity(group, this.decryption.clarity);
+    this.scene.add(group);
+    this.outgoing.push({
+      group,
+      slot: this.selectedSlot,
+      cell: { ...cell },
+      lift: { ...this.lift },
+      returnY: group.rotation.y !== 0 ? group.position.y : null,
+      clarity: this.decryption.clarity,
+    });
+  }
+  /**
+   * 详情内换曲目：保持抽取高度与解密状态，只换选中的格位与封面。
+   * 旧卡片留给归位副本下降回阵列，新卡片已在特写位，不经过回落到预览的过程。
+   */
+  swapSelection(index: number, navigation?: ArchiveNavigation) {
+    if (!this.navigatingDrag) this.cancelPointer();
+    this.setHover(null);
+    this.lastInteraction = this.clock;
+    const canonical = fileLocation(index);
+    const cell: ArchiveCell = this.looping
+      ? selectionCell(index, this.selectedCell, navigation)
+      : { lane: canonical.lane, row: canonical.row };
+    const changed = !sameCell(cell, this.selectedCell);
+    if (changed && this.loaded && this.lift.value > 0.0001) {
+      this.detachOutgoing(this.selectedCell);
+    }
+    this.selectedSlot = canonical.slot;
+    this.selectedCell = cell;
+    if (changed) {
+      this.rotation = 0;
+      this.targetRotation = 0;
+      this.returnY = null;
+    }
+    this.drawLabel(index);
+    return changed;
+  }
+  /** 外层用于判断点击的是不是当前抬起的那张卡片：选中格位的实例是隐藏的，能命中的只有模型本身。 */
+  get selectedCellSnapshot(): ArchiveCell {
+    return { ...this.selectedCell };
+  }
+  /** 曲名索引签总开关：外壳默认整排隐藏（用户不要阵列上的曲名标签），机制保留待后续方案。 */
+  setTrackLabels(visible: boolean) {
+    if (this.tabMesh) this.tabMesh.visible = visible;
+  }
   select(index: number, navigation?: ArchiveNavigation) {
     if (!this.navigatingDrag) this.cancelPointer();
     this.setHover(null);
@@ -684,35 +889,7 @@ export class ArchiveScene {
       : { lane: canonical.lane, row: canonical.row };
     const changed = !sameCell(cell, this.selectedCell);
     if (this.looping && changed && this.loaded && this.lift.value > 0.0001) {
-      const group = this.model.clone(true);
-      const label = group.children[group.children.length - 1] as THREE.Mesh;
-      const canvas = document.createElement("canvas");
-      canvas.width = 1024;
-      canvas.height = 440;
-      canvas.getContext("2d")!.drawImage(this.labelCanvas, 0, 0);
-      const map = new THREE.CanvasTexture(canvas);
-      map.colorSpace = THREE.SRGBColorSpace;
-      label.material = new THREE.MeshBasicMaterial({
-        map,
-        toneMapped: false,
-        transparent: true,
-        depthWrite: false,
-      });
-      // Clone carries the selected label material by reference. Replace it
-      // before installing appearance shaders, so theme hooks are not appended
-      // to the original label a second time on every selection.
-      this.appearance.prepare(group);
-      this.appearance.apply(group, ease(this.lift.value / 0.4));
-      this.appearance.setClarity(group, this.decryption.clarity);
-      this.scene.add(group);
-      this.outgoing.push({
-        group,
-        slot: this.selectedSlot,
-        cell: { ...this.selectedCell },
-        lift: { ...this.lift },
-        returnY: group.rotation.y !== 0 ? group.position.y : null,
-        clarity: this.decryption.clarity,
-      });
+      this.detachOutgoing(this.selectedCell);
       this.lift.value = 0;
       this.lift.velocity = 0;
     }
@@ -744,30 +921,71 @@ export class ArchiveScene {
     this.pulses.push({ ...cell, time: this.clock });
     this.pulses = this.pulses.slice(-6);
   }
+  // 滑套正面的曲目印刷：曲名、歌手、时长、编号与分类。占位曲目标注 PENDING。
+  private wrapText(c: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number) {
+    const lines: string[] = [];
+    let current = "";
+    for (const char of text) {
+      if (c.measureText(current + char).width > maxWidth && current) {
+        lines.push(current);
+        current = char;
+        if (lines.length === maxLines) break;
+      } else current += char;
+    }
+    if (lines.length < maxLines && current) lines.push(current);
+    if (lines.length === maxLines && lines.join("").length < text.length) {
+      let last = lines[maxLines - 1];
+      while (last.length > 1 && c.measureText(`${last}…`).width > maxWidth)
+        last = last.slice(0, -1);
+      lines[maxLines - 1] = `${last}…`;
+    }
+    return lines;
+  }
   private drawLabel(index: number) {
     if (!this.labelTexture) return;
+    const track = records[index];
     const c = this.labelCanvas.getContext("2d")!;
+    const w = this.labelCanvas.width, h = this.labelCanvas.height;
     c.fillStyle = "#e6e2d9";
-    c.fillRect(0, 0, 1024, 440);
+    c.fillRect(0, 0, w, h);
+    c.fillStyle = "rgba(23,23,19,.07)";
+    for (let y = 0; y < h; y += 6) c.fillRect(0, y, w, 1);
     c.fillStyle = "#171713";
-    c.fillRect(12, 12, 1000, 6);
-    c.fillRect(12, 419, 1000, 3);
-    c.font = "bold 81px MiSans";
-    c.fillText("RHINE LAB, LLC.", 22, 116);
-    c.font = "32px MiSans";
+    c.fillRect(16, 16, w - 32, 5);
+    c.font = "bold 42px MiSans";
+    c.fillText("RHINE MUSIC", 20, 84);
+    c.font = "23px MiSans";
     c.fillStyle = "#878476";
-    c.fillText("INTERNAL DATABASE", 25, 174);
+    c.fillText("AUDIO ARCHIVE", 20, 120);
+    c.textAlign = "right";
     c.fillStyle = "#171713";
-    c.font = "bold 130px MiSans";
-    c.fillText("NO." + String(index + 1).padStart(3, "0"), 22, 360);
-    c.fillRect(782, 32, 221, 39);
-    c.fillStyle = "#eee9de";
-    c.font = "24px MiSans";
-    c.fillText("R L / I S", 809, 61);
+    c.font = "bold 42px MiSans";
+    c.fillText(`NO.${String(index + 1).padStart(3, "0")}`, w - 20, 84);
+    c.fillStyle = "#878476";
+    c.font = "23px MiSans";
+    c.fillText(track.category, w - 20, 120);
+    c.textAlign = "left";
+    c.fillStyle = "#c9a15c";
+    c.fillRect(20, 146, w - 40, 3);
+    // 淡淡的标志水印，避免与正文争视觉
+    c.globalAlpha = 0.1;
+    c.drawImage(this.labelMark, w - 340, 190, 300, 140);
+    c.globalAlpha = 1;
     c.fillStyle = "#171713";
     c.font = "bold 64px MiSans";
-    c.fillText("INFO", 830, 143);
-    c.drawImage(this.labelMark, 790, 242, 210, 98);
+    const lines = this.wrapText(c, track.title, w - 60, 2);
+    lines.forEach((line, i) => c.fillText(line, 20, 268 + i * 78));
+    c.fillStyle = "#5f6159";
+    c.font = "30px MiSans";
+    c.fillText(track.artist, 20, 268 + lines.length * 78 + 16);
+    c.fillStyle = "#171713";
+    c.font = "bold 44px MiSans";
+    c.fillText(formatDuration(track.duration), 20, h - 34);
+    c.textAlign = "right";
+    c.fillStyle = track.pending ? "#a08a63" : "#5f6159";
+    c.font = "26px MiSans";
+    c.fillText(track.pending ? "PENDING · 待入库" : "READY · 本地音源", w - 20, h - 38);
+    c.textAlign = "left";
     this.labelTexture.needsUpdate = true;
   }
   private ensureInstanceCapacity(required: number) {
@@ -1157,6 +1375,22 @@ export class ArchiveScene {
       pointers.delete(e.pointerId), { signal: this.inputEvents.signal }
     );
   }
+  // 抽取进度直接驱动唱片滑出：预览抬起（0.4）保持全收，进入详情后滑到最大行程。
+  // 唱片只在抽取卡片上滑动，阵列实例里没有唱片，无需逐实例处理。
+  private updateRecordSlide() {
+    if (!this.recordBasis.length) return;
+    const progress = THREE.MathUtils.clamp(
+      (this.lift.value - RECORD_SLIDE_START) / (INSPECTION_LIFT - RECORD_SLIDE_START),
+      0,
+      1,
+    );
+    const target = ease(progress) * RECORD_SLIDE;
+    if (Math.abs(target - this.recordSlide) < 0.0005) return;
+    this.recordSlide = target;
+    for (const item of this.recordBasis) {
+      item.mesh.position.set(item.home.x + target, item.home.y, item.home.z);
+    }
+  }
   update(
     time: number,
     cinematic?: { reveal: number; lift: number; zoom: number; time: number },
@@ -1371,6 +1605,7 @@ export class ArchiveScene {
       cinematic ? shot + 5 : undefined);
     this.appearance.apply(this.model, ease(this.lift.value / 0.4));
     this.appearance.setClarity(this.model, this.decryption.clarity);
+    this.updateRecordSlide();
     // Reference 26.92–27.76: the array travels horizontally into a white field.
     const entry = cinematic ? ease((shot - 21.9) / 0.86) : this.reveal;
     const entranceTime = THREE.MathUtils.clamp((shot - 21.92) / 0.75, 0, 1);
@@ -1620,6 +1855,7 @@ export class ArchiveScene {
     this.drawnCells = [];
     this.relayPoints.clear();
     this.matrixUpdates ??= new InstanceUpdates(this.instances[0].instanceMatrix);
+    this.tabUvUpdates ??= this.tabUv ? new InstanceUpdates(this.tabUv) : undefined;
     if (this.themeAttribute) this.themeUpdates ??= new InstanceUpdates(this.themeAttribute);
     for (const cell of this.cells) {
       const { row, lane } = cell;
@@ -1638,8 +1874,14 @@ export class ArchiveScene {
       this.dummy.scale.setScalar(1);
       this.dummy.updateMatrix();
       if (play.enabled) this.relayPoints.set(cellKey(cell), { cell: { ...cell }, point: new THREE.Vector3(0, 3.5, 0).applyMatrix4(this.dummy.matrix) });
+      // 曲名索引签：写入这一格对应的图集偏移，并让鼠标指着的那张亮起来。
+      if (this.tabUvUpdates) {
+        const uv = trackUv(fileAtCell(cell));
+        this.tabUvUpdates.set(i * 2, [uv.u, uv.v]);
+      }
       this.matrixUpdates!.set(i * 16, this.dummy.matrix.elements);
     }
+    this.tabUvUpdates?.commit();
     const countChanged = this.instances[0].count !== this.drawnCells.length;
     const matricesChanged = this.matrixUpdates!.commit();
     for (const inst of this.instances) {
@@ -1772,6 +2014,13 @@ export class ArchiveScene {
       presentation: this.presence,
       triangles: this.renderer.info.render.triangles,
       archiveCount: this.drawnCells.length,
+      trackLabels: this.tabMesh
+        ? {
+            visible: this.tabMesh.visible,
+            count: this.tabMesh.count,
+            atlas: Boolean(this.tabAtlas),
+          }
+        : null,
       archiveCandidates: this.cells.length,
       archiveCulled: this.cells.length - this.drawnCells.length,
       archiveCapacity: this.instanceCapacity,

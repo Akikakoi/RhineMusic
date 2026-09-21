@@ -4,6 +4,9 @@ const surfaces: Record<string, string> = {
   Frosted_Polymer: "#626b70", Ivory_Edges: "#687277", Optical_Diffuser: "#192226",
   Titanium_Fasteners: "#b1b9bb", Index_Inlay: "#c6a36b", Printed_Label: "#303a3e",
   Subsurface_Optics: "#939e9f", Optical_Edges: "#bbc3bc", Carbon_Ink: "#b6bdb8",
+  // RhineMusic · 黑胶唱片袋：暗色主题下的纸面、唱片与杏金信号。
+  Sleeve_Paper: "#3d3b35", Sleeve_Liner: "#474540", Vinyl_Record: "#15161a",
+  Vinyl_Label: "#c6a36b", Amber_Lightguide: "#c6a36b",
 };
 /** Extend existing optical shaders; one float per instance avoids new meshes or passes. */
 export function themeMaterial(material: THREE.Material, name: string, instanced = false, subduedIndex = { value: 0 }) {

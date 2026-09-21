@@ -741,6 +741,12 @@ button {
   opacity: 0;
   outline: none !important;
 }
+/* 长曲名与长文件名会把面板撑高，元数据里的路径用省略号收住 */
+.metadata dd.metadata-file {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .detail-kicker {
   display: flex;
   justify-content: space-between;
@@ -778,8 +784,15 @@ button {
 .metadata {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 25px 42px;
-  margin: 28px 0 34px;
+  gap: 16px 42px;
+  margin: 22px 0 24px;
+}
+/* 长曲名换行会让面板整体变高，把主标题收一档，保证下方走带按钮留在可视区 */
+.detail-content h2.compact {
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.8px;
+  margin: 20px 0 10px;
 }
 .metadata dt {
   font-size: 9px;
@@ -2123,4 +2136,180 @@ button {
 [data-mode="archive"] .boot,
 [data-mode="detail"] .boot {
   visibility: hidden;
+}
+/* RhineMusic · 详情右栏的 NOW PLAYING */
+.now-playing {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 16px;
+}
+.now-playing strong {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  line-height: 1.35;
+}
+.now-playing span {
+  font-size: 12.5px;
+  color: var(--theme-muted);
+}
+/* 进度条可拖动：用 range 输入保持细线外观，同时带上拖动与键盘支持 */
+.playback-seek {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 18px;
+  margin: 10px 0 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.playback-seek::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(
+    to right,
+    var(--theme-accent) 0 var(--seek-progress, 0%),
+    var(--theme-line) var(--seek-progress, 0%) 100%
+  );
+}
+.playback-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  margin-top: -4px;
+  border: none;
+  border-radius: 50%;
+  background: var(--theme-accent);
+}
+.playback-seek::-moz-range-track {
+  height: 2px;
+  border-radius: 1px;
+  background: var(--theme-line);
+}
+.playback-seek::-moz-range-progress {
+  height: 2px;
+  border-radius: 1px;
+  background: var(--theme-accent);
+}
+.playback-seek::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: none;
+  border-radius: 50%;
+  background: var(--theme-accent);
+}
+.playback-seek:disabled {
+  cursor: default;
+  opacity: .45;
+}
+.playback-seek:focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 4px;
+}
+.playback-time {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--theme-muted);
+}
+/* 前缀 playback- 是为了避开旧播放器遗留样式里的 .transport 规则 */
+.playback-transport {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 20px;
+}
+.playback-transport button {
+  width: auto;
+  height: auto;
+  min-height: 42px;
+  min-width: 54px;
+  padding: 0 12px;
+  border: 1px solid var(--theme-line);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.playback-transport .playback-transport-main {
+  min-width: 68px;
+  background: var(--theme-ink);
+  color: var(--theme-paper);
+  border-color: var(--theme-ink);
+}
+.playback-transport button[aria-pressed="true"] {
+  background: var(--theme-accent);
+  border-color: var(--theme-accent);
+  color: var(--theme-paper);
+}
+.playback-transport button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.playback-note {
+  margin-top: 18px;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--theme-muted);
+}
+/* 歌词页签：按播放进度高亮当前行并居中滚动 */
+.lyrics-panel {
+  max-height: 236px;
+  margin-top: 6px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.lyrics-panel.synced {
+  mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
+}
+.lyric-line {
+  display: flex;
+  gap: 12px;
+  margin: 0;
+  padding: 5px 2px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--theme-muted);
+  transition: color .22s ease, opacity .22s ease;
+}
+.lyric-line > span {
+  flex: 0 0 46px;
+  font-size: 11px;
+  color: var(--theme-line);
+  font-variant-numeric: tabular-nums;
+}
+.lyric-line.active {
+  color: var(--theme-ink);
+  font-weight: 600;
+}
+.lyric-line.active > span {
+  color: var(--theme-accent);
+}
+.play-log-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--theme-muted);
+}
+.play-log-foot button {
+  padding: 7px 11px;
+  border: 1px solid var(--theme-line);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.play-log-foot button:hover {
+  color: var(--theme-accent);
+  border-color: var(--theme-accent);
+}
+@media (max-width: 700px) {
+  .playback-transport { flex-wrap: wrap; }
+  .playback-transport button { flex: 1 1 auto; }
 }
