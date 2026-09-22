@@ -27,3 +27,7 @@ reference/local-files-connection.js
 public/fonts/novecento/
 .vercel/
 .wrangler/
+
+# User's personal demo audio, not part of the public release
+public/audio/doriko、初音ミク - 歌に形はないけれど.mp3
+public/audio/坏苹果（车载dj版）.mp3
