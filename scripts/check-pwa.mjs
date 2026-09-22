@@ -33,16 +33,12 @@ try{
  await context.setOffline(true);await page.reload();await ready();
  await page.locator('.read-file').click();await page.waitForFunction(()=>window.rhine.stats().decryption.clarity===1);
  const exported=await page.locator('.export-button').evaluate(async a=>{const r=await fetch(a.href);return {ok:r.ok,text:await r.text()}});assert.ok(exported.ok&&exported.text.includes('X-001'));
- await page.locator('.viewer-open').click();await page.waitForFunction(()=>JSON.parse(document.querySelector('.model-viewer')?.dataset.stats||'{}').ready);
- await page.locator('[data-viewer="explode"]').click();await page.waitForFunction(()=>JSON.parse(document.querySelector('.model-viewer').dataset.stats).spread===1);
  await mkdir('.tools/responsive',{recursive:true});await page.screenshot({path:'.tools/responsive/pwa-offline.png'});
  assert.ok(await page.evaluate(async()=>{const r=await fetch('/audio/motif.ogg');return r.ok&&(await r.arrayBuffer()).byteLength>100000}));
- report.checks.push('offline reload, fonts, document export, model viewer, explosion and audio resource');
+ report.checks.push('offline reload, fonts, document export and audio resource');
  await context.setOffline(false);revision=2;
  await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update()});
  await page.waitForFunction(async()=>Boolean((await navigator.serviceWorker.getRegistration())?.waiting),null,{timeout:90000});
- assert.equal(await page.locator('#pwa-update-notice').isVisible(),false,'Viewer must isolate the outside update action');
- await page.locator('[data-viewer="close"]').click();
  await page.waitForSelector('#pwa-update-notice:not([hidden])');
  assert.equal(await page.evaluate(()=>document.querySelector('#stage').dataset.mode),'detail','Waiting update must not interrupt the page');
  await Promise.all([page.waitForNavigation(),page.locator('#pwa-update-notice [data-pwa-action="update"]').click()]);await ready();

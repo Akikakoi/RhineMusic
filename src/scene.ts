@@ -103,8 +103,6 @@ export class ArchiveScene {
     this.tabMesh = undefined;
     this.tabUv = undefined;
     this.tabUvUpdates = undefined;
-    this.assemblyTemplate?.then(disposeThreeTree).catch(() => {});
-    this.assemblyTemplate = undefined;
     this.light.shadow.map?.dispose();
     for (const pass of this.composer.passes) pass.dispose();
     this.composer.dispose();
@@ -622,74 +620,6 @@ export class ArchiveScene {
     this.loaded = true;
   }
 
-  private assemblyTemplate?: Promise<THREE.Group>;
-  async createAssemblyModel() {
-    this.assemblyTemplate ??= new GLTFLoader()
-      .loadAsync(publicAsset("assets/archive-assembly.glb"))
-      .then((gltf) => {
-        gltf.scene.updateMatrixWorld(true);
-        return gltf.scene;
-      })
-      .catch((error) => {
-        this.assemblyTemplate = undefined;
-        throw error;
-      });
-    const template = await this.assemblyTemplate;
-    const model = new THREE.Group();
-    const meshes: THREE.Mesh[] = [];
-    template.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return;
-      const name = (object.material as THREE.Material).name.replace(
-        /\.\d+$/,
-        "",
-      );
-      const mesh = new THREE.Mesh(
-        object.geometry.clone().applyMatrix4(object.matrixWorld),
-        object.material,
-      );
-      mesh.userData.surface = name;
-      mesh.userData.assemblyPart = object.userData.assemblyPart;
-      model.add(mesh);
-      meshes.push(mesh);
-    });
-    this.appearance.prepare(model);
-    this.appearance.apply(model, 1);
-    this.appearance.setClarity(model, this.decryption.clarity);
-    this.appearance.setTheme(model, this.themeAmount);
-    const canvas = document.createElement("canvas");
-    canvas.width = this.labelCanvas.width;
-    canvas.height = this.labelCanvas.height;
-    canvas.getContext("2d")!.drawImage(this.labelCanvas, 0, 0);
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
-    const label = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.99, 0.46),
-      new THREE.MeshBasicMaterial({
-        map: texture,
-        toneMapped: false,
-        transparent: true,
-        depthWrite: false,
-      }),
-    );
-    label.position.set(-1.36, 3.04, 0.255);
-    label.userData.assemblyPart = "cover";
-    label.userData.themeAmount = themeMaterial(label.material, "Printed_Canvas");
-    label.userData.themeAmount.value = this.themeAmount;
-    model.add(label);
-    meshes.push(label);
-    return {
-      model,
-      setClarity: (value: number) => this.appearance.setClarity(model, value),
-      dispose: () => {
-        for (const mesh of meshes) {
-          mesh.geometry.dispose();
-          (mesh.material as THREE.Material).dispose();
-        }
-        texture.dispose();
-      },
-    };
-  }
   setMode(mode: "hidden" | "archive" | "detail") {
     this.cancelPointer();
     this.setHover(null);
@@ -1981,7 +1911,6 @@ export class ArchiveScene {
     return [(p.x + 1) * this.container.clientWidth / 2, (1 - p.y) * this.container.clientHeight / 2];
   }
   get decryptionFrame() { return this.decryption.frame; }
-  finishDecryption() { this.decryption.finish(); }
   get detailVisibility() {
     return ease((this.detail - 0.25) / 0.55);
   }

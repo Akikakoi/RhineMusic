@@ -16,7 +16,6 @@ import { assetUrl } from "./asset-url";
 import { initPwa, pwaSettingsMarkup } from "./pwa";
 import { createRollingNumber, createRollingText } from "@kitlangton/rolling-number";
 import { ArchiveScene } from "./scene";
-import { ModelViewer } from "./model-viewer";
 import { ContentTransition, SurfaceTransition } from "./ui-transitions";
 import { BootSequence } from "./boot";
 import { loadBootWebfonts } from "./boot-lettering";
@@ -81,7 +80,7 @@ $("#stage").innerHTML = `
   </section>
   <section id="detail-ui" class="detail-ui" aria-label="曲目信息" hidden>
     <button class="back-button" data-action="back">← <span>TRACK OVERVIEW</span><small>ESC</small></button>
-    <div class="object-caption"><span id="object-id">NO.001</span><div>AUDIO ARCHIVE</div><small>DRAG TO INSPECT <span>↔</span></small><button class="viewer-open" data-action="model-viewer">360° 查看模型 <span>↗</span></button></div>
+    <div class="object-caption"><span id="object-id">NO.001</span><div>AUDIO ARCHIVE</div><small>DRAG TO INSPECT <span>↔</span></small></div>
     <article id="detail-content" class="detail-content"></article>
   </section>
   <div class="powered">POWERED BY <b>RHINE LAB</b><i></i></div>
@@ -250,7 +249,6 @@ let scene: ArchiveScene | undefined;
 let threeState: "on" | "closing" | "off" | "loading" = "on";
 let resumeCell: { lane: number; row: number } | undefined;
 let resumeSelection = -1;
-let viewer: ModelViewer | undefined;
 const accessLog: { id: string; time: string }[] = [];
 const columnMemory = archiveColumns.map((_, lane) => columnFiles(lane)[0]);
 function recordAccess() {
@@ -280,9 +278,7 @@ function savePrefs() {
   scene?.setTheme(prefs.colorTheme === "dark", prefs.reduced || !started);
   document.querySelectorAll<HTMLElement>("[data-color-theme]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.colorTheme === prefs.colorTheme)));
   scene?.setSuperPerformance(superPerformanceEnabled());
-  viewer?.setSuperPerformance(superPerformanceEnabled());
   scene?.setQuality(effectiveRenderQuality());
-  viewer?.setQuality(effectiveRenderQuality());
   syncQualityUI(prefs.rendering);
   updateQualitySummary();
   fileCounter.update({ animated: !prefs.reduced && mode === "archive" });
@@ -325,7 +321,6 @@ function fit() {
   if (layoutKey !== previousLayout) {
     previousLayout = layoutKey;
     scene?.resize();
-    viewer?.resize();
   }
   updateQualitySummary();
   // Re-measure line covers and tab underline after wrapping changes.
@@ -1073,24 +1068,6 @@ document.addEventListener("click", (e) => {
   if (action === "column-prev") stepColumn(-1);
   if (action === "column-next") stepColumn(1);
   if (action === "open") openFile();
-  if (action === "model-viewer" && mode === "detail" && scene) {
-    const activeScene = scene;
-    // Safari does not always focus a button when it is tapped. Capture the
-    // actual opener so closing the modal reliably restores the right control.
-    el.focus({ preventScroll: true });
-    viewer ??= new ModelViewer($("#stage"), () => { audio.setScene(mode); audio.play("page-close"); }, (sound) => audio.play(sound === "tick" ? "ui-tick" : sound));
-    audio.setScene("viewer");
-    viewer.setSuperPerformance(superPerformanceEnabled());
-    viewer.setQuality(effectiveRenderQuality());
-    scene.finishDecryption();
-    viewer.open(
-      records[selected].id,
-      records[selected].title,
-      () => activeScene.createAssemblyModel(),
-      prefs.reduced,
-    );
-    audio.play("page-open");
-  }
   if (action === "back") {
     setMode("archive");
     audio.play("back");
@@ -1130,7 +1107,6 @@ document.addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if (!started) return;
-  if (viewer?.isOpen) return;
   if (playground?.active && !modal) {
     if (e.key === "Escape") { e.preventDefault(); playground.stop(); }
     else if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter", "/"].includes(e.key) && !(e.target instanceof HTMLButtonElement)) e.preventDefault();
@@ -1279,7 +1255,6 @@ function frame(ms: number) {
   const time = ms / 1000;
   const theme = scene?.themeAmount ?? (prefs.colorTheme === "dark" ? 1 : 0);
   paintTheme(theme);
-  viewer?.setTheme(theme);
   playground?.tick(time);
   const cinema =
     mode === "boot" && ready
@@ -1287,8 +1262,7 @@ function frame(ms: number) {
       : undefined;
   wallpaperEffects?.update(time, prefs.reduced);
   // The calibrated 2D opening fully covers the scene until array entry.
-  if (!viewer?.isOpen && (!cinema || cinema.time >= 21.9)) scene?.update(time, cinema);
-  viewer?.update(time);
+  if (!cinema || cinema.time >= 21.9) scene?.update(time, cinema);
   if (threeState === "closing" && scene?.presentationHidden) releaseThree();
   playground?.position();
   if (scene && mode === "detail") {
@@ -1297,7 +1271,7 @@ function frame(ms: number) {
     $("#detail-content").style.translate =
       `0 ${(1 - scene.detailVisibility) * 18}px`;
     $("#detail-content").inert = scene.detailVisibility < 0.1;
-    if (pendingDetailFocus && scene.detailVisibility >= 0.1 && !modal && !viewer?.isOpen) {
+    if (pendingDetailFocus && scene.detailVisibility >= 0.1 && !modal) {
       $("#detail-content").focus({ preventScroll: true });
       pendingDetailFocus = false;
     }
@@ -1323,7 +1297,7 @@ function frame(ms: number) {
 function bindScene(scene: ArchiveScene, cell?: { lane: number; row: number }) {
     scene.select(selected, cell ? { cell } : undefined);
     scene.onSelect = (i, cell) => {
-      if (mode !== "archive" || modal || viewer?.isOpen) return;
+      if (mode !== "archive" || modal) return;
       // 再次点击已经抬起的那张卡片 = 进入播放界面。选中格位的阵列实例是隐藏的，
       // 能在该格位命中的只有抽取模型本身，因此按格位判断即可区分「点自己」与「点别的卡片」。
       if (cell && sameCell(cell, scene.selectedCellSnapshot)) {
@@ -1334,7 +1308,7 @@ function bindScene(scene: ArchiveScene, cell?: { lane: number; row: number }) {
       selectForPlayback();
     };
     scene.onNavigate = (axis, direction) => {
-      if (mode !== "archive" || modal || viewer?.isOpen) return;
+      if (mode !== "archive" || modal) return;
       if (axis === "lane") stepColumn(direction);
       else stepFile(direction);
     };
@@ -1371,7 +1345,6 @@ function syncThreeButton() {
 function releaseThree() {
   if (!scene) return;
   resumeCell = { ...scene.getStats().selectedCell }; resumeSelection = selected;
-  viewer?.dispose(); viewer = undefined;
   scene.dispose(); scene = undefined;
   if (mode === "detail") {
     $("#detail-content").style.opacity = "1";

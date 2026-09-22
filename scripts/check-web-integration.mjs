@@ -54,9 +54,6 @@ try {
   await page.evaluate(() => window.rhine.detail()); await page.waitForTimeout(2800);
   assert.equal((await stats()).mode, 'detail');
   await page.screenshot({ path: 'verification/web-integration/dark-detail.png' });
-  await page.locator('[data-action="model-viewer"]').click(); await page.waitForTimeout(1600);
-  assert.ok(await page.locator('canvas').count() >= 2);
-  await page.keyboard.press('Escape'); await page.waitForTimeout(400);
   results.viewports = [];
   for (const [width, height] of [[2560,1080],[390,844],[844,390]]) {
     await page.setViewportSize({ width, height }); await page.waitForTimeout(600);
@@ -70,8 +67,8 @@ try {
   assert.match(html, /rel="manifest"/); assert.doesNotMatch(html, /wallpaperPropertyListener/);
   const worker = await readFile('dist/sw.js', 'utf8'); assert.ok(worker.length > 1000);
   assert.deepEqual(errors, []);
-  results.startupGesture = results.persistedPerformance = results.restoredQuality = results.numericMotion = results.viewer = results.pwaBuild = true;
+  results.startupGesture = results.persistedPerformance = results.restoredQuality = results.numericMotion = results.detail = results.pwaBuild = true;
   results.errors = errors;
   await writeFile('verification/web-integration/results.json', JSON.stringify(results, null, 2));
-  console.log('Web entry, host isolation, theme, performance persistence/restoration, keyboard, clock animation, detail/viewer, responsive and PWA build passed.');
+  console.log('Web entry, host isolation, theme, performance persistence/restoration, keyboard, clock animation, detail, responsive and PWA build passed.');
 } finally { await browser.close(); }

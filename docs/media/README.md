@@ -11,9 +11,6 @@
 | `archive.jpg` | 新版循环阵列与档案导航 |
 | `detail.jpg` | 解密完成后的双环内构与档案概述 |
 | `research.jpg` | 研究记录页签 |
-| `viewer-clear.jpg` | 独立查看器，清晰玻璃 |
-| `viewer-frosted.jpg` | 相同视角下的磨砂玻璃 |
-| `assembly.jpg` | 六组结构拆解 |
 | `search.jpg` | 搜索「莱茵」后的档案索引 |
 | `settings.jpg` | 音效、音乐、减少动态效果与画质设置 |
 | `boot.jpg` | 白底开场中的 Logo 与身份接入 |
@@ -25,8 +22,6 @@
 | 文件 | 内容 | 大约时长 | 尺寸 / 帧率 |
 | --- | --- | --- | --- |
 | `decryption.gif` | 抽取、对角解密线、玻璃与正文同步揭示 | 7.9 秒 | 960 × 540 / 12 fps |
-| `glass-motion.gif` | 清晰 → 磨砂 → 清晰 | 4.2 秒 | 800 × 450 / 12 fps |
-| `assembly-motion.gif` | 拆解、旋转、视角复位与重组 | 8.0 秒 | 800 × 450 / 12 fps |
 | `browse.gif` | 连续选档、切列和文字滚动 | 6.8 秒 | 640 × 360 / 8 fps |
 | `boot-motion.gif` | 白底输入、Logo、权限扫描与欢迎转场 | 20.4 秒 | 800 × 450 / 12 fps |
 

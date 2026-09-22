@@ -57,7 +57,7 @@ for(const [name,width,height,mobile] of cases.filter(([name])=>!process.env.REVI
  await page.waitForTimeout(2000);
  await page.locator('.read-file').click();
  await page.waitForFunction(()=>window.rhine.stats().decryption.clarity===1,null,{timeout:60000});await page.waitForTimeout(1400);
- entry.detail=await inside(page,['.back-button','.viewer-open','.detail-content'],width,height);
+ entry.detail=await inside(page,['.back-button','.object-caption','.detail-content','.detail-actions'],width,height);
  entry.detailStats=await stats(page);
  await page.screenshot({path:resolve(output,`${name}-detail-final.png`)});
  assert.equal(entry.detailStats.extraction,4.05);
@@ -67,34 +67,6 @@ for(const [name,width,height,mobile] of cases.filter(([name])=>!process.env.REVI
  const scroll=await page.locator('.detail-content').evaluate(el=>el.scrollTop);
  await page.locator('[data-action="bookmark"]').click();
  assert.equal(await page.locator('.detail-content').evaluate(el=>el.scrollTop),scroll);
- await page.locator('.viewer-open').click();
- await page.waitForFunction(()=>JSON.parse(document.querySelector('.model-viewer')?.dataset.stats||'{}').ready,null,{timeout:60000});
- await page.waitForTimeout(550);
- await page.locator('[data-viewer="explode"]').click();await page.waitForFunction(()=>JSON.parse(document.querySelector('.model-viewer').dataset.stats).spread>.999);
- await inside(page,['.viewer-back','.viewer-actions','.viewer-reset','.viewer-surface'],width,height);
- await page.screenshot({path:resolve(output,`${name}-viewer-final.png`)});
- const viewerBefore=await page.locator('.model-viewer').evaluate(el=>JSON.parse(el.dataset.stats));
- if(mobile&&engine==='chromium') {
-   const host=await page.locator('.viewer-canvas').boundingBox();const x=host.x+host.width*.5,y=host.y+host.height*.5;
-   const session=await context.newCDPSession(page);
-   const points=(dx,dy=0)=>[{x:x-dx,y:y+dy,id:1},{x:x+dx,y:y+dy,id:2}];
-   await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:points(35)});
-   for(const dx of [42,50,60]){await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:points(dx,15)});await page.waitForTimeout(30)}
-   await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(500);
-   const after=await page.locator('.model-viewer').evaluate(el=>JSON.parse(el.dataset.stats));
-   assert.ok(after.requestedDistance<viewerBefore.requestedDistance,'Pinch out zooms in');
-   assert.ok(Math.hypot(...after.requestedTarget)>0.01,'Two fingers pan the view');
-   await session.detach();
-   // Orientation changes keep the requested pose, selection, and exploded state.
-   await page.setViewportSize({width:height,height:width});await page.waitForTimeout(400);
-   const rotated=await page.locator('.model-viewer').evaluate(el=>JSON.parse(el.dataset.stats));
-   assert.equal(rotated.target,1);assert.ok(Math.abs(rotated.requestedDistance-after.requestedDistance)<1e-5);
-   assert.equal((await stats(page)).selected,entry.detailStats.selected);
-   await page.setViewportSize({width,height});await page.waitForTimeout(350);
- }
- await page.locator('[data-viewer="assemble"]').click();await page.locator('[data-viewer="close"]').click();
- await page.waitForFunction(()=>document.querySelector('.model-viewer').hidden);
- assert.equal(await page.evaluate(()=>document.activeElement?.className),'viewer-open');
  await page.locator('[data-action="back"]').click();await page.waitForTimeout(350);
  for(const action of ['search','saved','settings']){
    await page.locator(`[data-action="${action}"]`).click();await page.waitForTimeout(350);

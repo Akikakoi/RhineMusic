@@ -43,8 +43,6 @@ try {
   await page.locator('.entry-start').click();await ready();
   assert.equal(await page.evaluate(()=>window.rhine.stats().audio.tracks),3);
   await page.locator('.read-file').click();await page.waitForFunction(()=>window.rhine.stats().decryption.clarity===1);
-  await page.locator('.viewer-open').click();await page.waitForFunction(()=>JSON.parse(document.querySelector('.model-viewer')?.dataset.stats||'{}').ready);
-  await page.locator('[data-viewer="explode"]').click();await page.waitForFunction(()=>JSON.parse(document.querySelector('.model-viewer').dataset.stats).spread===1);
-  report.checks.push('Updated release enters offline with all three music tracks, split fonts, hashed main/viewer models and explosion');
+  report.checks.push('Updated release enters offline with all three music tracks, split fonts and hashed models');
   assert.deepEqual(report.errors,[]);console.log(JSON.stringify(report,null,2));
 } finally {await mkdir('.tools/issues',{recursive:true});await writeFile('.tools/issues/font-update.json',JSON.stringify(report,null,2));await browser.close();await new Promise(r=>server.close(r));}

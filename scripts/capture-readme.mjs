@@ -182,38 +182,6 @@ try {
   await click('[data-tab="notes"]');
   await wait(450);
   await shot("research");
-  await click('[data-action="model-viewer"]');
-  await page.waitForFunction(
-    () => document.querySelector('[data-viewer="explode"]')?.disabled === false,
-  );
-  await wait(1700);
-  await shot("viewer-clear");
-  await record("glass-motion", async () => {
-    await click('[data-viewer="frosted"]');
-    await wait(1700);
-    await shot("viewer-frosted");
-    await click('[data-viewer="clear"]');
-    await wait(1700);
-  });
-  await record("assembly-motion", async () => {
-    await click('[data-viewer="explode"]');
-    await wait(1800);
-    await shot("assembly");
-    await page.mouse.move(850, 460);
-    await page.mouse.down();
-    for (let i = 1; i <= 30; i++) {
-      await page.mouse.move(850 + i * 6, 460 + i);
-      await wait(25);
-    }
-    await page.mouse.up();
-    await wait(600);
-    await click('[data-viewer="reset"]');
-    await wait(850);
-    await click('[data-viewer="assemble"]');
-    await wait(1800);
-  });
-  await click('[data-viewer="close"]');
-  await wait(450);
   await page.keyboard.press("Escape");
   await wait(1800);
   await click('[data-action="search"]');

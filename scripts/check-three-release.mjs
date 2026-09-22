@@ -40,13 +40,11 @@ await apply({customwallpaperfile:''});assert.equal(await page.locator('.wallpape
 assert.equal(await page.locator('canvas').count(),0);
 await click();await page.waitForFunction(()=>window.rhine.stats().threeState==='on'&&window.rhine.stats().presentation===1);
 await apply({desktopmode:'archive'});await page.evaluate(()=>window.rhine.detail());await page.waitForFunction(()=>window.rhine.stats().mode==='detail');
-await page.locator('[data-action="model-viewer"]').click();await page.waitForTimeout(1800);
-assert.equal(await page.locator('canvas').count(),2);await page.keyboard.press('Escape');await page.waitForTimeout(400);
 await click();await page.waitForFunction(()=>window.rhine.stats().threeState==='off');assert.equal(await page.locator('canvas').count(),0);
 // Details stay readable with no renderer.
 assert.equal(await page.locator('#detail-content').evaluate(el=>el.inert),false);
 await click();await page.waitForFunction(()=>window.rhine.stats().threeState==='on');
 await page.screenshot({path:'verification/three-release/restored.png'});
 assert.deepEqual(errors,[]);await writeFile('verification/three-release/results.json',JSON.stringify({before,closing,reloading,after:await stats(),errors},null,2));
-console.log('Exit reversal, actual context loss, zero canvases, custom image, fresh context, reduced motion, viewer disposal and detail recovery passed.');
+console.log('Exit reversal, actual context loss, zero canvases, custom image, fresh context, reduced motion and detail recovery passed.');
 } finally {await browser.close()}
