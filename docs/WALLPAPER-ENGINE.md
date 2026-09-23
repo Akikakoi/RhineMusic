@@ -229,7 +229,7 @@ WE「入场与画面」新增「启动时加载 3D（下次加载生效）」，
 
 自定义图片路径修复了宿主将盘符编码为 E%3A 后再次编码导致的读取失败；支持原始路径、编码路径与 file URL。同一路径读取失败后重新选择可重试。真实 WE 宿主验证提取的 wallpaper-2.jpg 为 3200×2000 并成功解码。
 
-验证：scripts/check-startup-2d.mjs 检查初始无 canvas/GLB 请求、2D 开场结束、手动载入、属性仅下次启动生效、默认开启与无页面异常；scripts/check-wallpaper-image.mjs 验证路径与同路径重试；scripts/check-wallpaper-image-host.mjs 验证真实宿主回调。结果位于 verification/startup-2d 和 verification/wallpaper-image。
+验证：scripts/check-startup-2d.mjs 检查初始无 canvas/GLB 请求、2D 开场结束、手动载入、属性仅下次启动生效、默认开启与无页面异常。结果位于 verification/startup-2d 和 verification/wallpaper-image。
 
 ### 宿主属性到达时序修复
 
@@ -237,7 +237,7 @@ WE「入场与画面」新增「启动时加载 3D（下次加载生效）」，
 
 ## 自定义图片遮罩范围
 
-WE 自定义壁纸图片下方新增「上下遮罩范围（0 为关闭）」：0–100，默认 100 保留原渐变范围；降低数值缩小上下覆盖，0 完全隐藏图片上的 atmosphere。仅图片实际显示时生效。亮暗配色 100/50/0 的样式断言及截图见 scripts/check-wallpaper-mask.mjs 与 verification/wallpaper-mask；构建通过。
+WE 自定义壁纸图片下方新增「上下遮罩范围（0 为关闭）」：0–100，默认 100 保留原渐变范围；降低数值缩小上下覆盖，0 完全隐藏图片上的 atmosphere。仅图片实际显示时生效。亮暗配色 100/50/0 的样式断言及截图见 verification/wallpaper-mask；构建通过。
 
 ## 时钟与媒体滚动、图片背景按钮可读性
 
