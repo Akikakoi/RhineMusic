@@ -1,0 +1,682 @@
+{
+  "url": "http://127.0.0.1:5173/?scene=archive",
+  "fixtures": [
+    "Alpha Artist - First Song.wav",
+    "Beta Artist – Second Song.wav",
+    "Broken Upload.mp3"
+  ],
+  "checks": [
+    "import appears in the list, parses artist/title and reads the real duration",
+    "import does not interrupt the current playback",
+    "local tracks persist across reload and stay out of the array",
+    "local track plays through the shared audio chain",
+    "editing title updates both the list and the mini player without restarting playback",
+    "detail panel reports the playing local track",
+    "deleting the playing track advances to the next playlist entry",
+    "removing the last local track wraps playback back to the first entry",
+    "unsupported/corrupt file reports a readable message and is not stored"
+  ],
+  "shots": [
+    "check-01-imported.png",
+    "check-02-two-rows.png",
+    "check-03-after-reload.png",
+    "check-04-playing-local.png",
+    "check-05-editing.png",
+    "check-06-edited.png",
+    "check-07-detail-local.png",
+    "check-08-delete-confirm.png",
+    "check-09-after-delete.png",
+    "check-10-empty.png",
+    "check-11-broken-file.png"
+  ],
+  "steps": {
+    "imported": {
+      "rows": [
+        {
+          "id": "b782b16468bc4222",
+          "title": "First Song",
+          "meta": "Alpha Artist · LOCAL",
+          "time": "00:25",
+          "editing": false,
+          "playing": false,
+          "play": "▶ 播放"
+        }
+      ],
+      "status": "1 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "statusKind": "info",
+      "empty": false,
+      "playerTitle": "MOTIF · 主题动机",
+      "detailLocal": "",
+      "detailLocalHidden": null,
+      "mode": "archive",
+      "selected": "RM-002",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:b782b16468bc4222",
+            "title": "First Song",
+            "subtitle": "Alpha Artist",
+            "localId": "b782b16468bc4222"
+          }
+        ],
+        "track": 1,
+        "wanted": 1,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 4.210667,
+        "duration": 53.336,
+        "error": ""
+      }
+    },
+    "two-rows": {
+      "rows": [
+        {
+          "id": "b782b16468bc4222",
+          "title": "First Song",
+          "meta": "Alpha Artist · LOCAL",
+          "time": "00:25",
+          "editing": false,
+          "playing": false,
+          "play": "▶ 播放"
+        },
+        {
+          "id": "ffa9622c146c4790",
+          "title": "Second Song",
+          "meta": "Beta Artist · LOCAL",
+          "time": "00:30",
+          "editing": false,
+          "playing": false,
+          "play": "▶ 播放"
+        }
+      ],
+      "status": "2 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "statusKind": "info",
+      "empty": false,
+      "playerTitle": "MOTIF · 主题动机",
+      "detailLocal": "",
+      "detailLocalHidden": null,
+      "mode": "archive",
+      "selected": "RM-002",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:b782b16468bc4222",
+            "title": "First Song",
+            "subtitle": "Alpha Artist",
+            "localId": "b782b16468bc4222"
+          },
+          {
+            "file": "local:ffa9622c146c4790",
+            "title": "Second Song",
+            "subtitle": "Beta Artist",
+            "localId": "ffa9622c146c4790"
+          }
+        ],
+        "track": 1,
+        "wanted": 1,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 5.709333,
+        "duration": 53.336,
+        "error": ""
+      }
+    },
+    "after-reload": {
+      "rows": [
+        {
+          "id": "b782b16468bc4222",
+          "title": "First Song",
+          "meta": "Alpha Artist · LOCAL",
+          "time": "00:25",
+          "editing": false,
+          "playing": false,
+          "play": "▶ 播放"
+        },
+        {
+          "id": "ffa9622c146c4790",
+          "title": "Second Song",
+          "meta": "Beta Artist · LOCAL",
+          "time": "00:30",
+          "editing": false,
+          "playing": false,
+          "play": "▶ 播放"
+        }
+      ],
+      "status": "2 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "statusKind": "info",
+      "empty": false,
+      "playerTitle": "MOTIF · 主题动机",
+      "detailLocal": "",
+      "detailLocalHidden": null,
+      "mode": "archive",
+      "selected": "RM-002",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:b782b16468bc4222",
+            "title": "First Song",
+            "subtitle": "Alpha Artist",
+            "localId": "b782b16468bc4222"
+          },
+          {
+            "file": "local:ffa9622c146c4790",
+            "title": "Second Song",
+            "subtitle": "Beta Artist",
+            "localId": "ffa9622c146c4790"
+          }
+        ],
+        "track": 1,
+        "wanted": 1,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 0.68,
+        "duration": 53.336,
+        "error": ""
+      }
+    },
+    "playing-local": {
+      "rows": [
+        {
+          "id": "b782b16468bc4222",
+          "title": "First Song",
+          "meta": "Alpha Artist · LOCAL",
+          "time": "00:25",
+          "editing": false,
+          "playing": true,
+          "play": "❚❚ 暂停"
+        },
+        {
+          "id": "ffa9622c146c4790",
+          "title": "Second Song",
+          "meta": "Beta Artist · LOCAL",
+          "time": "00:30",
+          "editing": false,
+          "playing": false,
+          "play": "▶ 播放"
+        }
+      ],
+      "status": "2 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "statusKind": "info",
+      "empty": false,
+      "playerTitle": "First Song · Alpha Artist",
+      "detailLocal": "",
+      "detailLocalHidden": null,
+      "mode": "archive",
+      "selected": "RM-002",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:b782b16468bc4222",
+            "title": "First Song",
+            "subtitle": "Alpha Artist",
+            "localId": "b782b16468bc4222"
+          },
+          {
+            "file": "local:ffa9622c146c4790",
+            "title": "Second Song",
+            "subtitle": "Beta Artist",
+            "localId": "ffa9622c146c4790"
+          }
+        ],
+        "track": 6,
+        "wanted": 6,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 1.834082,
+        "duration": 25,
+        "error": ""
+      }
+    },
+    "edited": {
+      "rows": [
+        {
+          "id": "b782b16468bc4222",
+          "title": "Renamed Local Song",
+          "meta": "Alpha Artist · LOCAL",
+          "time": "00:25",
+          "editing": false,
+          "playing": true,
+          "play": "❚❚ 暂停"
+        },
+        {
+          "id": "ffa9622c146c4790",
+          "title": "Second Song",
+          "meta": "Beta Artist · LOCAL",
+          "time": "00:30",
+          "editing": false,
+          "playing": false,
+          "play": "▶ 播放"
+        }
+      ],
+      "status": "2 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "statusKind": "info",
+      "empty": false,
+      "playerTitle": "Renamed Local Song · Alpha Artist",
+      "detailLocal": "",
+      "detailLocalHidden": null,
+      "mode": "archive",
+      "selected": "RM-002",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:b782b16468bc4222",
+            "title": "Renamed Local Song",
+            "subtitle": "Alpha Artist",
+            "localId": "b782b16468bc4222"
+          },
+          {
+            "file": "local:ffa9622c146c4790",
+            "title": "Second Song",
+            "subtitle": "Beta Artist",
+            "localId": "ffa9622c146c4790"
+          }
+        ],
+        "track": 6,
+        "wanted": 6,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 3.644545,
+        "duration": 25,
+        "error": ""
+      }
+    },
+    "detail-local": {
+      "rows": [],
+      "status": "",
+      "statusKind": "",
+      "empty": false,
+      "playerTitle": "",
+      "detailLocal": "LOCAL LIBRARYRenamed Local Song·Alpha Artist",
+      "detailLocalHidden": false,
+      "mode": "detail",
+      "selected": "RM-002",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:b782b16468bc4222",
+            "title": "Renamed Local Song",
+            "subtitle": "Alpha Artist",
+            "localId": "b782b16468bc4222"
+          },
+          {
+            "file": "local:ffa9622c146c4790",
+            "title": "Second Song",
+            "subtitle": "Beta Artist",
+            "localId": "ffa9622c146c4790"
+          }
+        ],
+        "track": 6,
+        "wanted": 6,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 2.624,
+        "duration": 25,
+        "error": ""
+      }
+    },
+    "after-delete": {
+      "rows": [
+        {
+          "id": "ffa9622c146c4790",
+          "title": "Second Song",
+          "meta": "Beta Artist · LOCAL",
+          "time": "00:30",
+          "editing": false,
+          "playing": true,
+          "play": "❚❚ 暂停"
+        }
+      ],
+      "status": "1 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "statusKind": "info",
+      "empty": false,
+      "playerTitle": "Second Song · Beta Artist",
+      "detailLocal": "LOCAL LIBRARYSecond Song·Beta Artist",
+      "detailLocalHidden": false,
+      "mode": "archive",
+      "selected": "RM-002",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:ffa9622c146c4790",
+            "title": "Second Song",
+            "subtitle": "Beta Artist",
+            "localId": "ffa9622c146c4790"
+          }
+        ],
+        "track": 6,
+        "wanted": 6,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 2.278568,
+        "duration": 30,
+        "error": ""
+      }
+    },
+    "empty": {
+      "rows": [],
+      "status": "0 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "statusKind": "info",
+      "empty": true,
+      "playerTitle": "AMBIENCE · 观测室 · 氛围",
+      "detailLocal": "LOCAL LIBRARYSecond Song·Beta Artist",
+      "detailLocalHidden": true,
+      "mode": "archive",
+      "selected": "RM-001",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          }
+        ],
+        "track": 0,
+        "wanted": 0,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 2.239608,
+        "duration": 53.336,
+        "error": ""
+      }
+    },
+    "broken-file": {
+      "rows": [],
+      "status": "无法导入「Broken Upload.mp3」：音频格式不受支持或文件已损坏。",
+      "statusKind": "error",
+      "empty": true,
+      "playerTitle": "AMBIENCE · 观测室 · 氛围",
+      "detailLocal": "LOCAL LIBRARYSecond Song·Beta Artist",
+      "detailLocalHidden": true,
+      "mode": "archive",
+      "selected": "RM-001",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          }
+        ],
+        "track": 0,
+        "wanted": 0,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 3.738667,
+        "duration": 53.336,
+        "error": ""
+      }
+    }
+  },
+  "failures": [],
+  "errors": [],
+  "passed": true
+}

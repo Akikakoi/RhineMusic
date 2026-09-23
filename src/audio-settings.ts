@@ -1,4 +1,5 @@
 import type { AudioPreferences, MusicState } from "./audio";
+import { displayArtist, type LocalTrackEntry } from "./local-tracks";
 
 const escapeHtml = (text: string) =>
   text.replace(/[&<>"']/g, (ch) => (
@@ -8,6 +9,90 @@ const formatTime = (seconds: number) => {
   const safe = Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
   return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(Math.floor(safe % 60)).padStart(2, "0")}`;
 };
+
+/** 设置面板里本地曲库区块的界面状态；由 main.ts 维护。 */
+export interface LocalLibraryUi {
+  supported: boolean;
+  busy: boolean;
+  error: string;
+  editing: string | null;
+  confirming: string | null;
+}
+
+const localButtons = (
+  id: string,
+  actions: (readonly [string, string])[],
+) =>
+  actions
+    .map(
+      ([action, label]) =>
+        `<button type="button" data-local-action="${action}" data-local-id="${escapeHtml(id)}">${label}</button>`,
+    )
+    .join("");
+
+function localRowMarkup(
+  entry: LocalTrackEntry,
+  index: number,
+  ui: LocalLibraryUi,
+) {
+  const id = escapeHtml(entry.id);
+  const no = String(index + 1).padStart(2, "0");
+  const time = formatTime(entry.duration);
+  if (ui.editing === entry.id)
+    return `<div class="local-row local-row--edit" role="listitem" data-local-id="${id}">
+      <span class="local-no">${no}</span>
+      <div class="local-edit">
+        <label><span>标题</span><input data-local-field="title" aria-label="曲目标题" autocomplete="off" value="${escapeHtml(entry.title)}"/></label>
+        <label><span>歌手</span><input data-local-field="artist" aria-label="曲目歌手" autocomplete="off" value="${escapeHtml(entry.artist)}"/></label>
+      </div>
+      <span class="local-actions">${localButtons(entry.id, [
+        ["edit-save", "保存"],
+        ["edit-cancel", "取消"],
+      ])}</span>
+    </div>`;
+  if (ui.confirming === entry.id)
+    return `<div class="local-row local-row--confirm" role="listitem" data-local-id="${id}">
+      <span class="local-no">${no}</span>
+      <span class="local-name"><b>${escapeHtml(entry.title)}</b><small>从本地曲库删除这一条？文件本体也会一并移除。</small></span>
+      <span class="local-time">${time}</span>
+      <span class="local-actions">${localButtons(entry.id, [
+        ["delete-confirm", "确认删除"],
+        ["delete-cancel", "取消"],
+      ])}</span>
+    </div>`;
+  return `<div class="local-row" role="listitem" data-local-id="${id}">
+      <span class="local-no">${no}</span>
+      <span class="local-name"><b>${escapeHtml(entry.title)}</b><small>${escapeHtml(displayArtist(entry.artist))} <i>· LOCAL</i></small></span>
+      <span class="local-time">${time}</span>
+      <span class="local-actions">${localButtons(entry.id, [
+        ["play", "▶ 播放"],
+        ["edit", "编辑"],
+        ["delete", "删除"],
+      ])}</span>
+    </div>`;
+}
+
+/** 本地曲库区块内容；外层 <section id="local-library"> 由设置面板提供。 */
+export function localLibraryMarkup(
+  entries: LocalTrackEntry[],
+  ui: LocalLibraryUi,
+) {
+  const status = !ui.supported
+    ? "本地曲库不可用：当前浏览器未开放本地存储（隐私模式或已禁用站点数据）。"
+    : ui.error;
+  const summary = `${entries.length} 首本地曲目 · 导入后进入播放列表，不占用五列阵列`;
+  return `<div class="local-head">
+    <div><strong>LOCAL LIBRARY</strong><span>本地曲库 · 导入本机音频文件，保存在此浏览器</span></div>
+    <div class="local-import-actions">
+      <input id="local-import" type="file" accept="audio/*" multiple hidden/>
+      <button type="button" class="local-import" data-local-action="import"${ui.supported && !ui.busy ? "" : " disabled"}>＋ IMPORT <span>导入</span></button>
+    </div>
+  </div>
+  <p class="local-status" data-kind="${status ? "error" : "info"}" role="status">${escapeHtml(status || summary)}</p>
+  ${entries.length
+      ? `<div class="local-list">${entries.map((entry, index) => localRowMarkup(entry, index, ui)).join("")}</div>`
+      : `<p class="local-empty">尚无本地曲目。选择「导入」添加音频文件；文件名按「歌手 - 曲名」解析，导入后也可以手动编辑标题与歌手。</p>`}`;
+}
 
 export function audioSettingsMarkup(prefs: AudioPreferences, music?: MusicState) {
   const state = music;

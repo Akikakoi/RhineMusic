@@ -138,6 +138,9 @@
 :is([data-layout="compact"], [data-layout="portrait"]) .settings-list label { gap: 16px; }
 :is([data-layout="compact"], [data-layout="portrait"]) .toggle { flex-shrink: 0; }
 :is([data-layout="compact"], [data-layout="portrait"]) .quality-grid { grid-template-columns: 1fr; gap: 0; }
+:is([data-layout="compact"], [data-layout="portrait"]) .local-library button { min-height: 44px; font-size: 12px; }
+:is([data-layout="compact"], [data-layout="portrait"]) .local-head { flex-wrap: wrap; gap: 14px; }
+:is([data-layout="compact"], [data-layout="portrait"]) .local-edit input { min-height: 44px; font-size: 16px; }
 :is([data-layout="compact"], [data-layout="portrait"]) .quality-heading { gap: 12px; flex-wrap: wrap; }
 :is([data-layout="compact"], [data-layout="portrait"]) .quality-heading h3 span { margin-left: 8px; }
 :is([data-layout="compact"], [data-layout="portrait"]) .quality-range { display: block; }

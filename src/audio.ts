@@ -1,6 +1,11 @@
 import { hasTypingBetween } from "./typing-rhythm";
 import { TYPING_PCM, TYPING_SAMPLE_RATE } from "./typing-samples";
 import { assetUrl } from "./asset-url";
+import {
+  LOCAL_TRACK_PREFIX,
+  cachedLocalObjectUrl,
+  type LocalTrackEntry,
+} from "./local-tracks";
 export type Sound =
   | "page-open"
   | "page-close"
@@ -28,7 +33,13 @@ export type AudioPreferences = {
   musicTrack: number;
   musicLoop: "one" | "all";
 };
-export type MusicTrack = { file: string; title: string; subtitle: string };
+export type MusicTrack = {
+  file: string;
+  title: string;
+  subtitle: string;
+  /** 本地曲库条目 id；本地曲目才有，其余为 undefined。 */
+  localId?: string;
+};
 export type MusicState = ReturnType<TerminalAudio["musicState"]>;
 const BUILTIN_TRACKS: MusicTrack[] = [
   { file: "atmosphere", title: "AMBIENCE", subtitle: "观测室 · 氛围" },
@@ -38,8 +49,22 @@ const BUILTIN_TRACKS: MusicTrack[] = [
 const STEMS = ["atmosphere", "motif", "pulse"] as const;
 // Manifest entries may name any browser-playable format; a bare name plays as .ogg.
 const normalizeTrackFile = (file: string) => file.trim().replace(/\.(ogg|mp3)$/i, "");
-const trackSource = (file: string) =>
-  assetUrl(`audio/${/\.[a-z0-9]+$/i.test(file) ? file : `${file}.ogg`}`);
+/** 本地曲目带有 `local:<id>` 前缀；其余沿用内置与 manifest 的文件名。 */
+export const isLocalTrackFile = (file: string) =>
+  file.startsWith(LOCAL_TRACK_PREFIX);
+export const localIdOf = (file: string) =>
+  isLocalTrackFile(file) ? file.slice(LOCAL_TRACK_PREFIX.length) : null;
+/**
+ * 播放列表的稳定标识。本地曲目用本地 id，其余把 .ogg/.mp3 归一化后按文件名比较，
+ * 因此增删本地曲目只会位移本地段，索引重映射永远按标识而不是数组位置计算。
+ */
+export const musicTrackKey = (file: string) =>
+  isLocalTrackFile(file) ? file : normalizeTrackFile(file);
+const trackSource = (file: string) => {
+  const localId = localIdOf(file);
+  if (localId) return cachedLocalObjectUrl(localId) ?? "";
+  return assetUrl(`audio/${/\.[a-z0-9]+$/i.test(file) ? file : `${file}.ogg`}`);
+};
 const LOOP_SECONDS = 160 / 3;
 const noiseBuffers = new WeakMap<BaseAudioContext, AudioBuffer>();
 const typingBuffers = new WeakMap<
@@ -348,6 +373,11 @@ export class TerminalAudio {
   private playedKeys = 0;
   private entryPending = false;
   private hostPaused = false;
+  /** 内置三轨 + audio/manifest.json 追加曲目；本地曲库单独追加在后面。 */
+  private base: MusicTrack[] = [...BUILTIN_TRACKS];
+  private localTracks: MusicTrack[] = [];
+  /** 本地段落的内容签名，未变化时跳过重映射。 */
+  private localSignature = "";
   private playlist: MusicTrack[] = [...BUILTIN_TRACKS];
   private playlistLoading?: Promise<MusicTrack[]>;
   private player?: HTMLAudioElement;
@@ -433,15 +463,90 @@ export class TerminalAudio {
                 subtitle: t.subtitle?.trim() ?? "",
               };
             });
-          if (extras.length) this.playlist = [...BUILTIN_TRACKS, ...extras];
+          if (extras.length) this.base = [...BUILTIN_TRACKS, ...extras];
+          this.rebuildPlaylist();
           return this.playlist;
         },
       )
-      .catch(() => this.playlist)
+      .catch(() => {
+        this.rebuildPlaylist();
+        return this.playlist;
+      })
       .finally(() => {
         this.playlistLoading = undefined;
       });
     return this.playlistLoading;
+  }
+  private rebuildPlaylist() {
+    this.playlist = [...this.base, ...this.localTracks];
+  }
+  private indexOfKey(key: string | null) {
+    if (key === null) return -1;
+    return this.playlist.findIndex((track) => musicTrackKey(track.file) === key);
+  }
+  /**
+   * 本地曲库增删改后重建播放列表。
+   * 本地曲目追加在内置与 manifest 之后，其余曲目的下标不变；
+   * 正在播放的曲目按稳定标识重映射，不中断播放；被删除时顺延到列表中的下一条。
+   */
+  setLocalTracks(entries: LocalTrackEntry[]) {
+    const previous = this.playlist;
+    const activeKey =
+      this.activeTrack >= 0 ? musicTrackKey(previous[this.activeTrack].file) : null;
+    const wanted = this.effectiveTrack();
+    const wantedKey = wanted >= 0 ? musicTrackKey(previous[wanted].file) : null;
+    const signature = entries
+      .map((entry) => `${entry.id}\u0000${entry.title}\u0000${entry.artist}`)
+      .join("\u0001");
+    this.localTracks = entries.map((entry) => ({
+      file: `${LOCAL_TRACK_PREFIX}${entry.id}`,
+      title: entry.title || "UNTITLED",
+      subtitle: entry.artist,
+      localId: entry.id,
+    }));
+    if (signature === this.localSignature) {
+      this.rebuildPlaylist();
+      this.emit();
+      return;
+    }
+    this.localSignature = signature;
+    this.rebuildPlaylist();
+    // 播放目标（用户选曲）按标识重算，避免删一首歌把选择错位或重置。
+    this.prefs.musicTrack = this.indexOfKey(wantedKey);
+    if (this.activeTrack < 0) {
+      this.emit();
+      return;
+    }
+    const stillThere = this.indexOfKey(activeKey);
+    if (stillThere >= 0) {
+      // 曲目还在：只更新下标，<audio> 元素不受影响，播放不中断。
+      this.activeTrack = stillThere;
+      if (this.prefs.musicTrack < 0) this.prefs.musicTrack = stillThere;
+      this.emit();
+      return;
+    }
+    // 正在播放的曲目已被删除：顺延到原位置的下一条；列表为空则回到场景联动。
+    const removed = previous.findIndex(
+      (track) => musicTrackKey(track.file) === activeKey,
+    );
+    this.activeTrack = -1;
+    if (!this.playlist.length) {
+      this.prefs.musicTrack = -1;
+      this.stopPlayer();
+      this.startMusic();
+      return;
+    }
+    const count = this.playlist.length;
+    const target = ((removed % count) + count) % count;
+    this.prefs.musicTrack = target;
+    if (
+      this.context?.state === "running" &&
+      !this.hostPaused &&
+      !document.hidden &&
+      this.prefs.music
+    )
+      this.startPlayer(target);
+    this.emit();
   }
   restartBoot() {
     this.stopEffects();
@@ -688,8 +793,15 @@ export class TerminalAudio {
       if (this.disposed || !this.prefs.music) return;
       el.loop = this.prefs.musicLoop === "one";
       if (swap) {
+        const source = trackSource(track.file);
+        // 本地曲目音源尚未就绪时不切换，避免把空地址写进播放器。
+        if (!source) {
+          this.error = "本地曲目音源尚未就绪，请重新打开设置面板";
+          this.emit();
+          return;
+        }
         el.dataset.file = track.file;
-        el.src = trackSource(track.file);
+        el.src = source;
         el.currentTime = 0;
       }
       this.activeTrack = index;

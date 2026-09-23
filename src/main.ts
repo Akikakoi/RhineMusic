@@ -28,10 +28,20 @@ import {
   fileLocation,
   formatDuration,
 } from "./data";
-import { TerminalAudio } from "./audio";
+import { TerminalAudio, localIdOf, musicTrackKey } from "./audio";
 import { loadLyrics, activeLyric, formatLyricTime, type LyricLine } from "./lyrics";
 import { appendPlayLog, clearPlayLog, formatPlayTime, readPlayLog } from "./play-log";
-import { audioSettingsMarkup } from "./audio-settings";
+import { audioSettingsMarkup, localLibraryMarkup, type LocalLibraryUi } from "./audio-settings";
+import {
+  addLocalTrack,
+  displayArtist,
+  localTracksSupported,
+  refreshLocalTracks,
+  removeLocalTrack,
+  subscribeLocalTracks,
+  updateLocalTrack,
+  type LocalTrackEntry,
+} from "./local-tracks";
 import { StartupGate } from "./startup";
 import { isWallpaper, wallpaperHost, wallpaperFrame, type WallpaperProperties } from "./wallpaper";
 import "./startup.css";
@@ -582,10 +592,17 @@ function playingTrack() {
   const state = audio.musicState();
   return state.playing && state.wanted === playlistIndex(records[selected]);
 }
-/** 曲目标题与音频播放列表的对应关系：仅已入库曲目能命中。 */
+/**
+ * 曲目与播放列表的对应关系。按文件名（本地曲目按 id）比较真实标识，
+ * 不按标题——标题可以手动编辑，同名标题也会互相混淆；本地曲目追加在列表末尾，
+ * 因此已入库曲目的下标不受导入影响。
+ */
 function playlistIndex(track: (typeof records)[number]) {
-  if (track.pending) return -1;
-  return audio.musicState().tracks.findIndex((item) => item.title === track.title);
+  if (track.pending || !track.file) return -1;
+  const key = musicTrackKey(track.file);
+  return audio.musicState().tracks.findIndex(
+    (item) => musicTrackKey(item.file) === key,
+  );
 }
 function overview() {
   const r = records[selected];
@@ -599,6 +616,7 @@ function overview() {
     <button data-action="play-next" aria-label="下一首">▶▶</button>
     <button data-action="play-loop" aria-pressed="${prefs.musicLoop === "one"}" aria-label="循环模式">${prefs.musicLoop === "one" ? "↻ 单曲" : "↻ 列表"}</button>
   </div>
+  <p id="playback-local" class="playback-local" hidden></p>
   <p class="playback-note">${r.pending ? "占位曲目：音源尚未入库，等待后续补充真实文件与时长。" : "音源来自 public/audio，与设置中的迷你播放器共用同一条音频链路。"}</p>`;
 }
 /** 把音频引擎的播放状态写回面板；播放列表里没有的曲目保持静默。 */
@@ -632,6 +650,15 @@ function updatePlaybackPanel() {
     loop.textContent = prefs.musicLoop === "one" ? "↻ 单曲" : "↻ 列表";
     loop.setAttribute("aria-pressed", String(prefs.musicLoop === "one"));
   }
+  const local = document.querySelector<HTMLElement>("#playback-local");
+  if (local) {
+    const now = state.track >= 0 ? state.tracks[state.track] : undefined;
+    const localId = now ? localIdOf(now.file) : null;
+    local.hidden = !localId;
+    if (now && localId)
+      local.innerHTML = `<span>LOCAL LIBRARY</span><b>${escapeHtml(now.title)}</b><i>·</i>${escapeHtml(displayArtist(now.subtitle))}`;
+  }
+  syncLocalPlaying();
 }
 /** 详情面板的走带控制：与设置里的迷你播放器共用同一条音频链路。 */
 function controlPlayback(action: string) {
@@ -747,6 +774,197 @@ function setTab(tab: string, sound = true) {
     audio.play("ui-tick");
   }
 }
+/* ---------------------------------------------------------------- 本地曲库 */
+let localEntries: LocalTrackEntry[] = [];
+let localBusy = false;
+let localError = "";
+let localPanel: { editing: string | null; confirming: string | null } = {
+  editing: null,
+  confirming: null,
+};
+
+function localMessage(error: unknown, fallback: string) {
+  const text = error instanceof Error ? error.message.trim() : "";
+  return text || fallback;
+}
+
+const playingLocalId = () => {
+  const state = audio.musicState();
+  const playing = state.track >= 0 ? state.tracks[state.track] : undefined;
+  return playing ? localIdOf(playing.file) : null;
+};
+
+/** 重画设置面板里的本地曲库区块；面板未打开时不做任何事。 */
+function refreshLocalLibrary() {
+  const host = document.querySelector<HTMLElement>("#local-library");
+  if (!host) return;
+  const ui: LocalLibraryUi = {
+    supported: localTracksSupported(),
+    busy: localBusy,
+    error: localError,
+    editing: localPanel.editing,
+    confirming: localPanel.confirming,
+  };
+  host.innerHTML = localLibraryMarkup(localEntries, ui);
+  syncLocalPlaying();
+}
+
+/** 播放状态只改高亮与按钮文案，不重建节点（重建会把导入中的文件选择器换掉）。 */
+function syncLocalPlaying() {
+  const host = document.querySelector<HTMLElement>("#local-library");
+  if (!host) return;
+  const id = playingLocalId();
+  host.querySelectorAll<HTMLElement>(".local-row").forEach((row) => {
+    const playing = Boolean(id) && row.dataset.localId === id;
+    row.classList.toggle("playing", playing);
+    const button = row.querySelector<HTMLElement>('[data-local-action="play"]');
+    if (button) button.textContent = playing ? "❚❚ 暂停" : "▶ 播放";
+  });
+}
+
+function focusLocalEditor() {
+  requestAnimationFrame(() => {
+    document
+      .querySelector<HTMLInputElement>('#local-library [data-local-field="title"]')
+      ?.focus({ preventScroll: true });
+  });
+}
+
+/** 导入不改变播放列表里的既有下标，也不动正在播放的曲目。 */
+async function importLocalFiles(files: File[]) {
+  if (!localTracksSupported()) {
+    localError = "本地曲库不可用：当前浏览器未开放本地存储。";
+    refreshLocalLibrary();
+    notify(localError);
+    return;
+  }
+  localBusy = true;
+  localError = "";
+  refreshLocalLibrary();
+  const failures: string[] = [];
+  let added = 0;
+  for (const file of files) {
+    try {
+      await addLocalTrack(file);
+      added++;
+    } catch (error) {
+      failures.push(localMessage(error, `无法导入「${file.name}」。`));
+    }
+  }
+  localBusy = false;
+  localError = failures.join(" ");
+  await refreshLocalTracks().catch((error) => {
+    localError = localMessage(error, "本地曲库读取失败。");
+  });
+  refreshLocalLibrary();
+  updateMusicPanel();
+  if (added) notify(`已导入 ${added} 首本地曲目`);
+  if (failures.length) notify(failures[0]);
+}
+
+function playLocalTrack(id: string) {
+  const state = audio.musicState();
+  const index = state.tracks.findIndex((track) => track.localId === id);
+  if (index < 0) {
+    notify("本地曲目未能载入，请重新打开设置面板");
+    return;
+  }
+  if (state.track === index && state.playing) {
+    audio.setPaused(true);
+  } else {
+    prefs.musicTrack = index;
+    saveAudioPrefs();
+    audio.setPaused(false);
+    notify(`正在播放：${state.tracks[index].title}`);
+  }
+  updateMusicPanel();
+  updatePlaybackPanel();
+  syncLocalPlaying();
+}
+
+async function saveLocalEdit() {
+  const id = localPanel.editing;
+  if (!id) return;
+  const host = document.querySelector<HTMLElement>("#local-library");
+  const field = (name: string) =>
+    host?.querySelector<HTMLInputElement>(`[data-local-field="${name}"]`)?.value ??
+    "";
+  const title = field("title").trim();
+  const artist = field("artist");
+  if (!title) {
+    localError = "标题不能为空；如需清空歌手可以留空，界面会显示 UNKNOWN。";
+    refreshLocalLibrary();
+    return;
+  }
+  try {
+    await updateLocalTrack(id, { title, artist });
+  } catch (error) {
+    localError = localMessage(error, "本地曲目更新失败。");
+    refreshLocalLibrary();
+    notify(localError);
+    return;
+  }
+  localError = "";
+  localPanel = { editing: null, confirming: null };
+  refreshLocalLibrary();
+  updateMusicPanel();
+  updatePlaybackPanel();
+  notify("元数据已更新");
+}
+
+async function deleteLocal(id: string) {
+  localPanel = { editing: null, confirming: null };
+  try {
+    await removeLocalTrack(id);
+  } catch (error) {
+    localError = localMessage(error, "本地曲目删除失败。");
+    refreshLocalLibrary();
+    notify(localError);
+    return;
+  }
+  localError = "";
+  refreshLocalLibrary();
+  updateMusicPanel();
+  updatePlaybackPanel();
+  notify("已从本地曲库删除");
+}
+
+function handleLocalAction(button: HTMLElement) {
+  const action = button.dataset.localAction;
+  const id = button.dataset.localId ?? "";
+  if (action === "import") {
+    document.querySelector<HTMLInputElement>("#local-import")?.click();
+    return;
+  }
+  if (action === "play") playLocalTrack(id);
+  else if (action === "edit") {
+    localPanel = { editing: id, confirming: null };
+    refreshLocalLibrary();
+    focusLocalEditor();
+  } else if (action === "edit-cancel") {
+    localPanel = { editing: null, confirming: null };
+    refreshLocalLibrary();
+  } else if (action === "edit-save") void saveLocalEdit();
+  else if (action === "delete") {
+    localPanel = { editing: null, confirming: id };
+    refreshLocalLibrary();
+  } else if (action === "delete-cancel") {
+    localPanel = { editing: null, confirming: null };
+    refreshLocalLibrary();
+  } else if (action === "delete-confirm") void deleteLocal(id);
+}
+
+subscribeLocalTracks((next) => {
+  localEntries = next;
+  // 引擎按稳定标识重映射：导入/改名不打断播放，删除正在播放的曲目则顺延下一条。
+  audio.setLocalTracks(next);
+  refreshLocalLibrary();
+});
+void refreshLocalTracks().catch((error) => {
+  localError = localMessage(error, "本地曲库不可用。");
+  refreshLocalLibrary();
+});
+
 function notify(message: string) {
   clearTimeout(toastTimer);
   $("#toast").textContent = message;
@@ -800,7 +1018,10 @@ function renderModal() {
   backdrop.hidden = true;
   modalTransition = new SurfaceTransition(backdrop, $(".terminal-modal"));
   modalTransition.show(prefs.reduced);
-  if (modal === "settings") updateQualitySummary();
+  if (modal === "settings") {
+    refreshLocalLibrary();
+    updateQualitySummary();
+  }
   if (modal !== "settings") {
     renderResults();
     requestAnimationFrame(() => {
@@ -852,7 +1073,7 @@ function motionSettingsMarkup() {
     : "当前使用完整动效。"}</p>${prefs.reduced ? '<button data-action="enable-motion">启用完整动效并重播 ↻</button>' : ""}</div>`;
 }
 function settingsMarkup() {
-  return `<h2>SYSTEM SETTINGS<small>终端偏好设置</small></h2><p class="settings-intro">JOYCE MOORE <span>·</span> SESSION AUTHORIZED</p>${isWallpaper ? '<p class="wallpaper-settings-note">每次启动都会读取 Wallpaper Engine 中的设置。在此修改仅对当前运行生效，无法持久保存；如需保留，请在 Wallpaper Engine 的壁纸属性中调整。</p>' : ""}<div class="settings-list">${themeSettingsMarkup(prefs.colorTheme === "dark")}${!isWallpaper ? `<label><div><strong>SUPER PERFORMANCE</strong><span>降低三维画质和渲染分辨率，保留完整动效；关闭后恢复原画质</span></div><input type="checkbox" data-pref="superPerformance" ${prefs.superPerformance ? "checked" : ""}/><i class="toggle"></i></label>` : ""}${workbench?.settingsMarkup() ?? ""}${audioSettingsMarkup(prefs, audio.musicState())}<label><div><strong>REDUCED MOTION</strong><span>跳过开机动画，简化选档、镜头和文字动效</span></div><input type="checkbox" data-pref="reduced" ${prefs.reduced ? "checked" : ""}/><i class="toggle"></i></label></div>${motionSettingsMarkup()}${qualityMarkup(prefs.rendering)}${pwaSettingsMarkup()}<div class="settings-shortcuts">${isWallpaper ? '<span>DESKTOP CONTROLS</span><p>拖动阵列或点击界面按钮浏览档案。桌面模式下，方向键与滚轮可能无法传入壁纸。</p>' : '<span>KEYBOARD CONTROLS</span><p><kbd>←</kbd><kbd>→</kbd> 切列 <kbd>↑</kbd><kbd>↓</kbd> 选档 <kbd>ENTER</kbd> 读取 <kbd>/</kbd> 检索 <kbd>ESC</kbd> 返回</p>'}</div><div class="settings-bottom">${!isWallpaper && document.fullscreenEnabled ? '<button data-action="fullscreen">FULLSCREEN <span>↗</span></button>' : ''}<button data-action="restart">REINITIALIZE SYSTEM <span>↻</span></button></div><div class="modal-bottom"><span>ANALYSIS OS / 1.0 · 使用 MiSans 字体（小米） <a href="${assetUrl("fonts/MiSans-license.pdf")}" target="_blank" rel="noopener">字体许可</a></span><span>POWERED BY RHINE LAB</span></div>`;
+  return `<h2>SYSTEM SETTINGS<small>终端偏好设置</small></h2><p class="settings-intro">JOYCE MOORE <span>·</span> SESSION AUTHORIZED</p>${isWallpaper ? '<p class="wallpaper-settings-note">每次启动都会读取 Wallpaper Engine 中的设置。在此修改仅对当前运行生效，无法持久保存；如需保留，请在 Wallpaper Engine 的壁纸属性中调整。</p>' : ""}<div class="settings-list">${themeSettingsMarkup(prefs.colorTheme === "dark")}${!isWallpaper ? `<label><div><strong>SUPER PERFORMANCE</strong><span>降低三维画质和渲染分辨率，保留完整动效；关闭后恢复原画质</span></div><input type="checkbox" data-pref="superPerformance" ${prefs.superPerformance ? "checked" : ""}/><i class="toggle"></i></label>` : ""}${workbench?.settingsMarkup() ?? ""}${audioSettingsMarkup(prefs, audio.musicState())}<label><div><strong>REDUCED MOTION</strong><span>跳过开机动画，简化选档、镜头和文字动效</span></div><input type="checkbox" data-pref="reduced" ${prefs.reduced ? "checked" : ""}/><i class="toggle"></i></label></div>${motionSettingsMarkup()}<section id="local-library" class="local-library" aria-label="本地曲库"></section>${qualityMarkup(prefs.rendering)}${pwaSettingsMarkup()}<div class="settings-shortcuts">${isWallpaper ? '<span>DESKTOP CONTROLS</span><p>拖动阵列或点击界面按钮浏览档案。桌面模式下，方向键与滚轮可能无法传入壁纸。</p>' : '<span>KEYBOARD CONTROLS</span><p><kbd>←</kbd><kbd>→</kbd> 切列 <kbd>↑</kbd><kbd>↓</kbd> 选档 <kbd>ENTER</kbd> 读取 <kbd>/</kbd> 检索 <kbd>ESC</kbd> 返回</p>'}</div><div class="settings-bottom">${!isWallpaper && document.fullscreenEnabled ? '<button data-action="fullscreen">FULLSCREEN <span>↗</span></button>' : ''}<button data-action="restart">REINITIALIZE SYSTEM <span>↻</span></button></div><div class="modal-bottom"><span>ANALYSIS OS / 1.0 · 使用 MiSans 字体（小米） <a href="${assetUrl("fonts/MiSans-license.pdf")}" target="_blank" rel="noopener">字体许可</a></span><span>POWERED BY RHINE LAB</span></div>`;
 }
 
 let musicSeeking = false;
@@ -913,6 +1134,7 @@ let followingPlayback = false;
 window.addEventListener("rhine-music-state", () => {
   updateMusicPanel();
   updatePlaybackPanel();
+  syncLocalPlaying();
   const state = audio.musicState();
   if (!state.playing || state.track < 0) {
     // 停止后清空，便于再次播放同一曲目时重新记录、重新跟随。
@@ -928,7 +1150,25 @@ window.addEventListener("rhine-music-state", () => {
   }
   lastPlayedTrack = state.track;
   const playing = state.tracks[state.track];
-  const index = records.findIndex((item) => item.title === playing.title);
+  const localId = localIdOf(playing.file);
+  if (localId) {
+    // 本地曲目不进五列阵列：只记录播放与刷新面板，不动阵列选择。
+    const entry = localEntries.find((item) => item.id === localId);
+    appendPlayLog({
+      id: playing.file,
+      title: entry?.title ?? playing.title,
+      artist: displayArtist(entry?.artist ?? playing.subtitle),
+      at: Date.now(),
+    });
+    if (mode === "detail" && activeTab === "history") setTab("history", false);
+    updateLyricsHighlight(state);
+    updatePlaybackPanel();
+    return;
+  }
+  const key = musicTrackKey(playing.file);
+  const index = records.findIndex(
+    (item) => !!item.file && musicTrackKey(item.file) === key,
+  );
   if (index < 0) {
     updateLyricsHighlight(state);
     return;
@@ -980,6 +1220,12 @@ document.addEventListener("input", (e) => {
 });
 document.addEventListener("change", (e) => {
   const el = e.target as HTMLInputElement;
+  if (el.id === "local-import") {
+    const files = [...(el.files ?? [])];
+    el.value = "";
+    if (files.length) void importLocalFiles(files);
+    return;
+  }
   if (el.id === "quality-preset" && Object.hasOwn(qualityPresets, el.value)) {
     prefs.rendering = { ...qualityPresets[el.value as QualityPreset] };
     savePrefs();
@@ -1018,6 +1264,12 @@ document.addEventListener("click", (e) => {
       if (action === "loop") saveAudioPrefs();
       updateMusicPanel();
     }
+    audio.play("tick");
+    return;
+  }
+  const localControl = (e.target as Element).closest<HTMLElement>("[data-local-action]");
+  if (localControl && !(localControl as HTMLButtonElement).disabled) {
+    handleLocalAction(localControl);
     audio.play("tick");
     return;
   }

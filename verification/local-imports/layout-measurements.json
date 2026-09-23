@@ -1,0 +1,235 @@
+{
+  "desktopLight": {
+    "theme": "false",
+    "layout": "desktop",
+    "viewport": [
+      1920,
+      1080
+    ],
+    "modal": {
+      "x": 420,
+      "y": 65,
+      "width": 1080,
+      "height": 950,
+      "bottom": 1015
+    },
+    "modalScroll": [
+      948,
+      1864
+    ],
+    "library": {
+      "x": 474,
+      "y": 983,
+      "width": 962,
+      "height": 336,
+      "bottom": 1319
+    },
+    "list": {
+      "box": {
+        "x": 474,
+        "y": 1090,
+        "width": 962,
+        "height": 208,
+        "bottom": 1298
+      },
+      "scroll": [
+        207,
+        348
+      ]
+    },
+    "row": {
+      "x": 474,
+      "y": 1091,
+      "width": 962,
+      "height": 58,
+      "bottom": 1149
+    },
+    "rowOverflow": [
+      962,
+      962
+    ],
+    "modalBottom": {
+      "x": 474,
+      "y": 1883,
+      "width": 962,
+      "height": 12,
+      "bottom": 1895
+    },
+    "status": "6 首本地曲目 · 导入后进入播放列表，不占用五列阵列"
+  },
+  "desktopDark": {
+    "theme": "true",
+    "layout": "desktop",
+    "viewport": [
+      1920,
+      1080
+    ],
+    "modal": {
+      "x": 420,
+      "y": 65,
+      "width": 1080,
+      "height": 950,
+      "bottom": 1015
+    },
+    "modalScroll": [
+      948,
+      1864
+    ],
+    "library": {
+      "x": 474,
+      "y": 146,
+      "width": 962,
+      "height": 336,
+      "bottom": 482
+    },
+    "list": {
+      "box": {
+        "x": 474,
+        "y": 253,
+        "width": 962,
+        "height": 208,
+        "bottom": 461
+      },
+      "scroll": [
+        207,
+        348
+      ]
+    },
+    "row": {
+      "x": 474,
+      "y": 254,
+      "width": 962,
+      "height": 58,
+      "bottom": 312
+    },
+    "rowOverflow": [
+      962,
+      962
+    ],
+    "modalBottom": {
+      "x": 474,
+      "y": 1046,
+      "width": 962,
+      "height": 12,
+      "bottom": 1058
+    },
+    "status": "6 首本地曲目 · 导入后进入播放列表，不占用五列阵列"
+  },
+  "portrait": {
+    "theme": "false",
+    "layout": "portrait",
+    "viewport": [
+      390,
+      844
+    ],
+    "modal": {
+      "x": 20,
+      "y": 16,
+      "width": 350,
+      "height": 816,
+      "bottom": 832
+    },
+    "modalScroll": [
+      814,
+      2837
+    ],
+    "library": {
+      "x": 41,
+      "y": 1333,
+      "width": 308,
+      "height": 907,
+      "bottom": 2239
+    },
+    "list": {
+      "box": {
+        "x": 41,
+        "y": 1497,
+        "width": 308,
+        "height": 721,
+        "bottom": 2218
+      },
+      "scroll": [
+        720,
+        720
+      ]
+    },
+    "row": {
+      "x": 41,
+      "y": 1498,
+      "width": 308,
+      "height": 120,
+      "bottom": 1618
+    },
+    "rowOverflow": [
+      308,
+      308
+    ],
+    "modalBottom": {
+      "x": 41,
+      "y": 2806,
+      "width": 308,
+      "height": 32,
+      "bottom": 2838
+    },
+    "status": "6 首本地曲目 · 导入后进入播放列表，不占用五列阵列"
+  },
+  "portraitDark": {
+    "theme": "true",
+    "layout": "portrait",
+    "viewport": [
+      390,
+      844
+    ],
+    "modal": {
+      "x": 20,
+      "y": 16,
+      "width": 350,
+      "height": 816,
+      "bottom": 832
+    },
+    "modalScroll": [
+      814,
+      2837
+    ],
+    "library": {
+      "x": 41,
+      "y": 97,
+      "width": 308,
+      "height": 907,
+      "bottom": 1003
+    },
+    "list": {
+      "box": {
+        "x": 41,
+        "y": 261,
+        "width": 308,
+        "height": 721,
+        "bottom": 982
+      },
+      "scroll": [
+        720,
+        720
+      ]
+    },
+    "row": {
+      "x": 41,
+      "y": 262,
+      "width": 308,
+      "height": 120,
+      "bottom": 382
+    },
+    "rowOverflow": [
+      308,
+      308
+    ],
+    "modalBottom": {
+      "x": 41,
+      "y": 1570,
+      "width": 308,
+      "height": 32,
+      "bottom": 1602
+    },
+    "status": "6 首本地曲目 · 导入后进入播放列表，不占用五列阵列"
+  },
+  "focusProbe": []
+}

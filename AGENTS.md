@@ -1,5 +1,15 @@
 # Rhine Lab UI
 
+## 本地曲库（2026-09-23）
+
+- 用户要求：设置面板可导入本机音频文件，持久保存、播放、编辑元数据、删除；所有 UI 与现有界面风格一致。
+- 范围与约束：新增 `src/local-tracks.ts`，设置面板新增「LOCAL LIBRARY / 本地曲库」区块（`src/audio-settings.ts` 出 markup、`src/main.ts` 接线、`src/style.css` 与 `src/responsive.css` 出样式）。导入的曲目进入播放链路（播放列表、迷你播放器、详情走带、上一首/下一首、播放记录），**不进入五列阵列**，不改动 scene、阵列几何与 track-atlas。沿用原生实现，本轮不启用前端设计/动效 Skill。
+- 已确认决策：文件名按「艺术家 - 曲名」解析（支持 `-`、`–`、`—`，无分隔符时整名作标题、歌手显示 UNKNOWN）；时长由音频实际解码读取；标题与歌手可在面板就地编辑。文件本体存 IndexedDB（库 `rhine-local-tracks`、对象仓 `tracks`），不用 localStorage 存音频；本地曲目以 `local:<id>` 作为 `MusicTrack.file`，由 `audio.ts` 解析成 object URL。
+- 索引重映射：`prefs.musicTrack` 与 `musicState().wanted / track` 都是播放列表下标。本地曲目一律追加在内置三轨与 `audio/manifest.json` 之后，因此已入库曲目的下标不变；本地曲目增删改后按稳定标识（本地 id / 文件名去掉 .ogg/.mp3）重映射，不按数组位置硬算。`main.ts` 的 `playlistIndex()` 改为按同一标识匹配曲库记录。
+- 删除正在播放的曲目：顺延到该位置的下一条（删的是最后一条则回绕到第一条）；只有删除后播放列表为空才回落到场景联动。导入与改名不打断当前播放，也不改变阵列选择。
+- 本地曲目属用户数据：PWA 的资源缓存（`rhine-lab:` 前缀的 Cache Storage）与 IndexedDB 互不相干，更新、重启与缓存刷新都不会清除。
+- 验证：`node scripts/check-local-imports.mjs`（puppeteer-core 驱动系统 Edge 无头，自生成合法 WAV 与损坏文件），证据在 `verification/local-imports/`；实现要点、复核方法与已知限制见 `verification/LOCAL-TRACKS.md`。本轮未提交、未推送。
+
 ## 提交与推送规则（2026-09-20 更新，覆盖旧授权）
 
 - 用户明确指示：不要自行提交或推送，只有当用户当次明确要求"提交""推送"时才执行。以下旧授权（完成验证后直接提交合并）自即日起作废。
