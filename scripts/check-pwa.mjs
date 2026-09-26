@@ -28,7 +28,7 @@ try{
  await page.goto('http://127.0.0.1:5191/?scene=archive');await ready();
  const manifest=await page.evaluate(async()=>await(await fetch(document.querySelector('link[rel="manifest"]').href)).json());
  assert.equal(manifest.display,'standalone');assert.equal(manifest.scope,'./');assert.equal(manifest.icons.length,3);
- await page.evaluate(async()=>{await caches.open('unrelated-app');localStorage.setItem('rhine-saved','["X-001"]')});
+ await page.evaluate(async()=>{await caches.open('unrelated-app');localStorage.setItem('rhine-playlists','[{"id":"pl-1","name":"Update","createdAt":1,"tracks":["atmosphere.ogg"]}]')});
  report.checks.push('manifest, installation, atomic full-resource cache');
  await context.setOffline(true);await page.reload();await ready();
  await page.locator('.read-file').click();await page.waitForFunction(()=>window.rhine.stats().decryption.clarity===1);
@@ -42,9 +42,9 @@ try{
  await page.waitForSelector('#pwa-update-notice:not([hidden])');
  assert.equal(await page.evaluate(()=>document.querySelector('#stage').dataset.mode),'detail','Waiting update must not interrupt the page');
  await Promise.all([page.waitForNavigation(),page.locator('#pwa-update-notice [data-pwa-action="update"]').click()]);await ready();
- assert.equal(await page.evaluate(()=>localStorage.getItem('rhine-saved')),'["X-001"]');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('rhine-playlists')),'[{"id":"pl-1","name":"Update","createdAt":1,"tracks":["atmosphere.ogg"]}]');
  const keys=await page.evaluate(()=>caches.keys());assert.ok(keys.includes('unrelated-app'));assert.equal(keys.filter(k=>k.startsWith('rhine-lab:')).length,1);assert.ok(keys.some(k=>k.endsWith('-test-2')));
- report.checks.push('visible update action without opening settings, explicit restart, old-cache cleanup and preserved preferences/bookmarks');
+ report.checks.push('visible update action without opening settings, explicit restart, old-cache cleanup and preserved preferences/playlists');
  revision=3;fail=true;
  await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update()});
  await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return !r.installing&&!r.waiting},null,{timeout:90000});

@@ -1,0 +1,496 @@
+{
+  "url": "http://127.0.0.1:5174/?scene=archive",
+  "checks": [
+    "playlist modal opens empty and offers the new-list entry",
+    "creating a list auto-fills every track of the library, in library order",
+    "removing a track then adding it back from the detail panel restores the list",
+    "playing a list switches the engine to that queue and starts at its first track",
+    "per-row play maps to the queue index",
+    "reordering the list reorders the live queue",
+    "removing the playing track keeps playback going on the remaining queue",
+    "deleting the active list leaves the queue and returns to the whole library",
+    "a dangling entry is marked missing and does not survive into the queue",
+    "playing a list with a dangling entry queues only the resolvable tracks",
+    "playlists persist in localStorage across reloads"
+  ],
+  "shots": [
+    "check-01-empty.png",
+    "check-02-created-filled.png",
+    "check-03-playing-list.png",
+    "check-04-reordered.png",
+    "check-05-removed.png",
+    "check-06-deleted.png",
+    "check-07-missing-entry.png"
+  ],
+  "steps": {
+    "empty": {
+      "playlists": {
+        "active": null,
+        "lists": []
+      },
+      "selected": "RM-001",
+      "mode": "archive",
+      "hint": "",
+      "items": [],
+      "rows": [],
+      "placeholder": "左侧还没有可用的列表。先新建一个。",
+      "music": {
+        "queued": false,
+        "track": -1,
+        "wanted": -1,
+        "playing": false,
+        "files": [
+          "atmosphere",
+          "motif",
+          "pulse",
+          "doriko、初音ミク - 歌に形はないけれど.mp3",
+          "observatory-preview.mp3",
+          "坏苹果（车载dj版）.mp3"
+        ]
+      }
+    },
+    "created-filled": {
+      "playlists": {
+        "active": null,
+        "lists": [
+          {
+            "id": "4fff0864cde4",
+            "name": "夜间频率",
+            "createdAt": 1790404729776,
+            "tracks": [
+              "atmosphere",
+              "motif",
+              "pulse",
+              "doriko、初音ミク - 歌に形はないけれど",
+              "observatory-preview",
+              "坏苹果（车载dj版）"
+            ]
+          }
+        ]
+      },
+      "selected": "RM-001",
+      "mode": "archive",
+      "hint": "",
+      "items": [
+        {
+          "id": "4fff0864cde4",
+          "name": "夜间频率",
+          "count": "6 首",
+          "active": true,
+          "playing": false
+        }
+      ],
+      "rows": [
+        {
+          "key": "atmosphere",
+          "title": "AMBIENCE",
+          "missing": false
+        },
+        {
+          "key": "motif",
+          "title": "MOTIF",
+          "missing": false
+        },
+        {
+          "key": "pulse",
+          "title": "PULSE",
+          "missing": false
+        },
+        {
+          "key": "doriko、初音ミク - 歌に形はないけれど",
+          "title": "DORIKO、初音ミク - 歌に形はないけれど",
+          "missing": false
+        },
+        {
+          "key": "observatory-preview",
+          "title": "OBSERVATORY-PREVIEW",
+          "missing": false
+        },
+        {
+          "key": "坏苹果（车载dj版）",
+          "title": "坏苹果（车载DJ版）",
+          "missing": false
+        }
+      ],
+      "placeholder": "",
+      "music": {
+        "queued": false,
+        "track": -1,
+        "wanted": -1,
+        "playing": false,
+        "files": [
+          "atmosphere",
+          "motif",
+          "pulse",
+          "doriko、初音ミク - 歌に形はないけれど.mp3",
+          "observatory-preview.mp3",
+          "坏苹果（车载dj版）.mp3"
+        ]
+      }
+    },
+    "playing-list": {
+      "playlists": {
+        "active": "4fff0864cde4",
+        "lists": [
+          {
+            "id": "4fff0864cde4",
+            "name": "夜间频率",
+            "createdAt": 1790404729776,
+            "tracks": [
+              "atmosphere",
+              "motif",
+              "pulse",
+              "doriko、初音ミク - 歌に形はないけれど",
+              "observatory-preview",
+              "坏苹果（车载dj版）"
+            ]
+          }
+        ]
+      },
+      "selected": "RM-001",
+      "mode": "detail",
+      "hint": "",
+      "items": [
+        {
+          "id": "4fff0864cde4",
+          "name": "夜间频率",
+          "count": "6 首",
+          "active": true,
+          "playing": true
+        }
+      ],
+      "rows": [
+        {
+          "key": "atmosphere",
+          "title": "AMBIENCE",
+          "missing": false
+        },
+        {
+          "key": "motif",
+          "title": "MOTIF",
+          "missing": false
+        },
+        {
+          "key": "pulse",
+          "title": "PULSE",
+          "missing": false
+        },
+        {
+          "key": "doriko、初音ミク - 歌に形はないけれど",
+          "title": "DORIKO、初音ミク - 歌に形はないけれど",
+          "missing": false
+        },
+        {
+          "key": "observatory-preview",
+          "title": "OBSERVATORY-PREVIEW",
+          "missing": false
+        },
+        {
+          "key": "坏苹果（车载dj版）",
+          "title": "坏苹果（车载DJ版）",
+          "missing": false
+        }
+      ],
+      "placeholder": "",
+      "music": {
+        "queued": true,
+        "track": 0,
+        "wanted": 0,
+        "playing": true,
+        "files": [
+          "atmosphere",
+          "motif",
+          "pulse",
+          "doriko、初音ミク - 歌に形はないけれど.mp3",
+          "observatory-preview.mp3",
+          "坏苹果（车载dj版）.mp3"
+        ]
+      }
+    },
+    "reordered": {
+      "playlists": {
+        "active": "4fff0864cde4",
+        "lists": [
+          {
+            "id": "4fff0864cde4",
+            "name": "夜间频率",
+            "createdAt": 1790404729776,
+            "tracks": [
+              "motif",
+              "atmosphere",
+              "pulse",
+              "doriko、初音ミク - 歌に形はないけれど",
+              "observatory-preview",
+              "坏苹果（车载dj版）"
+            ]
+          }
+        ]
+      },
+      "selected": "RM-002",
+      "mode": "detail",
+      "hint": "",
+      "items": [
+        {
+          "id": "4fff0864cde4",
+          "name": "夜间频率",
+          "count": "6 首",
+          "active": true,
+          "playing": true
+        }
+      ],
+      "rows": [
+        {
+          "key": "motif",
+          "title": "MOTIF",
+          "missing": false
+        },
+        {
+          "key": "atmosphere",
+          "title": "AMBIENCE",
+          "missing": false
+        },
+        {
+          "key": "pulse",
+          "title": "PULSE",
+          "missing": false
+        },
+        {
+          "key": "doriko、初音ミク - 歌に形はないけれど",
+          "title": "DORIKO、初音ミク - 歌に形はないけれど",
+          "missing": false
+        },
+        {
+          "key": "observatory-preview",
+          "title": "OBSERVATORY-PREVIEW",
+          "missing": false
+        },
+        {
+          "key": "坏苹果（车载dj版）",
+          "title": "坏苹果（车载DJ版）",
+          "missing": false
+        }
+      ],
+      "placeholder": "",
+      "music": {
+        "queued": true,
+        "track": 0,
+        "wanted": 0,
+        "playing": true,
+        "files": [
+          "motif",
+          "atmosphere",
+          "pulse",
+          "doriko、初音ミク - 歌に形はないけれど.mp3",
+          "observatory-preview.mp3",
+          "坏苹果（车载dj版）.mp3"
+        ]
+      }
+    },
+    "removed": {
+      "playlists": {
+        "active": "4fff0864cde4",
+        "lists": [
+          {
+            "id": "4fff0864cde4",
+            "name": "夜间频率",
+            "createdAt": 1790404729776,
+            "tracks": [
+              "atmosphere",
+              "pulse",
+              "doriko、初音ミク - 歌に形はないけれど",
+              "observatory-preview",
+              "坏苹果（车载dj版）"
+            ]
+          }
+        ]
+      },
+      "selected": "RM-001",
+      "mode": "detail",
+      "hint": "",
+      "items": [
+        {
+          "id": "4fff0864cde4",
+          "name": "夜间频率",
+          "count": "5 首",
+          "active": true,
+          "playing": true
+        }
+      ],
+      "rows": [
+        {
+          "key": "atmosphere",
+          "title": "AMBIENCE",
+          "missing": false
+        },
+        {
+          "key": "pulse",
+          "title": "PULSE",
+          "missing": false
+        },
+        {
+          "key": "doriko、初音ミク - 歌に形はないけれど",
+          "title": "DORIKO、初音ミク - 歌に形はないけれど",
+          "missing": false
+        },
+        {
+          "key": "observatory-preview",
+          "title": "OBSERVATORY-PREVIEW",
+          "missing": false
+        },
+        {
+          "key": "坏苹果（车载dj版）",
+          "title": "坏苹果（车载DJ版）",
+          "missing": false
+        }
+      ],
+      "placeholder": "",
+      "music": {
+        "queued": true,
+        "track": 0,
+        "wanted": 0,
+        "playing": true,
+        "files": [
+          "atmosphere",
+          "pulse",
+          "doriko、初音ミク - 歌に形はないけれど.mp3",
+          "observatory-preview.mp3",
+          "坏苹果（车载dj版）.mp3"
+        ]
+      }
+    },
+    "deleted": {
+      "playlists": {
+        "active": null,
+        "lists": []
+      },
+      "selected": "RM-001",
+      "mode": "detail",
+      "hint": "",
+      "items": [],
+      "rows": [],
+      "placeholder": "左侧还没有可用的列表。先新建一个。",
+      "music": {
+        "queued": false,
+        "track": 0,
+        "wanted": 0,
+        "playing": true,
+        "files": [
+          "atmosphere",
+          "motif",
+          "pulse",
+          "doriko、初音ミク - 歌に形はないけれど.mp3",
+          "observatory-preview.mp3",
+          "坏苹果（车载dj版）.mp3"
+        ]
+      }
+    },
+    "missing-entry": {
+      "playlists": {
+        "active": null,
+        "lists": [
+          {
+            "id": "pl-seed",
+            "name": "Seed",
+            "createdAt": 1,
+            "tracks": [
+              "local:missingentry",
+              "atmosphere"
+            ]
+          }
+        ]
+      },
+      "selected": "RM-001",
+      "mode": "archive",
+      "hint": "",
+      "items": [
+        {
+          "id": "pl-seed",
+          "name": "Seed",
+          "count": "2 首",
+          "active": true,
+          "playing": false
+        }
+      ],
+      "rows": [
+        {
+          "key": "local:missingentry",
+          "title": "已失效",
+          "missing": true
+        },
+        {
+          "key": "atmosphere",
+          "title": "AMBIENCE",
+          "missing": false
+        }
+      ],
+      "placeholder": "",
+      "music": {
+        "queued": false,
+        "track": 0,
+        "wanted": 0,
+        "playing": true,
+        "files": [
+          "atmosphere",
+          "motif",
+          "pulse",
+          "doriko、初音ミク - 歌に形はないけれど.mp3",
+          "observatory-preview.mp3",
+          "坏苹果（车载dj版）.mp3"
+        ]
+      }
+    },
+    "missing-playing": {
+      "playlists": {
+        "active": "pl-seed",
+        "lists": [
+          {
+            "id": "pl-seed",
+            "name": "Seed",
+            "createdAt": 1,
+            "tracks": [
+              "local:missingentry",
+              "atmosphere"
+            ]
+          }
+        ]
+      },
+      "selected": "RM-001",
+      "mode": "archive",
+      "hint": "",
+      "items": [
+        {
+          "id": "pl-seed",
+          "name": "Seed",
+          "count": "2 首",
+          "active": true,
+          "playing": true
+        }
+      ],
+      "rows": [
+        {
+          "key": "local:missingentry",
+          "title": "已失效",
+          "missing": true
+        },
+        {
+          "key": "atmosphere",
+          "title": "AMBIENCE",
+          "missing": false
+        }
+      ],
+      "placeholder": "",
+      "music": {
+        "queued": true,
+        "track": 0,
+        "wanted": 0,
+        "playing": true,
+        "files": [
+          "atmosphere"
+        ]
+      }
+    }
+  },
+  "failures": [],
+  "errors": [],
+  "passed": true
+}

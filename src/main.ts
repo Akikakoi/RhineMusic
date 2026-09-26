@@ -46,6 +46,17 @@ import {
   updateLocalTrack,
   type LocalTrackEntry,
 } from "./local-tracks";
+import {
+  addToPlaylist,
+  createPlaylist,
+  getPlaylist,
+  listPlaylists,
+  moveInPlaylist,
+  removeFromPlaylist,
+  removePlaylist,
+  renamePlaylist,
+  subscribePlaylists,
+} from "./playlists";
 import { StartupGate } from "./startup";
 import { isWallpaper, wallpaperHost, wallpaperFrame, type WallpaperProperties } from "./wallpaper";
 import "./startup.css";
@@ -71,7 +82,7 @@ $("#stage").innerHTML = `
   <header class="brand">${brandHeading}</header>
   <nav class="system-nav" aria-label="系统导航">
     <button data-action="search"><span class="nav-glyph">⌕</span> TRACK INDEX <span class="key">/</span></button>
-    <button data-action="saved" aria-label="查看收藏曲目" title="收藏曲目">＋ SAVED <span id="saved-count">00</span></button>
+    <button data-action="playlists" aria-label="查看播放列表" title="播放列表">＋ PLAYLISTS <span id="playlist-count">00</span></button>
     <button class="settings-button" data-action="settings" aria-label="系统设置" title="系统设置"><span class="settings-glyph" aria-hidden="true">◷</span><span class="settings-label">设置</span></button>
   </nav>
   <button id="skip" class="skip" data-action="skip">ENTER SYSTEM <span>↗</span></button>
@@ -117,7 +128,7 @@ let mode: Mode = "boot",
   bootStart = 0,
   lastStep = "",
   ready = false;
-let modal: "search" | "saved" | "settings" | null = null,
+let modal: "search" | "playlists" | "settings" | null = null,
   searchQuery = "",
   filter = "全部曲目";
 let activeTab = "overview";
@@ -152,7 +163,6 @@ let modalTransition: SurfaceTransition | undefined;
 let modalClosing = false;
 let modalSiblings: { node: HTMLElement; inert: boolean }[] = [];
 let pendingDetailFocus = false;
-let bookmarkFeedback: Animation | undefined;
 function readLocal<T>(key: string, fallback: T): T {
   try {
     return JSON.parse(localStorage.getItem(key) ?? "null") ?? fallback;
@@ -160,7 +170,6 @@ function readLocal<T>(key: string, fallback: T): T {
     return fallback;
   }
 }
-const saved = new Set<string>(readLocal<string[]>("rhine-saved", []));
 const storedPrefs = readLocal<Partial<{ sound: boolean; music: boolean; soundVolume: number; musicVolume: number; musicTrack: number; musicLoop: string; reduced: boolean; quality: boolean; rendering: RenderQuality; superPerformance: boolean; colorTheme: "light" | "dark" }>>("rhine-settings", {});
 const prefs = {
   sound: true,
@@ -286,7 +295,6 @@ function savePrefs() {
     detailTransition.finish();
     modalTransition?.finish();
     tabTransition.cancel();
-    bookmarkFeedback?.cancel();
   }
   scene?.setReduced(prefs.reduced);
   scene?.setTheme(prefs.colorTheme === "dark", prefs.reduced || !started);
@@ -466,7 +474,7 @@ let selectionPlayTimer: ReturnType<typeof setTimeout> | undefined;
  */
 function selectForPlayback() {
   clearTimeout(selectionPlayTimer);
-  const index = playlistIndex(records[selected]);
+  const index = ensureQueueFor(records[selected]);
   if (index < 0 || !prefs.music) return;
   if (audio.musicState().track === index && audio.musicState().playing) return;
   selectionPlayTimer = setTimeout(() => {
@@ -474,7 +482,6 @@ function selectForPlayback() {
     prefs.musicTrack = index;
     saveAudioPrefs();
     audio.setPaused(false);
-    updateMusicPanel();
     updatePlaybackPanel();
   }, 350);
 }
@@ -525,7 +532,7 @@ function updateSelection(navigation?: ArchiveNavigation) {
     button.classList.toggle("selected", index === selected);
     button.setAttribute("aria-pressed", String(index === selected));
   });
-  $("#saved-count").textContent = String(saved.size).padStart(2, "0");
+  updatePlaylistBadge();
 }
 function replayBoot(forcePreview = false) {
   if (!ready) return;
@@ -550,27 +557,328 @@ function openFile() {
     audio.play("open");
   });
 }
-function toggleSaved() {
-  const id = records[selected].id;
-  if (saved.has(id)) saved.delete(id);
-  else saved.add(id);
-  try {
-    localStorage.setItem("rhine-saved", JSON.stringify([...saved]));
-  } catch {}
-  $("#saved-count").textContent = String(saved.size).padStart(2, "0");
-  const button = $<HTMLButtonElement>('[data-action="bookmark"]');
-  const added = saved.has(id);
-  button.firstChild!.textContent = added ? "− REMOVE FROM SAVED" : "＋ SAVE TRACK";
-  button.querySelector("span")!.textContent = added ? "已收藏" : "收藏曲目";
-  button.setAttribute("aria-pressed", String(added));
-  bookmarkFeedback?.cancel();
-  if (!prefs.reduced) bookmarkFeedback = button.animate(
-    [{ backgroundColor: "#67634c" }, { backgroundColor: "#252820" }],
-    { duration: 220, easing: "ease-out" },
-  );
-  audio.play("confirm");
-  notify(saved.has(id) ? "曲目已加入收藏" : "已取消收藏");
+/* ---------------------------------------------------------------- 播放列表 */
+
+/** 当前驱动播放队列的列表 id；null = 整个曲库。不持久化，刷新后回到整库。 */
+let activePlaylistId: string | null = null;
+/** 弹窗内的局部状态：选中的列表、行内编辑、删除确认，以及待加入的曲目标识。 */
+const playlistPane = {
+  selected: null as string | null,
+  editing: null as "new" | "rename" | null,
+  confirming: false,
+  pendingKey: null as string | null,
+};
+
+/** 曲目标识：占位槽（没有音源）返回 null。 */
+function playableKeyOf(index: number) {
+  const record = records[index];
+  return !record.pending && record.file ? musicTrackKey(record.file) : null;
 }
+function recordIndexByKey(key: string) {
+  return records.findIndex(
+    (record) =>
+      !record.pending && record.file && musicTrackKey(record.file) === key,
+  );
+}
+function playlistTrackLabel(key: string) {
+  const index = recordIndexByKey(key);
+  if (index < 0) return null;
+  const record = records[index];
+  return { id: record.id, title: record.title, artist: record.artist };
+}
+
+function updatePlaylistBadge() {
+  const badge = document.querySelector<HTMLElement>("#playlist-count");
+  if (badge) badge.textContent = String(listPlaylists().length).padStart(2, "0");
+  document
+    .querySelector<HTMLElement>('[data-action="playlists"]')
+    ?.classList.toggle("active", activePlaylistId !== null);
+}
+
+/**
+ * 播放某条曲目：若它不在当前队列里，先退出队列回到整库，再取播放列表下标。
+ * 队列驱动整条播放链路，播放队列外的曲目必须显式退出，否则拿不到下标。
+ */
+function ensureQueueFor(record: (typeof records)[number]) {
+  const direct = playlistIndex(record);
+  if (direct >= 0 || !activePlaylistId) return direct;
+  if (record.pending || !record.file) return -1;
+  activePlaylistId = null;
+  audio.setQueue(null);
+  updatePlaylistBadge();
+  return playlistIndex(record);
+}
+
+/** 列表内容变化后让引擎跟上；列表被删则退出队列。 */
+function syncPlaylistQueue() {
+  updatePlaylistBadge();
+  if (!activePlaylistId) return;
+  const list = getPlaylist(activePlaylistId);
+  if (!list) {
+    activePlaylistId = null;
+    audio.setQueue(null);
+    updatePlaylistBadge();
+    return;
+  }
+  audio.setQueue(list.tracks);
+  updatePlaybackPanel();
+}
+
+function startPlaylist(id: string) {
+  const list = getPlaylist(id);
+  if (!list) {
+    notify("播放列表已不存在");
+    return;
+  }
+  activePlaylistId = id;
+  audio.setQueue(list.tracks);
+  prefs.musicTrack = list.tracks.length ? 0 : -1;
+  saveAudioPrefs();
+  audio.setPaused(false);
+  updatePlaylistBadge();
+  updatePlaybackPanel();
+  if (list.tracks.length) notify(`正在播放列表：${list.name}`);
+  else notify(`「${list.name}」还没有曲目`);
+}
+
+function leavePlaylistQueue() {
+  if (!activePlaylistId) return;
+  activePlaylistId = null;
+  audio.setQueue(null);
+  updatePlaylistBadge();
+  updatePlaybackPanel();
+  notify("已回到整个曲库");
+}
+
+/** 从详情面板发起「加入播放列表」：打开列表弹窗，点哪个列表就加进哪个。 */
+function openPlaylistPicker() {
+  const key = playableKeyOf(selected);
+  if (!key) {
+    notify("该曲目尚未入库，无法加入列表");
+    return;
+  }
+  playlistPane.pendingKey = key;
+  playlistPane.editing = null;
+  playlistPane.confirming = false;
+  openModal("playlists");
+}
+
+function playlistNameValue() {
+  return document.querySelector<HTMLInputElement>("#playlist-name")?.value ?? "";
+}
+
+function focusPlaylistInput() {
+  requestAnimationFrame(() => {
+    document
+      .querySelector<HTMLInputElement>("#playlist-name")
+      ?.focus({ preventScroll: true });
+  });
+}
+
+function playlistRowButtons(key: string, index: number, total: number) {
+  const id = escapeHtml(key);
+  return [
+    `<button type="button" data-action="playlist-track-play" data-key="${id}" title="播放这一首">▶</button>`,
+    `<button type="button" data-action="playlist-move" data-key="${id}" data-direction="-1"${index === 0 ? " disabled" : ""} title="上移">↑</button>`,
+    `<button type="button" data-action="playlist-move" data-key="${id}" data-direction="1"${index === total - 1 ? " disabled" : ""} title="下移">↓</button>`,
+    `<button type="button" data-action="playlist-remove" data-key="${id}" title="移出列表">移除</button>`,
+  ].join("");
+}
+
+/** 播放列表弹窗内容；外层 <section class="terminal-modal"> 由 renderModal 提供。 */
+function playlistsMarkup() {
+  const lists = listPlaylists();
+  if (playlistPane.selected && !getPlaylist(playlistPane.selected))
+    playlistPane.selected = null;
+  if (!playlistPane.selected && lists.length) playlistPane.selected = lists[0].id;
+  const list = playlistPane.selected
+    ? getPlaylist(playlistPane.selected)
+    : undefined;
+  const editing = playlistPane.editing;
+  const pendingLabel = playlistPane.pendingKey
+    ? playlistTrackLabel(playlistPane.pendingKey)
+    : null;
+  const hint = playlistPane.pendingKey
+    ? `<p class="playlist-hint" role="status">正在加入「${escapeHtml(pendingLabel?.title ?? "该曲目")}」：点左侧任一列表即可。</p>`
+    : "";
+  const items = lists.length
+    ? lists
+        .map(
+          (item) =>
+            `<button type="button" class="playlist-item${item.id === playlistPane.selected ? " active" : ""}${item.id === activePlaylistId ? " playing" : ""}" data-playlist="${escapeHtml(item.id)}"><b>${escapeHtml(item.name)}</b><small>${item.tracks.length} 首</small></button>`,
+        )
+        .join("")
+    : `<p class="playlist-empty">还没有播放列表。新建一个会自动填入曲库里的全部曲目，再按需删减。</p>`;
+  const editor =
+    editing === "new"
+      ? `<div class="playlist-editor"><input id="playlist-name" type="text" maxlength="24" placeholder="列表名称" aria-label="新列表名称" autocomplete="off"/><button type="button" data-action="playlist-create">创建</button><button type="button" data-action="playlist-cancel">取消</button></div>`
+      : editing === "rename"
+        ? `<div class="playlist-editor"><input id="playlist-name" type="text" maxlength="24" value="${escapeHtml(list?.name ?? "")}" aria-label="列表名称" autocomplete="off"/><button type="button" data-action="playlist-rename-save">保存</button><button type="button" data-action="playlist-cancel">取消</button></div>`
+        : "";
+  const rows = list
+    ? list.tracks
+        .map((key, index) => {
+          const label = playlistTrackLabel(key);
+          const no = String(index + 1).padStart(2, "0");
+          const actions = playlistRowButtons(key, index, list.tracks.length);
+          return label
+            ? `<div class="playlist-row" data-key="${escapeHtml(key)}"><span class="playlist-no">${no}</span><span class="playlist-name"><b>${escapeHtml(label.title)}</b><small>${escapeHtml(label.id)} · ${escapeHtml(label.artist)}</small></span><span class="playlist-actions">${actions}</span></div>`
+            : `<div class="playlist-row playlist-row--missing" data-key="${escapeHtml(key)}"><span class="playlist-no">${no}</span><span class="playlist-name"><b>已失效</b><small>曲目已不在曲库</small></span><span class="playlist-actions">${actions}</span></div>`;
+        })
+        .join("")
+    : "";
+  const missing = list
+    ? list.tracks.filter((key) => !playlistTrackLabel(key)).length
+    : 0;
+  const detail = list
+    ? `<div class="playlist-head"><div><strong>${escapeHtml(list.name)}</strong><span>${list.tracks.length} 首${missing ? ` · ${missing} 首已失效` : ""}${list.id === activePlaylistId ? " · 正在播放" : ""}</span></div><div class="playlist-head-actions">${
+        editing
+          ? ""
+          : `<button type="button" data-action="playlist-play"${list.tracks.length ? "" : " disabled"}>▶ 播放</button><button type="button" data-action="playlist-rename">重命名</button>${
+              playlistPane.confirming
+                ? `<button type="button" data-action="playlist-delete-confirm">确认删除</button><button type="button" data-action="playlist-cancel">取消</button>`
+                : `<button type="button" data-action="playlist-delete">删除</button>`
+            }`
+      }</div></div>${editor}${
+        list.tracks.length
+          ? `<div class="playlist-rows">${rows}</div>`
+          : `<p class="playlist-placeholder">列表已空。用曲目详情里的「加入播放列表」把曲目加回来，或再新建一个自动填满的列表。</p>`
+      }`
+    : `<p class="playlist-placeholder">左侧还没有可用的列表。先新建一个。</p>`;
+  return `<h2>PLAYLISTS<small>播放列表</small></h2>${hint}<div class="playlist-layout"><div class="playlist-column"><div class="playlist-column-head"><span>LISTS / 列表</span>${
+    editing
+      ? ""
+      : `<button type="button" data-action="playlist-new">＋ 新建列表</button>`
+  }</div>${editing === "new" ? editor : ""}<div class="playlist-items">${items}</div></div><div class="playlist-detail">${detail}</div></div><div class="modal-bottom"><span>${lists.length} 个列表 · ${activePlaylistId ? "播放队列已切到列表" : "当前播整个曲库"}</span><span>RHINE MUSIC <i>●</i> PLAYLISTS</span></div>`;
+}
+
+function handlePlaylistAction(button: HTMLElement) {
+  const action = button.dataset.action ?? "";
+  const key = button.dataset.key ?? "";
+  const listId = button.dataset.playlist ?? playlistPane.selected ?? "";
+  if (action === "playlist-new") {
+    playlistPane.editing = "new";
+    playlistPane.confirming = false;
+    renderModal();
+    focusPlaylistInput();
+    return;
+  }
+  if (action === "playlist-cancel") {
+    playlistPane.editing = null;
+    playlistPane.confirming = false;
+    renderModal();
+    return;
+  }
+  if (action === "playlist-create") {
+    const created = createPlaylist(playlistNameValue(), audio.libraryKeys());
+    if (!created) {
+      notify("无法新建：名称无效或列表数量已达上限");
+      renderModal();
+      return;
+    }
+    playlistPane.editing = null;
+    playlistPane.selected = created.id;
+    renderModal();
+    // 新列表自动填入整个曲库，再让用户删减。
+    notify(`已新建列表：${created.name} · 已填入 ${created.tracks.length} 首`);
+    return;
+  }
+  if (action === "playlist-rename") {
+    if (!listId) return;
+    playlistPane.editing = "rename";
+    playlistPane.confirming = false;
+    renderModal();
+    focusPlaylistInput();
+    return;
+  }
+  if (action === "playlist-rename-save") {
+    if (!listId) return;
+    const renamed = renamePlaylist(listId, playlistNameValue());
+    playlistPane.editing = null;
+    renderModal();
+    notify(renamed ? "列表已重命名" : "名称无效，未修改");
+    return;
+  }
+  if (action === "playlist-delete") {
+    playlistPane.confirming = true;
+    renderModal();
+    return;
+  }
+  if (action === "playlist-delete-confirm") {
+    if (!listId) return;
+    const removed = getPlaylist(listId);
+    removePlaylist(listId);
+    playlistPane.confirming = false;
+    if (playlistPane.selected === listId) playlistPane.selected = null;
+    if (activePlaylistId === listId) {
+      activePlaylistId = null;
+      audio.setQueue(null);
+      updatePlaybackPanel();
+    }
+    renderModal();
+    notify(removed ? `已删除列表：${removed.name}` : "列表已不存在");
+    return;
+  }
+  if (action === "playlist-play") {
+    if (!listId) return;
+    startPlaylist(listId);
+    renderModal();
+    return;
+  }
+  if (action === "playlist-track-play") {
+    if (!listId || !key) return;
+    startPlaylist(listId);
+    const index = audio
+      .musicState()
+      .tracks.findIndex((track) => musicTrackKey(track.file) === key);
+    if (index >= 0) {
+      prefs.musicTrack = index;
+      saveAudioPrefs();
+      audio.setPaused(false);
+      updatePlaybackPanel();
+    }
+    renderModal();
+    return;
+  }
+  if (action === "playlist-move") {
+    if (!listId || !key) return;
+    moveInPlaylist(listId, key, button.dataset.direction === "-1" ? -1 : 1);
+    syncPlaylistQueue();
+    renderModal();
+    return;
+  }
+  if (action === "playlist-remove") {
+    if (!listId || !key) return;
+    removeFromPlaylist(listId, key);
+    syncPlaylistQueue();
+    renderModal();
+    return;
+  }
+  if (button.dataset.playlist) {
+    if (playlistPane.pendingKey) {
+      const target = button.dataset.playlist;
+      const result = addToPlaylist(target, playlistPane.pendingKey);
+      const name = getPlaylist(target)?.name ?? "列表";
+      playlistPane.pendingKey = null;
+      renderModal();
+      notify(
+        result === "added"
+          ? `已加入「${name}」`
+          : result === "exists"
+            ? `「${name}」里已有这首`
+            : result === "full"
+              ? `「${name}」已达曲目上限`
+              : "列表已不存在",
+      );
+      return;
+    }
+    playlistPane.selected = button.dataset.playlist;
+    playlistPane.editing = null;
+    playlistPane.confirming = false;
+    renderModal();
+  }
+}
+
 function renderDetail() {
   tabTransition.cancel();
   const r = records[selected];
@@ -586,10 +894,9 @@ function renderDetail() {
   <dl class="metadata"><div><dt>COLLECTION / 曲库分类</dt><dd>${escapeHtml(r.category)}</dd></div><div><dt>DURATION / 时长</dt><dd>${formatDuration(r.duration)}</dd></div><div><dt>SOURCE / 音源</dt><dd class="metadata-file" title="${playable ? escapeHtml(r.file ?? "") : ""}">${playable ? escapeHtml(source) : "尚未入库"}</dd></div><div><dt>STATUS / 状态</dt><dd><i></i>${playable ? status : "占位曲目 · 待入库"}</dd></div></dl>
   <div class="detail-tabs" role="tablist"><button id="tab-overview" class="active" role="tab" aria-controls="tab-panel" aria-selected="true" data-tab="overview">01 <span>播放</span></button><button id="tab-notes" role="tab" aria-controls="tab-panel" aria-selected="false" data-tab="notes">02 <span>歌词</span></button><button id="tab-history" role="tab" aria-controls="tab-panel" aria-selected="false" data-tab="history">03 <span>播放记录</span></button><i class="tab-indicator" aria-hidden="true"></i></div>
   <div id="tab-panel" class="tab-panel" role="tabpanel">${overview()}</div>
-  <div class="detail-actions"><button class="solid-button" data-action="bookmark">${saved.has(r.id) ? "− REMOVE FROM SAVED" : "＋ SAVE TRACK"}<span>${saved.has(r.id) ? "已收藏" : "收藏曲目"}</span></button>${playable ? `<button class="solid-button" data-action="play-track">${playingTrack() ? "❚❚ PAUSE" : "▶ PLAY"}<span>${playingTrack() ? "暂停" : "播放"}</span></button>` : `<button class="solid-button" disabled>▶ PENDING<span>尚未入库</span></button>`}</div>
+  <div class="detail-actions"><button class="solid-button" data-action="playlist-add"${playable ? "" : " disabled"}>＋ ADD TO PLAYLIST<span>加入播放列表</span></button>${playable ? `<button class="solid-button" data-action="play-track">${playingTrack() ? "❚❚ PAUSE" : "▶ PLAY"}<span>${playingTrack() ? "暂停" : "播放"}</span></button>` : `<button class="solid-button" disabled>▶ PENDING<span>尚未入库</span></button>`}</div>
   ${playable ? "" : `<div class="detail-footnote"><span>占位曲目，仅用于填满五列阵列，没有音源</span><span>${String(selected + 1).padStart(3, "0")} / ${String(records.length).padStart(3, "0")}</span></div>`}`;
   $("#detail-content").setAttribute("tabindex", "-1");
-  $('[data-action="bookmark"]').setAttribute("aria-pressed", String(saved.has(r.id)));
   documentDecryption.reset($("#detail-content"), prefs.reduced || !scene || scene.decryptionFrame.phase === "clear");
   setTab(activeTab, false);
   updatePlaybackPanel();
@@ -624,6 +931,7 @@ function overview() {
     <button data-action="play-loop" aria-pressed="${prefs.musicLoop === "one"}" aria-label="循环模式">${prefs.musicLoop === "one" ? "↻ 单曲" : "↻ 列表"}</button>
   </div>
   <p id="playback-local" class="playback-local" hidden></p>
+  ${activePlaylistId ? `<p class="playback-queue" role="status"><span>PLAYLIST</span><b>${escapeHtml(getPlaylist(activePlaylistId)?.name ?? "")}</b><button type="button" data-action="playlist-leave">退出列表</button></p>` : ""}
   <p class="playback-note">${r.pending ? "占位曲目：音源尚未入库，等待后续补充真实文件与时长。" : r.localId ? "音源来自本机导入的本地曲库（IndexedDB），与设置中的迷你播放器共用同一条音频链路。" : "音源来自 public/audio，与设置中的迷你播放器共用同一条音频链路。"}</p>`;
 }
 /** 把音频引擎的播放状态写回面板；播放列表里没有的曲目保持静默。 */
@@ -669,13 +977,13 @@ function updatePlaybackPanel() {
 }
 /** 详情面板的走带控制：与设置里的迷你播放器共用同一条音频链路。 */
 function controlPlayback(action: string) {
-  const index = playlistIndex(records[selected]);
   if (action === "loop") {
     prefs.musicLoop = prefs.musicLoop === "one" ? "all" : "one";
     saveAudioPrefs();
     updatePlaybackPanel();
     return;
   }
+  const index = ensureQueueFor(records[selected]);
   if (index < 0) {
     notify("该曲目尚未入库，暂时无法播放");
     return;
@@ -693,7 +1001,6 @@ function controlPlayback(action: string) {
     saveAudioPrefs();
     audio.skip(action === "prev" ? -1 : 1);
   }
-  updateMusicPanel();
   updatePlaybackPanel();
 }
 /** 歌词页签：有 LRC 时按播放进度高亮并滚动；没有则说明原因。 */
@@ -882,7 +1189,6 @@ async function importLocalFiles(files: File[]) {
     localError = localMessage(error, "本地曲库读取失败。");
   });
   refreshLocalLibrary();
-  updateMusicPanel();
   if (added && failures.length) notify(`已导入 ${added} 首，${failures.length} 项未导入`);
   else if (added) notify(`已导入 ${added} 首本地曲目`);
   if (failures.length) notify(failures[0]);
@@ -903,7 +1209,6 @@ function playLocalTrack(id: string) {
     audio.setPaused(false);
     notify(`正在播放：${state.tracks[index].title}`);
   }
-  updateMusicPanel();
   updatePlaybackPanel();
   syncLocalPlaying();
 }
@@ -933,7 +1238,6 @@ async function saveLocalEdit() {
   localError = "";
   localPanel = { editing: null, confirming: null };
   refreshLocalLibrary();
-  updateMusicPanel();
   updatePlaybackPanel();
   notify("元数据已更新");
 }
@@ -950,7 +1254,6 @@ async function deleteLocal(id: string) {
   }
   localError = "";
   refreshLocalLibrary();
-  updateMusicPanel();
   updatePlaybackPanel();
   notify("已从本地曲库删除");
 }
@@ -988,7 +1291,7 @@ function syncTrackLibrary() {
   updateSelection();
   scene?.refreshRecord();
   if (mode === "detail") renderDetail();
-  if (modal === "search" || modal === "saved") renderResults();
+  if (modal === "search") renderResults();
   updatePlaybackPanel();
 }
 
@@ -999,6 +1302,10 @@ subscribeLocalTracks((next) => {
   // 本地曲目覆盖占位槽：同一首永远落在同一个方块上。
   applyLocalTracks(next);
   refreshLocalLibrary();
+});
+subscribePlaylists(() => {
+  syncPlaylistQueue();
+  if (modal === "playlists") renderModal();
 });
 subscribeTracks(syncTrackLibrary);
 
@@ -1050,7 +1357,7 @@ function renderModal() {
   if (!modal) return;
   modalTransition?.dispose();
   $("#modal-root").innerHTML =
-    `<div class="modal-backdrop"><section class="terminal-modal ${modal === "settings" ? "settings-modal" : ""}" role="dialog" aria-modal="true" aria-label="${modal === "settings" ? "系统设置" : modal === "saved" ? "收藏曲目" : "曲库检索"}"><div class="modal-top"><span>RHINE MUSIC / ${modal === "settings" ? "SYSTEM PREFERENCES" : "AUDIO DIRECTORY"}</span><button data-action="close-modal" aria-label="关闭窗口">CLOSE <span>×</span></button></div>${modal === "settings" ? settingsMarkup() : `<h2>${modal === "saved" ? "SAVED TRACKS" : "TRACK INDEX"}<small>${modal === "saved" ? "收藏曲目" : "内部曲库检索"}</small></h2><div class="search-field"><span>⌕</span><input id="archive-search" type="search" autocomplete="off" placeholder="输入曲目编号、名称或歌手" aria-label="检索曲目"/><span class="key">ESC</span></div><div class="category-filters">${categories.map((c, i) => `<button data-filter="${escapeHtml(c)}" class="${i === 0 ? "active" : ""}">${escapeHtml(c)}</button>`).join("")}</div><div class="result-header"><span>TRACK / 曲目</span><span>COLLECTION / 分类</span><span>STATUS</span></div><div id="search-results" class="search-results"></div><div class="modal-bottom"><span id="result-count"></span><span>AUDIO ARCHIVE <i>●</i> CONNECTED</span></div>`}</section></div>`;
+    `<div class="modal-backdrop"><section class="terminal-modal ${modal === "settings" ? "settings-modal" : modal === "playlists" ? "playlists-modal" : ""}" role="dialog" aria-modal="true" aria-label="${modal === "settings" ? "系统设置" : modal === "playlists" ? "播放列表" : "曲库检索"}"><div class="modal-top"><span>RHINE MUSIC / ${modal === "settings" ? "SYSTEM PREFERENCES" : "AUDIO DIRECTORY"}</span><button data-action="close-modal" aria-label="关闭窗口">CLOSE <span>×</span></button></div>${modal === "settings" ? settingsMarkup() : modal === "playlists" ? playlistsMarkup() : `<h2>TRACK INDEX<small>内部曲库检索</small></h2><div class="search-field"><span>⌕</span><input id="archive-search" type="search" autocomplete="off" placeholder="输入曲目编号、名称或歌手" aria-label="检索曲目"/><span class="key">ESC</span></div><div class="category-filters">${categories.map((c, i) => `<button data-filter="${escapeHtml(c)}" class="${i === 0 ? "active" : ""}">${escapeHtml(c)}</button>`).join("")}</div><div class="result-header"><span>TRACK / 曲目</span><span>COLLECTION / 分类</span><span>STATUS</span></div><div id="search-results" class="search-results"></div><div class="modal-bottom"><span id="result-count"></span><span>AUDIO ARCHIVE <i>●</i> CONNECTED</span></div>`}</section></div>`;
   const backdrop = $(".modal-backdrop");
   backdrop.hidden = true;
   modalTransition = new SurfaceTransition(backdrop, $(".terminal-modal"));
@@ -1059,10 +1366,16 @@ function renderModal() {
     refreshLocalLibrary();
     updateQualitySummary();
   }
-  if (modal !== "settings") {
+  if (modal === "search") {
     renderResults();
     requestAnimationFrame(() => {
       if (backdrop.isConnected && !modalClosing) $("#archive-search").focus();
+    });
+  } else if (modal === "playlists") {
+    requestAnimationFrame(() => {
+      if (!backdrop.isConnected || modalClosing) return;
+      if (playlistPane.editing) focusPlaylistInput();
+      else $('[data-action="close-modal"]').focus({ preventScroll: true });
     });
   } else
     requestAnimationFrame(() => {
@@ -1079,7 +1392,6 @@ function renderResults() {
     .map((r, i) => ({ r, i }))
     .filter(
       ({ r }) =>
-        (modal !== "saved" || saved.has(r.id)) &&
         (filter === "全部曲目" || r.category === filter) &&
         `${r.id} ${r.title} ${r.artist} ${r.category}`
           .toLowerCase()
@@ -1089,10 +1401,10 @@ function renderResults() {
     ? results
         .map(
           ({ r, i }) =>
-            `<button class="result-row" data-result="${i}"><span class="result-name"><b>${r.id}</b><span>${escapeHtml(r.title)}<small>${escapeHtml(r.artist)}</small></span>${saved.has(r.id) ? "<i>＋</i>" : ""}</span><span>${escapeHtml(r.category)}</span><span>${r.pending ? "PENDING" : "READY"} <i>↗</i></span></button>`,
+            `<button class="result-row" data-result="${i}"><span class="result-name"><b>${r.id}</b><span>${escapeHtml(r.title)}<small>${escapeHtml(r.artist)}</small></span></span><span>${escapeHtml(r.category)}</span><span>${r.pending ? "PENDING" : "READY"} <i>↗</i></span></button>`,
         )
         .join("")
-    : `<div class="empty-results"><span>∅</span><strong>${modal === "saved" && !searchQuery ? "尚无收藏曲目" : "没有匹配的曲目"}</strong><p>${modal === "saved" && !searchQuery ? "选中曲目后，选择 SAVE TRACK 将其保存在此处。" : "尝试其他曲名、曲目编号，或切换曲库分类。"}</p><button data-action="reset-search">${modal === "saved" ? "查看全部曲目 →" : "重置检索 →"}</button></div>`;
+    : `<div class="empty-results"><strong>没有匹配的曲目</strong><p>尝试其他曲名、曲目编号，或切换曲库分类。</p><button data-action="reset-search">重置检索 →</button></div>`;
   $("#result-count").textContent =
     `${String(results.length).padStart(2, "0")} TRACKS FOUND`;
 }
@@ -1110,67 +1422,33 @@ function motionSettingsMarkup() {
     : "当前使用完整动效。"}</p>${prefs.reduced ? '<button data-action="enable-motion">启用完整动效并重播 ↻</button>' : ""}</div>`;
 }
 function settingsMarkup() {
-  return `<h2>SYSTEM SETTINGS<small>终端偏好设置</small></h2><p class="settings-intro">JOYCE MOORE <span>·</span> SESSION AUTHORIZED</p>${isWallpaper ? '<p class="wallpaper-settings-note">每次启动都会读取 Wallpaper Engine 中的设置。在此修改仅对当前运行生效，无法持久保存；如需保留，请在 Wallpaper Engine 的壁纸属性中调整。</p>' : ""}<div class="settings-list">${themeSettingsMarkup(prefs.colorTheme === "dark")}${!isWallpaper ? `<label><div><strong>SUPER PERFORMANCE</strong><span>降低三维画质和渲染分辨率，保留完整动效；关闭后恢复原画质</span></div><input type="checkbox" data-pref="superPerformance" ${prefs.superPerformance ? "checked" : ""}/><i class="toggle"></i></label>` : ""}${workbench?.settingsMarkup() ?? ""}${audioSettingsMarkup(prefs, audio.musicState())}<label><div><strong>REDUCED MOTION</strong><span>跳过开机动画，简化选档、镜头和文字动效</span></div><input type="checkbox" data-pref="reduced" ${prefs.reduced ? "checked" : ""}/><i class="toggle"></i></label></div>${motionSettingsMarkup()}<section id="local-library" class="local-library" aria-label="本地曲库"></section>${qualityMarkup(prefs.rendering)}${pwaSettingsMarkup()}<div class="settings-shortcuts">${isWallpaper ? '<span>DESKTOP CONTROLS</span><p>拖动阵列或点击界面按钮浏览档案。桌面模式下，方向键与滚轮可能无法传入壁纸。</p>' : '<span>KEYBOARD CONTROLS</span><p><kbd>←</kbd><kbd>→</kbd> 切列 <kbd>↑</kbd><kbd>↓</kbd> 选档 <kbd>ENTER</kbd> 读取 <kbd>/</kbd> 检索 <kbd>ESC</kbd> 返回</p>'}</div><div class="settings-bottom">${!isWallpaper && document.fullscreenEnabled ? '<button data-action="fullscreen">FULLSCREEN <span>↗</span></button>' : ''}<button data-action="restart">REINITIALIZE SYSTEM <span>↻</span></button></div><div class="modal-bottom"><span>ANALYSIS OS / 1.0 · 使用 MiSans 字体（小米） <a href="${assetUrl("fonts/MiSans-license.pdf")}" target="_blank" rel="noopener">字体许可</a></span><span>POWERED BY RHINE LAB</span></div>`;
+  return `<h2>SYSTEM SETTINGS<small>终端偏好设置</small></h2><p class="settings-intro">JOYCE MOORE <span>·</span> SESSION AUTHORIZED</p>${isWallpaper ? '<p class="wallpaper-settings-note">每次启动都会读取 Wallpaper Engine 中的设置。在此修改仅对当前运行生效，无法持久保存；如需保留，请在 Wallpaper Engine 的壁纸属性中调整。</p>' : ""}<div class="settings-list">${themeSettingsMarkup(prefs.colorTheme === "dark")}${!isWallpaper ? `<label><div><strong>SUPER PERFORMANCE</strong><span>降低三维画质和渲染分辨率，保留完整动效；关闭后恢复原画质</span></div><input type="checkbox" data-pref="superPerformance" ${prefs.superPerformance ? "checked" : ""}/><i class="toggle"></i></label>` : ""}${workbench?.settingsMarkup() ?? ""}${audioSettingsMarkup(prefs)}<label><div><strong>REDUCED MOTION</strong><span>跳过开机动画，简化选档、镜头和文字动效</span></div><input type="checkbox" data-pref="reduced" ${prefs.reduced ? "checked" : ""}/><i class="toggle"></i></label></div>${motionSettingsMarkup()}<section id="local-library" class="local-library" aria-label="本地曲库"></section>${qualityMarkup(prefs.rendering)}${pwaSettingsMarkup()}<div class="settings-shortcuts">${isWallpaper ? '<span>DESKTOP CONTROLS</span><p>拖动阵列或点击界面按钮浏览档案。桌面模式下，方向键与滚轮可能无法传入壁纸。</p>' : '<span>KEYBOARD CONTROLS</span><p><kbd>←</kbd><kbd>→</kbd> 切列 <kbd>↑</kbd><kbd>↓</kbd> 选档 <kbd>ENTER</kbd> 读取 <kbd>/</kbd> 检索 <kbd>ESC</kbd> 返回</p>'}</div><div class="settings-bottom">${!isWallpaper && document.fullscreenEnabled ? '<button data-action="fullscreen">FULLSCREEN <span>↗</span></button>' : ''}<button data-action="restart">REINITIALIZE SYSTEM <span>↻</span></button></div><div class="modal-bottom"><span>ANALYSIS OS / 1.0 · 使用 MiSans 字体（小米） <a href="${assetUrl("fonts/MiSans-license.pdf")}" target="_blank" rel="noopener">字体许可</a></span><span>POWERED BY RHINE LAB</span></div>`;
 }
 
 let musicSeeking = false;
 document.addEventListener("pointerdown", (e) => {
   const target = e.target as HTMLElement | null;
-  // 设置里的迷你播放器与详情面板的进度条共用这个标记，拖动期间不回写数值。
-  if (target?.dataset?.musicSeek !== undefined || target?.id === "playback-seek") musicSeeking = true;
+  // 详情面板的进度条拖动期间不回写数值。
+  if (target?.id === "playback-seek") musicSeeking = true;
 });
 window.addEventListener("pointerup", () => { musicSeeking = false; });
 window.addEventListener("pointercancel", () => { musicSeeking = false; });
-function updateMusicPanel() {
-  const panel = document.querySelector(".music-player");
-  if (!panel) return;
+/**
+ * 引擎换曲（自然播完、上一首/下一首、队列重映射）后把播放目标同步回偏好。
+ * 不做这一步，之后任意 saveAudioPrefs() 都可能把音频拉回旧曲目。
+ */
+function syncMusicPrefs() {
   const state = audio.musicState();
   if (state.wanted >= 0 && prefs.musicTrack !== state.wanted) {
     prefs.musicTrack = state.wanted;
     saveAudioPrefs();
-  }
-  const linked = state.track < 0;
-  panel.querySelectorAll<HTMLElement>(".player-mode").forEach((button) => {
-    const active = button.dataset.musicMode !== undefined
-      ? state.track === -1
-      : Number(button.dataset.musicTrack) === state.track;
-    button.classList.toggle("active", active);
-  });
-  const transport = panel.querySelector<HTMLElement>(".player-transport");
-  transport?.classList.toggle("disabled", linked);
-  panel.querySelectorAll<HTMLButtonElement>(".player-transport button").forEach((button) => {
-    button.disabled = linked;
-  });
-  const toggleButton = panel.querySelector<HTMLButtonElement>('[data-music-action="toggle"]');
-  if (toggleButton) {
-    toggleButton.textContent = state.playing ? "⏸" : "▶";
-    toggleButton.setAttribute("aria-label", state.playing ? "暂停" : "播放");
-  }
-  const loopButton = panel.querySelector<HTMLButtonElement>('[data-music-action="loop"]');
-  if (loopButton) loopButton.textContent = `↻ ${state.loop === "one" ? "ONE" : "ALL"}`;
-  const title = panel.querySelector<HTMLElement>(".player-title");
-  const now = state.track >= 0 ? state.tracks[state.track] : undefined;
-  if (title) title.textContent = linked
-    ? "BACKGROUND MUSIC"
-    : now
-      ? `${now.title}${now.subtitle ? ` · ${now.subtitle}` : ""}`
-      : "";
-  const time = panel.querySelector<HTMLOutputElement>(".player-time");
-  if (time) time.textContent = linked
-    ? "--:--"
-    : `${String(Math.floor(state.time / 60)).padStart(2, "0")}:${String(Math.floor(state.time % 60)).padStart(2, "0")}`;
-  panel.querySelector(".player-progress")?.classList.toggle("hidden", linked);
-  const seek = panel.querySelector<HTMLInputElement>("[data-music-seek]");
-  if (seek) {
-    seek.disabled = linked;
-    if (!musicSeeking) seek.value = String(state.duration > 0 ? Math.round((state.time / state.duration) * 1000) : 0);
   }
 }
 let lastPlayedFile = "";
 let playbackWasActive = false;
 let followingPlayback = false;
 window.addEventListener("rhine-music-state", () => {
-  updateMusicPanel();
+  syncMusicPrefs();
   updatePlaybackPanel();
   syncLocalPlaying();
   const state = audio.musicState();
@@ -1247,9 +1525,6 @@ document.addEventListener("input", (e) => {
     volume.closest("label")?.querySelector("output")?.replaceChildren(`${volume.value}%`);
     saveAudioPrefs();
   }
-  if (volume.dataset.musicSeek !== undefined) {
-    audio.seek(Number(volume.value) / 1000);
-  }
   if (volume.id === "playback-seek") {
     // 详情面板的进度条：拖动即在播放下调整位置，同时立刻回显时间。
     const fraction = Number(volume.value) / 1000;
@@ -1291,31 +1566,21 @@ document.addEventListener("change", (e) => {
 document.addEventListener("click", (e) => {
   const themeButton = (e.target as Element).closest<HTMLElement>("[data-color-theme]");
   if (themeButton) { prefs.colorTheme = themeButton.dataset.colorTheme === "dark" ? "dark" : "light"; savePrefs(); return; }
-  const musicControl = (e.target as Element).closest<HTMLElement>("[data-music-mode], [data-music-track], [data-music-action]");
-  if (musicControl && !(musicControl as HTMLButtonElement).disabled) {
-    if (musicControl.dataset.musicMode !== undefined) {
-      prefs.musicTrack = -1;
-      saveAudioPrefs();
-      updateMusicPanel();
-    } else if (musicControl.dataset.musicTrack !== undefined) {
-      prefs.musicTrack = Number(musicControl.dataset.musicTrack);
-      saveAudioPrefs();
-      updateMusicPanel();
-    } else if (musicControl.dataset.musicAction) {
-      const action = musicControl.dataset.musicAction;
-      if (action === "toggle") audio.setPaused(audio.musicState().playing);
-      else if (action === "prev") audio.skip(-1);
-      else if (action === "next") audio.skip(1);
-      else if (action === "loop") prefs.musicLoop = prefs.musicLoop === "one" ? "all" : "one";
-      if (action === "loop") saveAudioPrefs();
-      updateMusicPanel();
-    }
-    audio.play("tick");
-    return;
-  }
   const localControl = (e.target as Element).closest<HTMLElement>("[data-local-action]");
   if (localControl && !(localControl as HTMLButtonElement).disabled) {
     handleLocalAction(localControl);
+    audio.play("tick");
+    return;
+  }
+  const playlistControl = (e.target as Element).closest<HTMLElement>(
+    '[data-playlist], [data-action^="playlist-"]',
+  );
+  if (
+    playlistControl &&
+    !(playlistControl as HTMLButtonElement).disabled &&
+    modal === "playlists"
+  ) {
+    handlePlaylistAction(playlistControl);
     audio.play("tick");
     return;
   }
@@ -1370,12 +1635,20 @@ document.addEventListener("click", (e) => {
     setMode("archive");
     audio.play("back");
   }
-  if (action === "search" || action === "saved" || action === "settings") {
+  if (action === "search" || action === "playlists" || action === "settings") {
     el.focus({ preventScroll: true });
     openModal(action);
   }
   if (action === "close-modal") closeModal();
-  if (action === "bookmark") toggleSaved();
+  if (action === "playlist-add") {
+    openPlaylistPicker();
+    return;
+  }
+  if (action === "playlist-leave") {
+    leavePlaylistQueue();
+    renderDetail();
+    return;
+  }
   if (action === "clear-log") {
     clearPlayLog();
     setTab("history", false);
@@ -1888,7 +2161,7 @@ Object.assign(window, {
       motion: { reduced: prefs.reduced, systemReduced: matchMedia("(prefers-reduced-motion: reduce)").matches },
       bootTime: mode === "boot" ? started ? (frozenTime ?? performance.now() / 1000 - bootStart) + 5 : 6.76 : null,
       selected: records[selected].id,
-      saved: [...saved],
+      playlists: { active: activePlaylistId, lists: listPlaylists() },
       // 曲库覆盖后的槽位实况；供 check-local-array.mjs 这类检查读取。
       library: {
         ...localSlotState(),

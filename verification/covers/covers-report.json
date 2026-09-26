@@ -25,7 +25,7 @@
     "imported-cover-song": {
       "rows": [
         {
-          "id": "cd025a2e8513477f",
+          "id": "3f6a7dd25bf64d67",
           "title": "Cover Song",
           "meta": "Cover Artist · LOCAL",
           "time": "00:53"
@@ -64,7 +64,7 @@
         {
           "id": "RM-005",
           "cover": true,
-          "localId": "cd025a2e8513477f",
+          "localId": "3f6a7dd25bf64d67",
           "pending": false
         },
         {
@@ -280,7 +280,7 @@
       ],
       "entries": [
         {
-          "id": "cd025a2e8513477f",
+          "id": "3f6a7dd25bf64d67",
           "title": "Cover Song",
           "artist": "Cover Artist",
           "duration": 53.333333,
@@ -323,14 +323,15 @@
             "subtitle": ""
           },
           {
-            "file": "local:cd025a2e8513477f",
+            "file": "local:3f6a7dd25bf64d67",
             "title": "Cover Song",
             "subtitle": "Cover Artist",
-            "localId": "cd025a2e8513477f"
+            "localId": "3f6a7dd25bf64d67"
           }
         ],
         "track": -1,
         "wanted": -1,
+        "queued": false,
         "playing": false,
         "paused": false,
         "loop": "all",
@@ -342,13 +343,13 @@
     "two-rows": {
       "rows": [
         {
-          "id": "cd025a2e8513477f",
+          "id": "3f6a7dd25bf64d67",
           "title": "Cover Song",
           "meta": "Cover Artist · LOCAL",
           "time": "00:53"
         },
         {
-          "id": "7a896e69f107427b",
+          "id": "c49ea7d2cdf44d92",
           "title": "No Cover Song",
           "meta": "Plain Artist · LOCAL",
           "time": "00:25"
@@ -387,13 +388,13 @@
         {
           "id": "RM-005",
           "cover": true,
-          "localId": "cd025a2e8513477f",
+          "localId": "3f6a7dd25bf64d67",
           "pending": false
         },
         {
           "id": "RM-006",
           "cover": false,
-          "localId": "7a896e69f107427b",
+          "localId": "c49ea7d2cdf44d92",
           "pending": false
         },
         {
@@ -603,7 +604,7 @@
       ],
       "entries": [
         {
-          "id": "cd025a2e8513477f",
+          "id": "3f6a7dd25bf64d67",
           "title": "Cover Song",
           "artist": "Cover Artist",
           "duration": 53.333333,
@@ -611,7 +612,7 @@
           "slot": 0
         },
         {
-          "id": "7a896e69f107427b",
+          "id": "c49ea7d2cdf44d92",
           "title": "No Cover Song",
           "artist": "Plain Artist",
           "duration": 25,
@@ -654,20 +655,21 @@
             "subtitle": ""
           },
           {
-            "file": "local:cd025a2e8513477f",
+            "file": "local:3f6a7dd25bf64d67",
             "title": "Cover Song",
             "subtitle": "Cover Artist",
-            "localId": "cd025a2e8513477f"
+            "localId": "3f6a7dd25bf64d67"
           },
           {
-            "file": "local:7a896e69f107427b",
+            "file": "local:c49ea7d2cdf44d92",
             "title": "No Cover Song",
             "subtitle": "Plain Artist",
-            "localId": "7a896e69f107427b"
+            "localId": "c49ea7d2cdf44d92"
           }
         ],
         "track": -1,
         "wanted": -1,
+        "queued": false,
         "playing": false,
         "paused": false,
         "loop": "all",
@@ -679,13 +681,13 @@
     "cover-on-card": {
       "rows": [
         {
-          "id": "cd025a2e8513477f",
+          "id": "3f6a7dd25bf64d67",
           "title": "Cover Song",
           "meta": "Cover Artist · LOCAL",
           "time": "00:53"
         },
         {
-          "id": "7a896e69f107427b",
+          "id": "c49ea7d2cdf44d92",
           "title": "No Cover Song",
           "meta": "Plain Artist · LOCAL",
           "time": "00:25"
@@ -724,13 +726,13 @@
         {
           "id": "RM-005",
           "cover": true,
-          "localId": "cd025a2e8513477f",
+          "localId": "3f6a7dd25bf64d67",
           "pending": false
         },
         {
           "id": "RM-006",
           "cover": false,
-          "localId": "7a896e69f107427b",
+          "localId": "c49ea7d2cdf44d92",
           "pending": false
         },
         {
@@ -940,7 +942,7 @@
       ],
       "entries": [
         {
-          "id": "cd025a2e8513477f",
+          "id": "3f6a7dd25bf64d67",
           "title": "Cover Song",
           "artist": "Cover Artist",
           "duration": 53.333333,
@@ -948,7 +950,7 @@
           "slot": 0
         },
         {
-          "id": "7a896e69f107427b",
+          "id": "c49ea7d2cdf44d92",
           "title": "No Cover Song",
           "artist": "Plain Artist",
           "duration": 25,
@@ -991,24 +993,25 @@
             "subtitle": ""
           },
           {
-            "file": "local:cd025a2e8513477f",
+            "file": "local:3f6a7dd25bf64d67",
             "title": "Cover Song",
             "subtitle": "Cover Artist",
-            "localId": "cd025a2e8513477f"
+            "localId": "3f6a7dd25bf64d67"
           },
           {
-            "file": "local:7a896e69f107427b",
+            "file": "local:c49ea7d2cdf44d92",
             "title": "No Cover Song",
             "subtitle": "Plain Artist",
-            "localId": "7a896e69f107427b"
+            "localId": "c49ea7d2cdf44d92"
           }
         ],
         "track": 6,
         "wanted": 6,
+        "queued": false,
         "playing": true,
         "paused": false,
         "loop": "all",
-        "time": 1.589333,
+        "time": 1.581333,
         "duration": 53.333333,
         "error": ""
       }
@@ -1016,13 +1019,13 @@
     "no-cover-on-card": {
       "rows": [
         {
-          "id": "cd025a2e8513477f",
+          "id": "3f6a7dd25bf64d67",
           "title": "Cover Song",
           "meta": "Cover Artist · LOCAL",
           "time": "00:53"
         },
         {
-          "id": "7a896e69f107427b",
+          "id": "c49ea7d2cdf44d92",
           "title": "No Cover Song",
           "meta": "Plain Artist · LOCAL",
           "time": "00:25"
@@ -1061,13 +1064,13 @@
         {
           "id": "RM-005",
           "cover": true,
-          "localId": "cd025a2e8513477f",
+          "localId": "3f6a7dd25bf64d67",
           "pending": false
         },
         {
           "id": "RM-006",
           "cover": false,
-          "localId": "7a896e69f107427b",
+          "localId": "c49ea7d2cdf44d92",
           "pending": false
         },
         {
@@ -1277,7 +1280,7 @@
       ],
       "entries": [
         {
-          "id": "cd025a2e8513477f",
+          "id": "3f6a7dd25bf64d67",
           "title": "Cover Song",
           "artist": "Cover Artist",
           "duration": 53.333333,
@@ -1285,7 +1288,7 @@
           "slot": 0
         },
         {
-          "id": "7a896e69f107427b",
+          "id": "c49ea7d2cdf44d92",
           "title": "No Cover Song",
           "artist": "Plain Artist",
           "duration": 25,
@@ -1328,24 +1331,25 @@
             "subtitle": ""
           },
           {
-            "file": "local:cd025a2e8513477f",
+            "file": "local:3f6a7dd25bf64d67",
             "title": "Cover Song",
             "subtitle": "Cover Artist",
-            "localId": "cd025a2e8513477f"
+            "localId": "3f6a7dd25bf64d67"
           },
           {
-            "file": "local:7a896e69f107427b",
+            "file": "local:c49ea7d2cdf44d92",
             "title": "No Cover Song",
             "subtitle": "Plain Artist",
-            "localId": "7a896e69f107427b"
+            "localId": "c49ea7d2cdf44d92"
           }
         ],
         "track": 7,
         "wanted": 7,
+        "queued": false,
         "playing": true,
         "paused": false,
         "loop": "all",
-        "time": 1.330502,
+        "time": 1.329989,
         "duration": 25,
         "error": ""
       }
@@ -1385,13 +1389,13 @@
         {
           "id": "RM-005",
           "cover": true,
-          "localId": "cd025a2e8513477f",
+          "localId": "3f6a7dd25bf64d67",
           "pending": false
         },
         {
           "id": "RM-006",
           "cover": false,
-          "localId": "7a896e69f107427b",
+          "localId": "c49ea7d2cdf44d92",
           "pending": false
         },
         {
@@ -1601,7 +1605,7 @@
       ],
       "entries": [
         {
-          "id": "cd025a2e8513477f",
+          "id": "3f6a7dd25bf64d67",
           "title": "Cover Song",
           "artist": "Cover Artist",
           "duration": 53.333333,
@@ -1609,7 +1613,7 @@
           "slot": 0
         },
         {
-          "id": "7a896e69f107427b",
+          "id": "c49ea7d2cdf44d92",
           "title": "No Cover Song",
           "artist": "Plain Artist",
           "duration": 25,
@@ -1652,20 +1656,21 @@
             "subtitle": ""
           },
           {
-            "file": "local:cd025a2e8513477f",
+            "file": "local:3f6a7dd25bf64d67",
             "title": "Cover Song",
             "subtitle": "Cover Artist",
-            "localId": "cd025a2e8513477f"
+            "localId": "3f6a7dd25bf64d67"
           },
           {
-            "file": "local:7a896e69f107427b",
+            "file": "local:c49ea7d2cdf44d92",
             "title": "No Cover Song",
             "subtitle": "Plain Artist",
-            "localId": "7a896e69f107427b"
+            "localId": "c49ea7d2cdf44d92"
           }
         ],
         "track": -1,
         "wanted": 7,
+        "queued": false,
         "playing": false,
         "paused": false,
         "loop": "all",

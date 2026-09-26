@@ -30,7 +30,7 @@ try {
  const ready=()=>page.waitForFunction(()=>window.rhine?.stats().ready&&document.documentElement.dataset.offlineReady==='true'&&navigator.serviceWorker.controller&&!document.querySelector('#loading'),null,{timeout:90000});
  const base='http://127.0.0.1:5192/';
  await page.goto(base);await ready();assert.equal(await page.locator('.settings-label').count(),0);
- await page.evaluate(()=>localStorage.setItem('rhine-saved','["X-001"]'));
+ await page.evaluate(()=>localStorage.setItem('rhine-playlists','[{"id":"pl-1","name":"Recovery","createdAt":1,"tracks":["atmosphere.ogg"]}]'));
  deployed=true;
  const cdp=await context.newCDPSession(page);await cdp.send('Network.clearBrowserCache');await cdp.detach();
  await page.reload();await ready();
@@ -40,9 +40,9 @@ try {
  await page.goto(base+'update.html');await page.getByRole('button',{name:'更新并返回'}).click();
  await page.waitForURL(base);await ready();assert.equal(await page.locator('.settings-label').textContent(),'设置');
  assert.ok((await page.evaluate(()=>caches.keys())).some(k=>k.endsWith(metadata.version)));
- assert.equal(await page.evaluate(()=>localStorage.getItem('rhine-saved')),'["X-001"]');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('rhine-playlists')),'[{"id":"pl-1","name":"Recovery","createdAt":1,"tracks":["atmosphere.ogg"]}]');
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('rhine-settings')).reduced),true);
- report.checks.push('network recovery replaces the old page and preserves bookmarks and motion preference');
+ report.checks.push('network recovery replaces the old page and preserves playlists and motion preference');
  broken=true;
  await page.goto(base+'update.html');await page.getByRole('button',{name:'更新并返回'}).click();
  await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('更新未完成'));

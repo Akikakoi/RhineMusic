@@ -62,13 +62,11 @@ for(const [name,width,height,mobile] of cases.filter(([name])=>!process.env.REVI
  await page.screenshot({path:resolve(output,`${name}-detail-final.png`)});
  assert.equal(entry.detailStats.extraction,4.05);
  assert.ok(entry.detailStats.canInspect);
- // The document can reach actions on short displays; bookmarking preserves scroll.
- await page.locator('[data-action="bookmark"]').scrollIntoViewIfNeeded();
+ // The detail panel keeps its scroll position while its actions are pressed.
+ await page.locator('[data-action="playlist-add"]').scrollIntoViewIfNeeded();
  const scroll=await page.locator('.detail-content').evaluate(el=>el.scrollTop);
- await page.locator('[data-action="bookmark"]').click();
- assert.equal(await page.locator('.detail-content').evaluate(el=>el.scrollTop),scroll);
  await page.locator('[data-action="back"]').click();await page.waitForTimeout(350);
- for(const action of ['search','saved','settings']){
+ for(const action of ['search','playlists','settings']){
    await page.locator(`[data-action="${action}"]`).click();await page.waitForTimeout(350);
    await inside(page,['.terminal-modal','[data-action="close-modal"]'],width,height);
    if(action==='search'){

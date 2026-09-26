@@ -945,7 +945,8 @@ export class ArchiveScene {
     this.labelTexture.needsUpdate = true;
   }
   /**
-   * 右半：内嵌封面居中留边。方图按原比例缩放到框内、四周留纸边，不裁切。
+   * 右半：内嵌封面铺满右半区（按长边取较大缩放，超出部分裁掉），不留上下留边。
+   * 方图在 512 × 605 的右半区里会左右各裁掉一点；非方形图按长边先顶满。
    * 没有封面或尚未解码完成时右半留空；加载完成后自己重画一次。
    */
   private drawLabelCover(
@@ -973,25 +974,25 @@ export class ArchiveScene {
       loading.src = url;
     }
     if (!ready || !image) return;
-    const pad = 24;
-    const boxX = left + pad;
-    const boxY = pad;
-    const boxWidth = right - left - pad * 2;
-    const boxHeight = h - pad * 2;
-    // 居中留边：整张封面按原比例放进框内，不裁切、不拉伸。
-    const scale = Math.min(boxWidth / image.naturalWidth, boxHeight / image.naturalHeight);
+    // 铺满右半区：取较大的缩放让两边都顶满，超出的部分裁掉（不拉伸、不留边）。
+    const scale = Math.max(
+      (right - left) / image.naturalWidth,
+      h / image.naturalHeight,
+    );
     const drawWidth = image.naturalWidth * scale;
     const drawHeight = image.naturalHeight * scale;
-    c.strokeStyle = "rgba(23,23,19,.5)";
-    c.lineWidth = 4;
-    c.strokeRect(boxX, boxY, boxWidth, boxHeight);
+    c.save();
+    c.beginPath();
+    c.rect(left, 0, right - left, h);
+    c.clip();
     c.drawImage(
       image,
-      boxX + (boxWidth - drawWidth) / 2,
-      boxY + (boxHeight - drawHeight) / 2,
+      left + (right - left - drawWidth) / 2,
+      (h - drawHeight) / 2,
       drawWidth,
       drawHeight,
     );
+    c.restore();
   }
   private ensureInstanceCapacity(required: number) {
     if (required <= this.instanceCapacity) return;

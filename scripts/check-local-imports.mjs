@@ -99,7 +99,7 @@ const read = () =>
       status: document.querySelector("#local-library .local-status")?.textContent?.trim() ?? "",
       statusKind: document.querySelector("#local-library .local-status")?.dataset.kind ?? "",
       empty: Boolean(document.querySelector("#local-library .local-empty")),
-      playerTitle: document.querySelector(".music-player .player-title")?.textContent?.trim() ?? "",
+      detailLocal: document.querySelector("#playback-local")?.textContent?.trim() ?? "",
       // 列表首行（即第一首导入曲目）占用的阵列槽位编号 RM-0xx。
       localSlot: (() => {
         const id = document.querySelector("#local-library .local-row")?.dataset.localId ?? "";
@@ -257,9 +257,14 @@ try {
     playingFirst.rows[0]?.playing === true && playingFirst.rows[0]?.play.includes("暂停"),
     `正在播放的行应有播放态与暂停文案，实际 ${playingFirst.rows[0]?.play}`,
   );
+  // 设置面板已不再承载播放界面，播放中的曲名从音频状态里读。
+  const playingTitle = (state) =>
+    state.music && state.music.track >= 0
+      ? state.music.tracks[state.music.track]?.title ?? ""
+      : "";
   expect(
-    playingFirst.playerTitle.includes("First Song"),
-    `迷你播放器应显示本地曲目，实际 ${playingFirst.playerTitle}`,
+    playingTitle(playingFirst) === "First Song",
+    `播放状态里应能读到本地曲名 First Song，实际 ${playingTitle(playingFirst)}`,
   );
   expect(
     playingFirst.selected === playingFirst.localSlot,
@@ -287,15 +292,15 @@ try {
     `编辑后列表标题应更新，实际 ${edited.rows[0]?.title}`,
   );
   expect(
-    edited.playerTitle.includes("Renamed Local Song"),
-    `编辑后播放器标题应更新，实际 ${edited.playerTitle}`,
+    playingTitle(edited) === "Renamed Local Song",
+    `改名后播放状态里的曲名应更新，实际 ${playingTitle(edited)}`,
   );
   expect(
     playingFile(edited) === `local:${firstId}`,
     `改名不应改变正在播放的曲目，实际 ${playingFile(edited)}`,
   );
   await shot("edited");
-  report.checks.push("editing title updates both the list and the mini player without restarting playback");
+  report.checks.push("editing title updates both the list and the playing state without restarting playback");
 
   // 7. 详情面板能看到正在播放的本地曲目（走带控制共用同一条链路）。
   await closeSettings();

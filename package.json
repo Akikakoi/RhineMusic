@@ -12,6 +12,7 @@
     "check:content": "node --experimental-strip-types --test scripts/check-content.mjs",
     "check:playback": "node scripts/check-playback.mjs",
     "check:covers": "node scripts/check-covers.mjs",
+    "check:playlists": "node scripts/check-playlists.mjs",
     "check:viewport": "node --experimental-strip-types scripts/check-viewport.mjs",
     "review:mobile": "node scripts/serve-mobile-review.mjs",
     "export:archives": "node scripts/export-records.mjs",

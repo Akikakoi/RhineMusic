@@ -23,7 +23,7 @@ try {
   const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));
   const ready=()=>page.waitForFunction(()=>window.rhine?.stats().ready&&!document.querySelector('#loading')&&navigator.serviceWorker.controller&&document.documentElement.dataset.offlineReady==='true',null,{timeout:120000});
   await page.goto('http://127.0.0.1:5198/');await ready();
-  await page.evaluate(()=>localStorage.setItem('rhine-saved','["X-001","X-009"]'));
+  await page.evaluate(()=>localStorage.setItem('rhine-playlists','[{"id":"pl-1","name":"Release","createdAt":1,"tracks":["atmosphere.ogg"]}]'));
   const oldKeys=await page.evaluate(()=>caches.keys());
   assert.ok(await page.evaluate(()=>caches.match('/fonts/MiSans-Regular.woff2').then(Boolean)));
   deployed=true;
@@ -32,11 +32,11 @@ try {
   assert.equal(await page.locator('.entry-start').count(),0);
   await page.locator('#pwa-update-notice [data-pwa-action="update"]').click();await page.waitForLoadState('load');await ready();
   assert.equal(await page.evaluate(()=>window.rhine.stats().startup),'started');
-  assert.equal(await page.evaluate(()=>localStorage.getItem('rhine-saved')),'["X-001","X-009"]');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('rhine-playlists')),'[{"id":"pl-1","name":"Release","createdAt":1,"tracks":["atmosphere.ogg"]}]');
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('rhine-settings')).sound),false);
   const newKeys=await page.evaluate(()=>caches.keys());assert.ok(newKeys.some(k=>k.endsWith(metadata.version)));assert.ok(oldKeys.every(k=>!newKeys.includes(k)));
   assert.equal(await page.evaluate(()=>caches.match('/fonts/MiSans-Regular.woff2').then(Boolean)),false);
-  report.checks.push('Previous complete release updates atomically; obsolete whole fonts removed; bookmarks and preferences retained');
+  report.checks.push('Previous complete release updates atomically; obsolete whole fonts removed; playlists and preferences retained');
   // Enable audio only for the next entry, then prove its cached resources work.
   await page.evaluate(()=>{const p=JSON.parse(localStorage.getItem('rhine-settings'));p.sound=true;p.music=true;localStorage.setItem('rhine-settings',JSON.stringify(p))});
   await context.setOffline(true);await page.reload();await page.waitForFunction(()=>window.rhine?.stats().startup==='waiting');

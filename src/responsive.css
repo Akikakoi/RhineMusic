@@ -102,7 +102,7 @@
 [data-layout="portrait"] .brand { transform: scale(.42) !important; }
 [data-layout="portrait"] .system-nav { gap: 8px; }
 [data-layout="portrait"] .system-nav button[data-action="search"] { font-size: 0; gap: 0; }
-[data-layout="portrait"] .system-nav button[data-action="saved"] { font-size: 10px; }
+[data-layout="portrait"] .system-nav button[data-action="playlists"] { font-size: 10px; }
 [data-layout="portrait"] .archive-callout { left: var(--edge); top: auto; bottom: 205px; width: calc(100% - 2 * var(--edge)); }
 [data-layout="portrait"] .archive-counter { bottom: 58px; }
 [data-layout="portrait"] .column-navigation { bottom: 58px; }
@@ -172,4 +172,32 @@
   [data-layout="compact"] .file-open { margin-left: 0; }
   [data-layout="compact"] .system-nav { gap: 8px; }
   [data-layout="compact"] .system-nav [data-action="search"] { font-size: 0; gap: 0; }
+}
+
+/* 播放列表弹窗在窄屏折成单列，控件放大到可点。 */
+:is([data-layout="compact"], [data-layout="portrait"]) .playlist-layout {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+:is([data-layout="compact"], [data-layout="portrait"]) .playlist-items,
+:is([data-layout="compact"], [data-layout="portrait"]) .playlist-rows {
+  max-height: none;
+}
+:is([data-layout="compact"], [data-layout="portrait"]) .playlist-row {
+  grid-template-columns: 24px minmax(0, 1fr);
+  row-gap: 8px;
+}
+:is([data-layout="compact"], [data-layout="portrait"]) .playlist-actions {
+  grid-column: 2;
+  flex-wrap: wrap;
+}
+:is([data-layout="compact"], [data-layout="portrait"]) .playlist-column-head button,
+:is([data-layout="compact"], [data-layout="portrait"]) .playlist-editor button,
+:is([data-layout="compact"], [data-layout="portrait"]) .playlist-head-actions button,
+:is([data-layout="compact"], [data-layout="portrait"]) .playlist-actions button {
+  min-height: 44px;
+}
+:is([data-layout="compact"], [data-layout="portrait"]) .playlist-editor input {
+  min-height: 44px;
+  font-size: 16px;
 }

@@ -30,7 +30,7 @@ CHECK_URL=http://127.0.0.1:5174 npm run check:covers
 - `check-01-imported-cover-song.png`：设置面板里导入带封面文件后的曲库行。
 - `check-02-cover-on-card.png`：导入 2 条后仍在设置面板，播放曲目为 `Cover Song`。
 - `check-03-archive-cover-selected.png`：合上设置后的阵列视图（选中 `RM-005`）。
-- `check-04-detail-cover-card.png`：详情里卡片正面——左半编号/分类/曲名/歌手/时长/状态，右半封面居中留边。
+- `check-04-detail-cover-card.png`：详情里卡片正面——左半编号/分类/曲名/歌手/时长/状态，右半封面铺满、无上下留边。
 - `check-05-no-cover-on-card.png`：播放无封面曲目后的设置面板。
 - `check-06-archive-no-cover-selected.png`：阵列视图（选中 `RM-006`）。
 - `check-07-detail-no-cover-card.png`：详情里无封面卡片正面——右半保持纸面留空，没有边框。
@@ -46,4 +46,4 @@ CHECK_URL=http://127.0.0.1:5174 npm run check:covers
 ## 备注
 
 - 刷新后的持久化断言读的是 `stats().library.entries`（数据层），不是设置面板的 DOM 行——刷新流程结束时设置弹窗是关的，所以该步 `rows` 为 0。
-- 详情态下卡片右半区会被右侧详情面板挡掉一部分，`check-04` 里可见封面画在框内；阵列视图与抽取过程更能看全。
+- 封面铺满右半区（cover + clip），方图会左右各裁掉约 15%；如需完整不裁切，要么重新出现上下留边，要么把左半文字栏压窄给封面更多横向空间。

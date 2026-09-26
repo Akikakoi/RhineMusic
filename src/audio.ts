@@ -379,6 +379,11 @@ export class TerminalAudio {
   /** 本地段落的内容签名，未变化时跳过重映射。 */
   private localSignature = "";
   private playlist: MusicTrack[] = [...BUILTIN_TRACKS];
+  /**
+   * 当前播放来源：null = 整个曲库（内置 + manifest + 本地段）；
+   * 否则是按 `musicTrackKey` 排列的命名播放列表，播放列表就是播放队列。
+   */
+  private queueKeys: string[] | null = null;
   private playlistLoading?: Promise<MusicTrack[]>;
   private player?: HTMLAudioElement;
   private playerSource?: MediaElementAudioSourceNode;
@@ -477,8 +482,83 @@ export class TerminalAudio {
       });
     return this.playlistLoading;
   }
+  /**
+   * 重建播放列表。没有队列时是「整个曲库」，有队列时按标识从曲库里取出那几条：
+   * 曲库里已经不存在的条目（本地曲目被删）自动跳过，不需要外部分析失效项。
+   */
   private rebuildPlaylist() {
-    this.playlist = [...this.base, ...this.localTracks];
+    const library = [...this.base, ...this.localTracks];
+    if (!this.queueKeys) {
+      this.playlist = library;
+      return;
+    }
+    const byKey = new Map(
+      library.map((track) => [musicTrackKey(track.file), track]),
+    );
+    const seen = new Set<string>();
+    const resolved: MusicTrack[] = [];
+    for (const key of this.queueKeys) {
+      const track = byKey.get(key);
+      if (!track || seen.has(key)) continue;
+      seen.add(key);
+      resolved.push(track);
+    }
+    this.playlist = resolved;
+  }
+  /**
+   * 整个曲库的曲目标识（内置三轨 + manifest 扩展 + 本地段），不含当前队列。
+   * 新建播放列表时用它把列表一次填成完整曲库。
+   */
+  libraryKeys() {
+    return [...this.base, ...this.localTracks].map((track) =>
+      musicTrackKey(track.file),
+    );
+  }
+  /**
+   * 切换播放来源（命名播放列表）。keys 是 `musicTrackKey` 列表，null 回到整个曲库。
+   * 正在播放的曲目若仍在新来源里就继续播（不重启 <audio>）；否则退到新来源的
+   * 第一条；来源为空时回到场景联动。播放目标的移动由调用方（main.ts 的偏好写入
+   * 与 configure()）接管，这里只保证下标落在合法范围。
+   */
+  setQueue(keys: string[] | null) {
+    const previous = this.playlist;
+    const activeKey =
+      this.activeTrack >= 0 ? musicTrackKey(previous[this.activeTrack].file) : null;
+    const wanted = this.effectiveTrack();
+    const wantedKey = wanted >= 0 ? musicTrackKey(previous[wanted].file) : null;
+    this.queueKeys = keys && keys.length ? [...keys] : null;
+    this.rebuildPlaylist();
+    if (!this.playlist.length) {
+      this.activeTrack = -1;
+      this.prefs.musicTrack = -1;
+      this.stopPlayer();
+      this.startMusic();
+      this.emit();
+      return;
+    }
+    const activeNext = this.indexOfKey(activeKey);
+    const wantedNext = this.indexOfKey(wantedKey);
+    if (activeNext >= 0) {
+      // 正在播放的曲目还在新来源里：只更新下标，播放不中断。
+      this.activeTrack = activeNext;
+      this.prefs.musicTrack = wantedNext >= 0 ? wantedNext : activeNext;
+      this.emit();
+      return;
+    }
+    const hadActive = activeKey !== null;
+    const target = wantedNext >= 0 ? wantedNext : 0;
+    this.prefs.musicTrack = target;
+    if (hadActive) {
+      this.activeTrack = -1;
+      if (
+        this.context?.state === "running" &&
+        !this.hostPaused &&
+        !document.hidden &&
+        this.prefs.music
+      )
+        this.startPlayer(target);
+    }
+    this.emit();
   }
   private indexOfKey(key: string | null) {
     if (key === null) return -1;
@@ -923,6 +1003,8 @@ export class TerminalAudio {
       tracks: this.playlist.map((track) => ({ ...track })),
       track: index,
       wanted: this.isPlayerMode() ? this.effectiveTrack() : -1,
+      /** 当前是否在播命名播放列表（false = 整个曲库）。 */
+      queued: this.queueKeys !== null,
       playing: !!el && index >= 0 && !el.paused && this.prefs.music,
       paused: this.playerPaused || !this.prefs.music,
       loop: this.prefs.musicLoop,

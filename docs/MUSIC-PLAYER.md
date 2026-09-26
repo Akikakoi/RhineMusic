@@ -130,6 +130,14 @@
   - 加新曲目：把 .ogg / .mp3 放入 public/audio 后运行 `npm run audio-manifest`，重启即生效。
   - 如需曲名滚动动画替代当前 ellipsis 截断，另行迭代（见阶段 4 备注）。
 
+### 2026-09-26 · 后续 · 移除设置面板里的迷你播放器
+
+- 需求：删除设置页面的歌曲列表与播放界面（设置不再承担播放职能）。
+- `src/audio-settings.ts`：`audioSettingsMarkup(prefs)` 只留音效/音乐开关与音量；去掉 `MusicState` 参数与整个 `.music-player` 标记。
+- `src/main.ts`：删除 `updateMusicPanel()`（以及 12 处调用）与 `data-music-mode / data-music-track / data-music-action` 点击分支、`data-music-seek` 拖动分支；改为 `syncMusicPrefs()`——在 `rhine-music-state` 事件里把 `prefs.musicTrack` 同步回引擎目标，防止之后的 `saveAudioPrefs()` 把音频拉回旧曲目。
+- `src/style.css`：删除 `.music-player` / `.player-modes` / `.player-mode` / `.player-transport` / `.player-now` / `.player-title` / `.player-time` / `.player-progress` 与对应的 reduce-motion 规则。
+- 影响：播放选择与走带只在详情面板（NOW PLAYING）、本机曲库行和播放列表里提供；`scripts/check-local-imports.mjs` 的「迷你播放器标题」断言改为直接读 `musicState()`。
+
 ### 2026-09-20 · 追加 · 扩展曲目支持 mp3（已完成）
 
 - 请求：用户询问是否支持 mp3。原实现曲目源写死 `.ogg` 后缀，不支持。
