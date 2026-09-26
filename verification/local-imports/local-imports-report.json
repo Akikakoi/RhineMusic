@@ -1,5 +1,5 @@
 {
-  "url": "http://127.0.0.1:5173/?scene=archive",
+  "url": "http://127.0.0.1:5174/?scene=archive",
   "fixtures": [
     "Alpha Artist - First Song.wav",
     "Beta Artist – Second Song.wav",
@@ -8,8 +8,8 @@
   "checks": [
     "import appears in the list, parses artist/title and reads the real duration",
     "import does not interrupt the current playback",
-    "local tracks persist across reload and stay out of the array",
-    "local track plays through the shared audio chain",
+    "local tracks persist across reload without disturbing the existing selection",
+    "local track plays through the shared audio chain and the array follows its slot",
     "editing title updates both the list and the mini player without restarting playback",
     "detail panel reports the playing local track",
     "deleting the playing track advances to the next playlist entry",
@@ -33,7 +33,7 @@
     "imported": {
       "rows": [
         {
-          "id": "b782b16468bc4222",
+          "id": "ea58bbc30ba54e39",
           "title": "First Song",
           "meta": "Alpha Artist · LOCAL",
           "time": "00:25",
@@ -42,10 +42,11 @@
           "play": "▶ 播放"
         }
       ],
-      "status": "1 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "status": "1 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
       "statusKind": "info",
       "empty": false,
       "playerTitle": "MOTIF · 主题动机",
+      "localSlot": "RM-005",
       "detailLocal": "",
       "detailLocalHidden": null,
       "mode": "archive",
@@ -83,10 +84,10 @@
             "subtitle": ""
           },
           {
-            "file": "local:b782b16468bc4222",
+            "file": "local:ea58bbc30ba54e39",
             "title": "First Song",
             "subtitle": "Alpha Artist",
-            "localId": "b782b16468bc4222"
+            "localId": "ea58bbc30ba54e39"
           }
         ],
         "track": 1,
@@ -94,7 +95,7 @@
         "playing": true,
         "paused": false,
         "loop": "all",
-        "time": 4.210667,
+        "time": 4.178667,
         "duration": 53.336,
         "error": ""
       }
@@ -102,7 +103,7 @@
     "two-rows": {
       "rows": [
         {
-          "id": "b782b16468bc4222",
+          "id": "ea58bbc30ba54e39",
           "title": "First Song",
           "meta": "Alpha Artist · LOCAL",
           "time": "00:25",
@@ -111,7 +112,7 @@
           "play": "▶ 播放"
         },
         {
-          "id": "ffa9622c146c4790",
+          "id": "6cc12183541e4ed2",
           "title": "Second Song",
           "meta": "Beta Artist · LOCAL",
           "time": "00:30",
@@ -120,10 +121,11 @@
           "play": "▶ 播放"
         }
       ],
-      "status": "2 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "status": "2 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
       "statusKind": "info",
       "empty": false,
       "playerTitle": "MOTIF · 主题动机",
+      "localSlot": "RM-005",
       "detailLocal": "",
       "detailLocalHidden": null,
       "mode": "archive",
@@ -161,16 +163,16 @@
             "subtitle": ""
           },
           {
-            "file": "local:b782b16468bc4222",
+            "file": "local:ea58bbc30ba54e39",
             "title": "First Song",
             "subtitle": "Alpha Artist",
-            "localId": "b782b16468bc4222"
+            "localId": "ea58bbc30ba54e39"
           },
           {
-            "file": "local:ffa9622c146c4790",
+            "file": "local:6cc12183541e4ed2",
             "title": "Second Song",
             "subtitle": "Beta Artist",
-            "localId": "ffa9622c146c4790"
+            "localId": "6cc12183541e4ed2"
           }
         ],
         "track": 1,
@@ -178,7 +180,7 @@
         "playing": true,
         "paused": false,
         "loop": "all",
-        "time": 5.709333,
+        "time": 5.68,
         "duration": 53.336,
         "error": ""
       }
@@ -186,7 +188,7 @@
     "after-reload": {
       "rows": [
         {
-          "id": "b782b16468bc4222",
+          "id": "ea58bbc30ba54e39",
           "title": "First Song",
           "meta": "Alpha Artist · LOCAL",
           "time": "00:25",
@@ -195,7 +197,7 @@
           "play": "▶ 播放"
         },
         {
-          "id": "ffa9622c146c4790",
+          "id": "6cc12183541e4ed2",
           "title": "Second Song",
           "meta": "Beta Artist · LOCAL",
           "time": "00:30",
@@ -204,10 +206,11 @@
           "play": "▶ 播放"
         }
       ],
-      "status": "2 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "status": "2 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
       "statusKind": "info",
       "empty": false,
       "playerTitle": "MOTIF · 主题动机",
+      "localSlot": "RM-005",
       "detailLocal": "",
       "detailLocalHidden": null,
       "mode": "archive",
@@ -245,16 +248,16 @@
             "subtitle": ""
           },
           {
-            "file": "local:b782b16468bc4222",
+            "file": "local:ea58bbc30ba54e39",
             "title": "First Song",
             "subtitle": "Alpha Artist",
-            "localId": "b782b16468bc4222"
+            "localId": "ea58bbc30ba54e39"
           },
           {
-            "file": "local:ffa9622c146c4790",
+            "file": "local:6cc12183541e4ed2",
             "title": "Second Song",
             "subtitle": "Beta Artist",
-            "localId": "ffa9622c146c4790"
+            "localId": "6cc12183541e4ed2"
           }
         ],
         "track": 1,
@@ -262,7 +265,7 @@
         "playing": true,
         "paused": false,
         "loop": "all",
-        "time": 0.68,
+        "time": 0.699302,
         "duration": 53.336,
         "error": ""
       }
@@ -270,7 +273,7 @@
     "playing-local": {
       "rows": [
         {
-          "id": "b782b16468bc4222",
+          "id": "ea58bbc30ba54e39",
           "title": "First Song",
           "meta": "Alpha Artist · LOCAL",
           "time": "00:25",
@@ -279,7 +282,7 @@
           "play": "❚❚ 暂停"
         },
         {
-          "id": "ffa9622c146c4790",
+          "id": "6cc12183541e4ed2",
           "title": "Second Song",
           "meta": "Beta Artist · LOCAL",
           "time": "00:30",
@@ -288,14 +291,15 @@
           "play": "▶ 播放"
         }
       ],
-      "status": "2 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "status": "2 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
       "statusKind": "info",
       "empty": false,
       "playerTitle": "First Song · Alpha Artist",
+      "localSlot": "RM-005",
       "detailLocal": "",
       "detailLocalHidden": null,
       "mode": "archive",
-      "selected": "RM-002",
+      "selected": "RM-005",
       "music": {
         "tracks": [
           {
@@ -329,16 +333,16 @@
             "subtitle": ""
           },
           {
-            "file": "local:b782b16468bc4222",
+            "file": "local:ea58bbc30ba54e39",
             "title": "First Song",
             "subtitle": "Alpha Artist",
-            "localId": "b782b16468bc4222"
+            "localId": "ea58bbc30ba54e39"
           },
           {
-            "file": "local:ffa9622c146c4790",
+            "file": "local:6cc12183541e4ed2",
             "title": "Second Song",
             "subtitle": "Beta Artist",
-            "localId": "ffa9622c146c4790"
+            "localId": "6cc12183541e4ed2"
           }
         ],
         "track": 6,
@@ -346,7 +350,7 @@
         "playing": true,
         "paused": false,
         "loop": "all",
-        "time": 1.834082,
+        "time": 1.830639,
         "duration": 25,
         "error": ""
       }
@@ -354,7 +358,7 @@
     "edited": {
       "rows": [
         {
-          "id": "b782b16468bc4222",
+          "id": "ea58bbc30ba54e39",
           "title": "Renamed Local Song",
           "meta": "Alpha Artist · LOCAL",
           "time": "00:25",
@@ -363,7 +367,7 @@
           "play": "❚❚ 暂停"
         },
         {
-          "id": "ffa9622c146c4790",
+          "id": "6cc12183541e4ed2",
           "title": "Second Song",
           "meta": "Beta Artist · LOCAL",
           "time": "00:30",
@@ -372,14 +376,15 @@
           "play": "▶ 播放"
         }
       ],
-      "status": "2 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "status": "2 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
       "statusKind": "info",
       "empty": false,
       "playerTitle": "Renamed Local Song · Alpha Artist",
+      "localSlot": "RM-005",
       "detailLocal": "",
       "detailLocalHidden": null,
       "mode": "archive",
-      "selected": "RM-002",
+      "selected": "RM-005",
       "music": {
         "tracks": [
           {
@@ -413,16 +418,16 @@
             "subtitle": ""
           },
           {
-            "file": "local:b782b16468bc4222",
+            "file": "local:ea58bbc30ba54e39",
             "title": "Renamed Local Song",
             "subtitle": "Alpha Artist",
-            "localId": "b782b16468bc4222"
+            "localId": "ea58bbc30ba54e39"
           },
           {
-            "file": "local:ffa9622c146c4790",
+            "file": "local:6cc12183541e4ed2",
             "title": "Second Song",
             "subtitle": "Beta Artist",
-            "localId": "ffa9622c146c4790"
+            "localId": "6cc12183541e4ed2"
           }
         ],
         "track": 6,
@@ -430,7 +435,7 @@
         "playing": true,
         "paused": false,
         "loop": "all",
-        "time": 3.644545,
+        "time": 3.661479,
         "duration": 25,
         "error": ""
       }
@@ -441,10 +446,11 @@
       "statusKind": "",
       "empty": false,
       "playerTitle": "",
+      "localSlot": "",
       "detailLocal": "LOCAL LIBRARYRenamed Local Song·Alpha Artist",
       "detailLocalHidden": false,
       "mode": "detail",
-      "selected": "RM-002",
+      "selected": "RM-005",
       "music": {
         "tracks": [
           {
@@ -478,24 +484,24 @@
             "subtitle": ""
           },
           {
-            "file": "local:b782b16468bc4222",
+            "file": "local:ea58bbc30ba54e39",
             "title": "Renamed Local Song",
             "subtitle": "Alpha Artist",
-            "localId": "b782b16468bc4222"
+            "localId": "ea58bbc30ba54e39"
           },
           {
-            "file": "local:ffa9622c146c4790",
+            "file": "local:6cc12183541e4ed2",
             "title": "Second Song",
             "subtitle": "Beta Artist",
-            "localId": "ffa9622c146c4790"
+            "localId": "6cc12183541e4ed2"
           }
         ],
         "track": 6,
         "wanted": 6,
-        "playing": true,
-        "paused": false,
+        "playing": false,
+        "paused": true,
         "loop": "all",
-        "time": 2.624,
+        "time": 7.085251,
         "duration": 25,
         "error": ""
       }
@@ -503,7 +509,7 @@
     "after-delete": {
       "rows": [
         {
-          "id": "ffa9622c146c4790",
+          "id": "6cc12183541e4ed2",
           "title": "Second Song",
           "meta": "Beta Artist · LOCAL",
           "time": "00:30",
@@ -512,14 +518,15 @@
           "play": "❚❚ 暂停"
         }
       ],
-      "status": "1 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "status": "1 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
       "statusKind": "info",
       "empty": false,
       "playerTitle": "Second Song · Beta Artist",
+      "localSlot": "RM-006",
       "detailLocal": "LOCAL LIBRARYSecond Song·Beta Artist",
       "detailLocalHidden": false,
       "mode": "archive",
-      "selected": "RM-002",
+      "selected": "RM-006",
       "music": {
         "tracks": [
           {
@@ -553,28 +560,29 @@
             "subtitle": ""
           },
           {
-            "file": "local:ffa9622c146c4790",
+            "file": "local:6cc12183541e4ed2",
             "title": "Second Song",
             "subtitle": "Beta Artist",
-            "localId": "ffa9622c146c4790"
+            "localId": "6cc12183541e4ed2"
           }
         ],
         "track": 6,
         "wanted": 6,
-        "playing": true,
-        "paused": false,
+        "playing": false,
+        "paused": true,
         "loop": "all",
-        "time": 2.278568,
+        "time": 0,
         "duration": 30,
         "error": ""
       }
     },
     "empty": {
       "rows": [],
-      "status": "0 首本地曲目 · 导入后进入播放列表，不占用五列阵列",
+      "status": "0 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
       "statusKind": "info",
       "empty": true,
       "playerTitle": "AMBIENCE · 观测室 · 氛围",
+      "localSlot": "",
       "detailLocal": "LOCAL LIBRARYSecond Song·Beta Artist",
       "detailLocalHidden": true,
       "mode": "archive",
@@ -614,10 +622,10 @@
         ],
         "track": 0,
         "wanted": 0,
-        "playing": true,
-        "paused": false,
+        "playing": false,
+        "paused": true,
         "loop": "all",
-        "time": 2.239608,
+        "time": 0,
         "duration": 53.336,
         "error": ""
       }
@@ -628,6 +636,7 @@
       "statusKind": "error",
       "empty": true,
       "playerTitle": "AMBIENCE · 观测室 · 氛围",
+      "localSlot": "",
       "detailLocal": "LOCAL LIBRARYSecond Song·Beta Artist",
       "detailLocalHidden": true,
       "mode": "archive",
@@ -667,10 +676,10 @@
         ],
         "track": 0,
         "wanted": 0,
-        "playing": true,
-        "paused": false,
+        "playing": false,
+        "paused": true,
         "loop": "all",
-        "time": 3.738667,
+        "time": 0,
         "duration": 53.336,
         "error": ""
       }

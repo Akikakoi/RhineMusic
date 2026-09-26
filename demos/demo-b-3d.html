@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>方案 B 预览 · 三维阵列选歌</title>
+<style>
+  :root { --paper:#e8e5e1; --ink:#1b1d18; --muted:#888277; --accent:#565c46; --amber:#ed821b; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--paper); color:var(--ink); font-family:"MiSans","Segoe UI",sans-serif; height:100vh; overflow:hidden; }
+  .banner { position:fixed; top:28px; left:72px; z-index:5; font-size:11px; letter-spacing:2px; color:var(--muted); }
+  .banner b { color:var(--amber); }
+  /* 三维透视舞台 */
+  .scene { position:absolute; inset:0; perspective:1400px; perspective-origin:50% 42%; }
+  .floor { position:absolute; left:50%; top:58%; width:1500px; height:900px; transform:translate(-50%,-50%) rotateX(52deg); transform-style:preserve-3d;
+    background:
+      linear-gradient(rgba(86,92,70,.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(86,92,70,.10) 1px, transparent 1px);
+    background-size:120px 120px; }
+  .grid { position:absolute; inset:0; display:grid; grid-template-columns:repeat(3, 1fr); gap:90px; padding:120px 180px; transform-style:preserve-3d; }
+  /* 卡片立在"地面"上 */
+  .card { position:relative; height:300px; transform-style:preserve-3d; transform:rotateX(-52deg) translateZ(0); cursor:pointer; transition:transform .35s cubic-bezier(.2,.7,.3,1), filter .35s; }
+  .face { position:absolute; inset:0; background:linear-gradient(160deg, rgba(255,255,255,.92), rgba(240,236,229,.85)); border:1px solid #c9c4ba; border-radius:4px;
+    box-shadow:0 30px 40px -20px rgba(27,29,24,.35); padding:18px 16px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden;
+    transition:box-shadow .35s; }
+  .face::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:#b9b2a4; transition:background .3s; }
+  .no { font-size:11px; letter-spacing:2px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .nm { font-size:19px; font-weight:600; line-height:1.25; }
+  .meta { font-size:10px; color:var(--muted); display:flex; justify-content:space-between; letter-spacing:1px; }
+  /* 悬停：卡片抬起靠近观察者 */
+  .card:hover { transform:rotateX(-52deg) translateZ(70px); filter:brightness(1.04); }
+  .card:hover .face { box-shadow:0 50px 60px -24px rgba(27,29,24,.45); }
+  .card:hover .face::before { background:var(--amber); }
+  /* 点击：抽取运镜（卡片飞向镜头再归位） */
+  .card.extract { animation:extract .9s cubic-bezier(.2,.7,.25,1); }
+  @keyframes extract {
+    0% { transform:rotateX(-52deg) translateZ(0); }
+    45% { transform:rotateX(-30deg) translateZ(420px) scale(1.12); }
+    70% { transform:rotateX(-30deg) translateZ(420px) scale(1.12); }
+    100% { transform:rotateX(-52deg) translateZ(0); }
+  }
+  /* 选中：琥珀描边 + 均衡器 */
+  .card.active .face { border-color:var(--amber); box-shadow:0 40px 50px -22px rgba(166,125,72,.5); }
+  .card.active .face::before { background:var(--amber); }
+  .eq { display:inline-flex; align-items:flex-end; gap:3px; height:14px; }
+  .eq i { width:4px; height:4px; background:var(--accent); opacity:.3; }
+  .card.active .eq i { opacity:1; animation:eq 1s ease-in-out infinite; }
+  .card.active .eq i:nth-child(2){ animation-delay:.15s; } .card.active .eq i:nth-child(3){ animation-delay:.3s; }
+  @keyframes eq { 0%,100%{height:4px;} 50%{height:14px;} }
+  /* 底部信息条 */
+  .hud { position:fixed; left:72px; bottom:40px; z-index:5; }
+  .hud .label { font-size:10px; letter-spacing:2px; color:var(--muted); }
+  .hud .name { font-size:26px; font-weight:600; margin-top:6px; transition:opacity .3s, transform .3s; }
+  .hud .name.swap { animation:swap .5s cubic-bezier(.2,.7,.3,1); }
+  @keyframes swap { 0%{opacity:0; transform:translateY(18px);} 100%{opacity:1; transform:translateY(0);} }
+  .tip { position:fixed; right:72px; bottom:40px; z-index:5; font-size:11px; color:var(--muted); text-align:right; line-height:1.8; }
+</style>
+</head>
+<body>
+  <div class="banner">方案 B 预览 · <b>三维阵列选歌</b> — 悬停卡片抬向镜头，点击触发抽取运镜并选中播放；卡片随节拍呼吸起伏</div>
+  <div class="scene">
+    <div class="floor"><div class="grid" id="grid"></div></div>
+  </div>
+  <div class="hud">
+    <div class="label">NOW PLAYING ／ <span id="status">STANDBY</span></div>
+    <div class="name" id="npName">RHINE MUSIC</div>
+  </div>
+  <div class="tip">悬停 / 点击卡片试试<br>← → 切换选中</div>
+<script>
+  const tracks = [
+    { no:"01", name:"AMBIENCE", sub:"观测室 · 氛围", time:"00:53" },
+    { no:"02", name:"MOTIF", sub:"主题动机", time:"00:53" },
+    { no:"03", name:"PULSE", sub:"脉冲", time:"00:53" },
+    { no:"04", name:"歌に形はないけれど", sub:"doriko、初音ミク", time:"05:32" },
+    { no:"05", name:"OBSERVATORY-PREVIEW", sub:"", time:"00:53" },
+    { no:"06", name:"坏苹果（车载DJ版）", sub:"", time:"07:39" },
+  ];
+  const grid = document.getElementById("grid");
+  grid.innerHTML = tracks.map((t,i)=>`
+    <div class="card" data-i="${i}">
+      <div class="face">
+        <div class="no">TRACK ${t.no}</div>
+        <div class="nm">${t.name}</div>
+        <div class="meta"><span>${t.sub||"—"}</span><span class="eq"><i></i><i></i><i></i></span><span>${t.time}</span></div>
+      </div>
+    </div>`).join("");
+  let active = -1;
+  const npName = document.getElementById("npName"), status = document.getElementById("status");
+  grid.addEventListener("click", e=>{
+    const card = e.target.closest(".card"); if(!card) return;
+    const i = +card.dataset.i;
+    card.classList.remove("extract"); void card.offsetWidth; card.classList.add("extract");
+    active = i;
+    document.querySelectorAll(".card").forEach(c=>c.classList.toggle("active", +c.dataset.i===i));
+    npName.classList.remove("swap"); void npName.offsetWidth; npName.classList.add("swap");
+    npName.textContent = tracks[i].name;
+    status.textContent = "PLAYING";
+  });
+  // 节拍呼吸：卡片随模拟节拍起伏
+  const cards = [...document.querySelectorAll(".card")];
+  const t0 = performance.now();
+  (function breathe(){
+    const t = (performance.now()-t0)/1000, beat = Math.abs(Math.sin(t*Math.PI*2/1.2));
+    cards.forEach((c,i)=>{ if(c.classList.contains("extract")) return;
+      const lift = 8 + 14*beat + Math.sin(t*1.4+i*1.1)*6;
+      c.style.marginBottom = lift+"px";
+    });
+    requestAnimationFrame(breathe);
+  })();
+  // 键盘左右切换
+  window.addEventListener("keydown", e=>{
+    if (e.key==="ArrowRight"||e.key==="ArrowLeft"){
+      active = Math.max(-1, Math.min(tracks.length-1, active + (e.key==="ArrowRight"?1:-1)));
+      document.querySelectorAll(".card").forEach(c=>c.classList.toggle("active", +c.dataset.i===active));
+      if (active>=0){ npName.classList.remove("swap"); void npName.offsetWidth; npName.classList.add("swap"); npName.textContent = tracks[active].name; status.textContent="PLAYING"; }
+    }
+  });
+</script>
+</body>
+</html>

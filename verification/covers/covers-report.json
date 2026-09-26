@@ -1,0 +1,1681 @@
+{
+  "url": "http://127.0.0.1:5174/?scene=archive",
+  "fixtures": [
+    "Cover Artist - Cover Song.mp3",
+    "Plain Artist - No Cover Song.wav"
+  ],
+  "checks": [
+    "importing a track with embedded APIC marks cover=true in the library data",
+    "a track without embedded art reports cover=false",
+    "selecting a covered track draws the cover on the card face (label.cover=ready)",
+    "detail view renders the printed face with the embedded cover",
+    "selecting a track without art leaves the right half blank (label.cover=none)",
+    "embedded covers persist across reload"
+  ],
+  "shots": [
+    "check-01-imported-cover-song.png",
+    "check-02-cover-on-card.png",
+    "check-03-archive-cover-selected.png",
+    "check-04-detail-cover-card.png",
+    "check-05-no-cover-on-card.png",
+    "check-06-archive-no-cover-selected.png",
+    "check-07-detail-no-cover-card.png"
+  ],
+  "steps": {
+    "imported-cover-song": {
+      "rows": [
+        {
+          "id": "cd025a2e8513477f",
+          "title": "Cover Song",
+          "meta": "Cover Artist · LOCAL",
+          "time": "00:53"
+        }
+      ],
+      "status": "1 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
+      "label": {
+        "index": 0,
+        "cover": "none"
+      },
+      "slots": [
+        {
+          "id": "RM-001",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-002",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-003",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-004",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-005",
+          "cover": true,
+          "localId": "cd025a2e8513477f",
+          "pending": false
+        },
+        {
+          "id": "RM-006",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-007",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-008",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-009",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-010",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-011",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-012",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-013",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-014",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-015",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-016",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-017",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-018",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-019",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-020",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-021",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-022",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-023",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-024",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-025",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-026",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-027",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-028",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-029",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-030",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-031",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-032",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-033",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-034",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-035",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-036",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-037",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-038",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-039",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-040",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        }
+      ],
+      "entries": [
+        {
+          "id": "cd025a2e8513477f",
+          "title": "Cover Song",
+          "artist": "Cover Artist",
+          "duration": 53.333333,
+          "cover": true,
+          "slot": 0
+        }
+      ],
+      "selected": "RM-001",
+      "mode": "archive",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:cd025a2e8513477f",
+            "title": "Cover Song",
+            "subtitle": "Cover Artist",
+            "localId": "cd025a2e8513477f"
+          }
+        ],
+        "track": -1,
+        "wanted": -1,
+        "playing": false,
+        "paused": false,
+        "loop": "all",
+        "time": 0,
+        "duration": 53.333333333333336,
+        "error": ""
+      }
+    },
+    "two-rows": {
+      "rows": [
+        {
+          "id": "cd025a2e8513477f",
+          "title": "Cover Song",
+          "meta": "Cover Artist · LOCAL",
+          "time": "00:53"
+        },
+        {
+          "id": "7a896e69f107427b",
+          "title": "No Cover Song",
+          "meta": "Plain Artist · LOCAL",
+          "time": "00:25"
+        }
+      ],
+      "status": "2 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
+      "label": {
+        "index": 0,
+        "cover": "none"
+      },
+      "slots": [
+        {
+          "id": "RM-001",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-002",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-003",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-004",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-005",
+          "cover": true,
+          "localId": "cd025a2e8513477f",
+          "pending": false
+        },
+        {
+          "id": "RM-006",
+          "cover": false,
+          "localId": "7a896e69f107427b",
+          "pending": false
+        },
+        {
+          "id": "RM-007",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-008",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-009",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-010",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-011",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-012",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-013",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-014",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-015",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-016",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-017",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-018",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-019",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-020",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-021",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-022",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-023",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-024",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-025",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-026",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-027",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-028",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-029",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-030",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-031",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-032",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-033",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-034",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-035",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-036",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-037",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-038",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-039",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-040",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        }
+      ],
+      "entries": [
+        {
+          "id": "cd025a2e8513477f",
+          "title": "Cover Song",
+          "artist": "Cover Artist",
+          "duration": 53.333333,
+          "cover": true,
+          "slot": 0
+        },
+        {
+          "id": "7a896e69f107427b",
+          "title": "No Cover Song",
+          "artist": "Plain Artist",
+          "duration": 25,
+          "cover": false,
+          "slot": 1
+        }
+      ],
+      "selected": "RM-001",
+      "mode": "archive",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:cd025a2e8513477f",
+            "title": "Cover Song",
+            "subtitle": "Cover Artist",
+            "localId": "cd025a2e8513477f"
+          },
+          {
+            "file": "local:7a896e69f107427b",
+            "title": "No Cover Song",
+            "subtitle": "Plain Artist",
+            "localId": "7a896e69f107427b"
+          }
+        ],
+        "track": -1,
+        "wanted": -1,
+        "playing": false,
+        "paused": false,
+        "loop": "all",
+        "time": 0,
+        "duration": 53.333333333333336,
+        "error": ""
+      }
+    },
+    "cover-on-card": {
+      "rows": [
+        {
+          "id": "cd025a2e8513477f",
+          "title": "Cover Song",
+          "meta": "Cover Artist · LOCAL",
+          "time": "00:53"
+        },
+        {
+          "id": "7a896e69f107427b",
+          "title": "No Cover Song",
+          "meta": "Plain Artist · LOCAL",
+          "time": "00:25"
+        }
+      ],
+      "status": "2 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
+      "label": {
+        "index": 4,
+        "cover": "ready"
+      },
+      "slots": [
+        {
+          "id": "RM-001",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-002",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-003",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-004",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-005",
+          "cover": true,
+          "localId": "cd025a2e8513477f",
+          "pending": false
+        },
+        {
+          "id": "RM-006",
+          "cover": false,
+          "localId": "7a896e69f107427b",
+          "pending": false
+        },
+        {
+          "id": "RM-007",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-008",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-009",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-010",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-011",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-012",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-013",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-014",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-015",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-016",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-017",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-018",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-019",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-020",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-021",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-022",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-023",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-024",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-025",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-026",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-027",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-028",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-029",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-030",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-031",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-032",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-033",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-034",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-035",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-036",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-037",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-038",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-039",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-040",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        }
+      ],
+      "entries": [
+        {
+          "id": "cd025a2e8513477f",
+          "title": "Cover Song",
+          "artist": "Cover Artist",
+          "duration": 53.333333,
+          "cover": true,
+          "slot": 0
+        },
+        {
+          "id": "7a896e69f107427b",
+          "title": "No Cover Song",
+          "artist": "Plain Artist",
+          "duration": 25,
+          "cover": false,
+          "slot": 1
+        }
+      ],
+      "selected": "RM-005",
+      "mode": "archive",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:cd025a2e8513477f",
+            "title": "Cover Song",
+            "subtitle": "Cover Artist",
+            "localId": "cd025a2e8513477f"
+          },
+          {
+            "file": "local:7a896e69f107427b",
+            "title": "No Cover Song",
+            "subtitle": "Plain Artist",
+            "localId": "7a896e69f107427b"
+          }
+        ],
+        "track": 6,
+        "wanted": 6,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 1.589333,
+        "duration": 53.333333,
+        "error": ""
+      }
+    },
+    "no-cover-on-card": {
+      "rows": [
+        {
+          "id": "cd025a2e8513477f",
+          "title": "Cover Song",
+          "meta": "Cover Artist · LOCAL",
+          "time": "00:53"
+        },
+        {
+          "id": "7a896e69f107427b",
+          "title": "No Cover Song",
+          "meta": "Plain Artist · LOCAL",
+          "time": "00:25"
+        }
+      ],
+      "status": "2 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
+      "label": {
+        "index": 5,
+        "cover": "none"
+      },
+      "slots": [
+        {
+          "id": "RM-001",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-002",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-003",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-004",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-005",
+          "cover": true,
+          "localId": "cd025a2e8513477f",
+          "pending": false
+        },
+        {
+          "id": "RM-006",
+          "cover": false,
+          "localId": "7a896e69f107427b",
+          "pending": false
+        },
+        {
+          "id": "RM-007",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-008",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-009",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-010",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-011",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-012",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-013",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-014",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-015",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-016",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-017",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-018",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-019",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-020",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-021",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-022",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-023",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-024",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-025",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-026",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-027",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-028",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-029",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-030",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-031",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-032",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-033",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-034",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-035",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-036",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-037",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-038",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-039",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-040",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        }
+      ],
+      "entries": [
+        {
+          "id": "cd025a2e8513477f",
+          "title": "Cover Song",
+          "artist": "Cover Artist",
+          "duration": 53.333333,
+          "cover": true,
+          "slot": 0
+        },
+        {
+          "id": "7a896e69f107427b",
+          "title": "No Cover Song",
+          "artist": "Plain Artist",
+          "duration": 25,
+          "cover": false,
+          "slot": 1
+        }
+      ],
+      "selected": "RM-006",
+      "mode": "archive",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:cd025a2e8513477f",
+            "title": "Cover Song",
+            "subtitle": "Cover Artist",
+            "localId": "cd025a2e8513477f"
+          },
+          {
+            "file": "local:7a896e69f107427b",
+            "title": "No Cover Song",
+            "subtitle": "Plain Artist",
+            "localId": "7a896e69f107427b"
+          }
+        ],
+        "track": 7,
+        "wanted": 7,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 1.330502,
+        "duration": 25,
+        "error": ""
+      }
+    },
+    "after-reload": {
+      "rows": [],
+      "status": "",
+      "label": {
+        "index": 0,
+        "cover": "none"
+      },
+      "slots": [
+        {
+          "id": "RM-001",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-002",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-003",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-004",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-005",
+          "cover": true,
+          "localId": "cd025a2e8513477f",
+          "pending": false
+        },
+        {
+          "id": "RM-006",
+          "cover": false,
+          "localId": "7a896e69f107427b",
+          "pending": false
+        },
+        {
+          "id": "RM-007",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-008",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-009",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-010",
+          "cover": false,
+          "localId": null,
+          "pending": false
+        },
+        {
+          "id": "RM-011",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-012",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-013",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-014",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-015",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-016",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-017",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-018",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-019",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-020",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-021",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-022",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-023",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-024",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-025",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-026",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-027",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-028",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-029",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-030",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-031",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-032",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-033",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-034",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-035",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-036",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-037",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-038",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-039",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        },
+        {
+          "id": "RM-040",
+          "cover": false,
+          "localId": null,
+          "pending": true
+        }
+      ],
+      "entries": [
+        {
+          "id": "cd025a2e8513477f",
+          "title": "Cover Song",
+          "artist": "Cover Artist",
+          "duration": 53.333333,
+          "cover": true,
+          "slot": 0
+        },
+        {
+          "id": "7a896e69f107427b",
+          "title": "No Cover Song",
+          "artist": "Plain Artist",
+          "duration": 25,
+          "cover": false,
+          "slot": 1
+        }
+      ],
+      "selected": "RM-001",
+      "mode": "archive",
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:cd025a2e8513477f",
+            "title": "Cover Song",
+            "subtitle": "Cover Artist",
+            "localId": "cd025a2e8513477f"
+          },
+          {
+            "file": "local:7a896e69f107427b",
+            "title": "No Cover Song",
+            "subtitle": "Plain Artist",
+            "localId": "7a896e69f107427b"
+          }
+        ],
+        "track": -1,
+        "wanted": 7,
+        "playing": false,
+        "paused": false,
+        "loop": "all",
+        "time": 0,
+        "duration": 53.333333333333336,
+        "error": ""
+      }
+    }
+  },
+  "failures": [],
+  "errors": [],
+  "passed": true
+}

@@ -2163,6 +2163,17 @@ button {
   color: var(--theme-muted);
 }
 .local-status[data-kind="error"] { color: var(--theme-accent); }
+.local-usage {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--theme-muted);
+  font-variant-numeric: tabular-nums;
+}
+.local-usage b {
+  font-weight: 400;
+  color: var(--theme-ink);
+}
 .local-list {
   max-height: 208px;
   margin-top: 14px;

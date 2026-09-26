@@ -14,10 +14,20 @@ export interface LocalTrackEntry {
   mime: string;
   size: number;
   addedAt: number;
+  /** 是否有内嵌专辑封面；旧条目没有这个字段时按无封面（留空）处理。 */
+  cover?: boolean;
+  /**
+   * 阵列占位槽序号（0 = records 顺序里的第一个占位槽），由 main.ts 在导入时定下。
+   * 随条目持久保存，删掉别的一首不会让剩下的歌换方块；旧条目没有这个字段时
+   * 由 data.ts 按列表顺序补最小的空槽。
+   */
+  slot?: number;
 }
 
 interface LocalTrackRecord extends LocalTrackEntry {
   blob: Blob;
+  /** 从音频内嵌元数据提取的封面原图；没有封面时缺省。 */
+  coverBlob?: Blob;
 }
 
 /** 曲库变更事件；detail 为最新的曲目列表。 */
@@ -32,6 +42,8 @@ const DB_VERSION = 1;
 export class LocalTrackError extends Error {}
 
 const objectUrls = new Map<string, string>();
+/** 封面 object URL 与音频分开管理：封面只在卡片印刷面上取用，两者生命周期互不牵连。 */
+const coverObjectUrls = new Map<string, string>();
 let entries: LocalTrackEntry[] = [];
 
 export const localTracksSupported = () => {
@@ -121,6 +133,8 @@ const strip = (record: LocalTrackRecord): LocalTrackEntry => ({
   mime: record.mime,
   size: record.size,
   addedAt: record.addedAt,
+  cover: Boolean(record.coverBlob),
+  slot: record.slot,
 });
 
 async function readAll(): Promise<LocalTrackRecord[]> {
@@ -213,20 +227,56 @@ export async function localObjectUrl(id: string): Promise<string> {
   return url;
 }
 
-/** 播放列表重建前预热 object URL，保证引擎同步取用。 */
+/** 已缓存的封面 object URL；卡片印刷面是同步取用的，取不到时按无封面处理。 */
+export const cachedLocalCoverUrl = (id: string) => coverObjectUrls.get(id);
+
+export async function localCoverUrl(id: string): Promise<string> {
+  const cached = coverObjectUrls.get(id);
+  if (cached) return cached;
+  const record = await readOne(id);
+  if (!record) throw new LocalTrackError("本地曲目已不存在。");
+  if (!record.coverBlob) throw new LocalTrackError("本地曲目没有内嵌封面。");
+  const url = URL.createObjectURL(record.coverBlob);
+  coverObjectUrls.set(id, url);
+  return url;
+}
+
+/**
+ * 播放列表重建前预热 object URL，保证引擎与卡片印刷面都能同步取用。
+ * 每条只读一次记录：音频与封面各建一个 object URL，失败时按空处理。
+ */
 export async function primeLocalObjectUrls(ids: string[]) {
-  await Promise.all(ids.map((id) => localObjectUrl(id).catch(() => "")));
+  await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const record = await readOne(id);
+        if (!record) return;
+        if (!objectUrls.has(id))
+          objectUrls.set(id, URL.createObjectURL(record.blob));
+        if (record.coverBlob && !coverObjectUrls.has(id))
+          coverObjectUrls.set(id, URL.createObjectURL(record.coverBlob));
+      } catch {
+        /* 取不到时空着，交由引擎与印刷面各自按无源/无封面处理 */
+      }
+    }),
+  );
 }
 
 function revoke(id: string) {
   const url = objectUrls.get(id);
-  if (!url) return;
-  URL.revokeObjectURL(url);
-  objectUrls.delete(id);
+  if (url) {
+    URL.revokeObjectURL(url);
+    objectUrls.delete(id);
+  }
+  const cover = coverObjectUrls.get(id);
+  if (cover) {
+    URL.revokeObjectURL(cover);
+    coverObjectUrls.delete(id);
+  }
 }
 
 export function revokeAllLocalObjectUrls() {
-  for (const id of [...objectUrls.keys()]) revoke(id);
+  for (const id of [...objectUrls.keys(), ...coverObjectUrls.keys()]) revoke(id);
 }
 
 window.addEventListener("pagehide", (event) => {
@@ -258,6 +308,191 @@ function mimeOf(file: File) {
   if (file.type) return file.type;
   const extension = file.name.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase() ?? "";
   return MIME_BY_EXTENSION[extension] ?? "";
+}
+
+/* ----------------------------------------------------------- 内嵌封面解析 */
+
+// 只取音频文件自带的封面（mp3 的 ID3v2 APIC/PIC、mp4/m4a 的 covr、flac 的 PICTURE），
+// 零依赖手写解析，风格与 scripts/generate-audio-manifest.mjs 的 mp3 时长解析一致。
+// 格式不匹配、解析失败或图片类型不受支持一律返回 null：导入不因此失败。
+
+const COVER_MIME = /^image\/(jpeg|png|webp|gif)$/i;
+/** 封面原图字节上限；超限当作没有封面，避免把超大图塞进 IndexedDB。 */
+const MAX_COVER_BYTES = 8 * 1024 * 1024;
+
+interface CoverImage {
+  mime: string;
+  data: Uint8Array;
+}
+
+const u32be = (bytes: Uint8Array, offset: number) =>
+  (((bytes[offset] << 24) |
+    (bytes[offset + 1] << 16) |
+    (bytes[offset + 2] << 8) |
+    bytes[offset + 3]) >>>
+    0);
+
+const ascii = (bytes: Uint8Array, start: number, length: number) =>
+  String.fromCharCode(...bytes.subarray(start, start + length));
+
+/** ID3v2 同步安全整数：每字节只用低 7 位。 */
+const id3Size = (bytes: Uint8Array, offset: number) =>
+  ((bytes[offset] & 0x7f) << 21) |
+  ((bytes[offset + 1] & 0x7f) << 14) |
+  ((bytes[offset + 2] & 0x7f) << 7) |
+  (bytes[offset + 3] & 0x7f);
+
+/** APIC/PIC 帧体：编码 → MIME → 图片类型 → 描述（按编码以 0 收尾）→ 图片字节。 */
+function apicPayload(
+  bytes: Uint8Array,
+  start: number,
+  end: number,
+  legacy: boolean,
+): CoverImage | null {
+  if (start >= end) return null;
+  const encoding = bytes[start];
+  let offset = start + 1;
+  let mime: string;
+  if (legacy) {
+    mime = `image/${ascii(bytes, offset, 3).toLowerCase()}`;
+    offset += 3;
+  } else {
+    let mimeEnd = offset;
+    while (mimeEnd < end && bytes[mimeEnd] !== 0) mimeEnd++;
+    mime = new TextDecoder("latin1").decode(bytes.subarray(offset, mimeEnd));
+    offset = mimeEnd + 1;
+  }
+  offset += 1; // picture type
+  if (encoding === 1 || encoding === 2) {
+    while (offset + 1 < end && !(bytes[offset] === 0 && bytes[offset + 1] === 0))
+      offset += 2;
+    offset += 2;
+  } else {
+    while (offset < end && bytes[offset] !== 0) offset++;
+    offset += 1;
+  }
+  if (offset >= end) return null;
+  return { mime: mime || "image/jpeg", data: bytes.subarray(offset, end) };
+}
+
+function coverFromId3(bytes: Uint8Array): CoverImage | null {
+  if (bytes.length < 10 || ascii(bytes, 0, 3) !== "ID3") return null;
+  const major = bytes[3];
+  const flags = bytes[5];
+  const end = Math.min(bytes.length, 10 + id3Size(bytes, 6));
+  let offset = 10;
+  if (flags & 0x40)
+    // 扩展头：v2.3 是 4 字节长度（不含自身），v2.4 是同步安全长度（含自身）
+    offset += major >= 4 ? id3Size(bytes, offset) : u32be(bytes, offset) + 4;
+  const headerSize = major === 2 ? 6 : 10;
+  while (offset + headerSize <= end) {
+    const id =
+      ascii(bytes, offset, 3) + (major === 2 ? "" : ascii(bytes, offset + 3, 1));
+    if (!/^[A-Z0-9]{3,4}$/.test(id)) break; // 帧区结束（通常是一串 0）
+    const size =
+      major === 2
+        ? (bytes[offset + 3] << 16) | (bytes[offset + 4] << 8) | bytes[offset + 5]
+        : major === 4
+          ? id3Size(bytes, offset + 4)
+          : u32be(bytes, offset + 4);
+    const body = offset + headerSize;
+    if (size <= 0 || body + size > end) break;
+    if (id === "APIC" || id === "PIC")
+      return apicPayload(bytes, body, body + size, id === "PIC");
+    offset = body + size;
+  }
+  return null;
+}
+
+interface Atom {
+  type: string;
+  start: number;
+  end: number;
+}
+
+/** 顺序扫描一段子原子列表；size 为 0 表示直到末尾。 */
+function atoms(bytes: Uint8Array, start: number, end: number): Atom[] {
+  const list: Atom[] = [];
+  let offset = start;
+  while (offset + 8 <= end) {
+    let size = u32be(bytes, offset);
+    if (size === 0) size = end - offset;
+    if (size < 8 || offset + size > end) break;
+    list.push({ type: ascii(bytes, offset + 4, 4), start: offset + 8, end: offset + size });
+    offset += size;
+  }
+  return list;
+}
+
+function coverFromMp4(bytes: Uint8Array): CoverImage | null {
+  if (bytes.length < 12 || ascii(bytes, 4, 4) !== "ftyp") return null;
+  const moov = atoms(bytes, 0, bytes.length).find((atom) => atom.type === "moov");
+  const udta = moov && atoms(bytes, moov.start, moov.end).find((a) => a.type === "udta");
+  // meta 是完整盒：4 字节 version/flags 之后才是子原子
+  const meta = udta && atoms(bytes, udta.start, udta.end).find((a) => a.type === "meta");
+  const ilst = meta && atoms(bytes, meta.start + 4, meta.end).find((a) => a.type === "ilst");
+  const covr = ilst && atoms(bytes, ilst.start, ilst.end).find((a) => a.type === "covr");
+  const data = covr && atoms(bytes, covr.start, covr.end).find((a) => a.type === "data");
+  if (!data) return null;
+  // data 盒：version/flags(4) + locale(4)，低字节 13=JPEG、14=PNG
+  const kind = u32be(bytes, data.start) & 0xff;
+  return {
+    mime: kind === 14 ? "image/png" : "image/jpeg",
+    data: bytes.subarray(data.start + 8, data.end),
+  };
+}
+
+function coverFromFlac(bytes: Uint8Array): CoverImage | null {
+  if (bytes.length < 8 || ascii(bytes, 0, 4) !== "fLaC") return null;
+  let offset = 4;
+  while (offset + 4 <= bytes.length) {
+    const header = bytes[offset];
+    const size =
+      (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3];
+    const body = offset + 4;
+    if (body + size > bytes.length) break;
+    if ((header & 0x7f) === 6) {
+      // PICTURE：类型 → MIME → 描述 → 宽/高/色深/颜色数 → 图片字节
+      let cursor = body + 4;
+      const mimeLength = u32be(bytes, cursor);
+      const mime = new TextDecoder("latin1").decode(
+        bytes.subarray(cursor + 4, cursor + 4 + mimeLength),
+      );
+      cursor += 4 + mimeLength;
+      cursor += 4 + u32be(bytes, cursor) + 16;
+      const dataLength = u32be(bytes, cursor);
+      return {
+        mime: mime || "image/jpeg",
+        data: bytes.subarray(cursor + 4, cursor + 4 + dataLength),
+      };
+    }
+    offset = body + size;
+    if (header & 0x80) break; // 最后一个元数据块
+  }
+  return null;
+}
+
+function parseCover(bytes: Uint8Array): CoverImage | null {
+  try {
+    return coverFromId3(bytes) ?? coverFromMp4(bytes) ?? coverFromFlac(bytes);
+  } catch {
+    return null;
+  }
+}
+
+/** 从音频文件提取内嵌封面；没有或无法解析时返回 null，不抛错。 */
+async function extractCover(file: File): Promise<Blob | null> {
+  let bytes: Uint8Array;
+  try {
+    bytes = new Uint8Array(await file.arrayBuffer());
+  } catch {
+    return null;
+  }
+  const found = parseCover(bytes);
+  if (!found || found.data.length === 0 || found.data.length > MAX_COVER_BYTES)
+    return null;
+  const mime = COVER_MIME.test(found.mime) ? found.mime : "image/jpeg";
+  return new Blob([found.data as unknown as BlobPart], { type: mime });
 }
 
 let decoder: AudioContext | undefined;
@@ -306,8 +541,14 @@ function newId() {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** 导入一个文件：解析「艺术家 - 曲名」、读取真实时长并写入 IndexedDB。 */
-export async function addLocalTrack(file: File): Promise<LocalTrackEntry> {
+/**
+ * 导入一个文件：解析「艺术家 - 曲名」、读取真实时长并写入 IndexedDB。
+ * slot 是调用方（main.ts）挑好的阵列占位槽序号，随条目一起保存。
+ */
+export async function addLocalTrack(
+  file: File,
+  slot?: number,
+): Promise<LocalTrackEntry> {
   if (!file.size)
     throw new LocalTrackError(`无法导入「${file.name}」：文件为空。`);
   const { title, artist } = parseTrackName(file.name);
@@ -319,6 +560,7 @@ export async function addLocalTrack(file: File): Promise<LocalTrackEntry> {
       `无法导入「${file.name}」：音频格式不受支持或文件已损坏。`,
     );
   }
+  const coverBlob = await extractCover(file);
   const record: LocalTrackRecord = {
     id: newId(),
     title,
@@ -328,9 +570,12 @@ export async function addLocalTrack(file: File): Promise<LocalTrackEntry> {
     size: file.size,
     addedAt: Date.now(),
     blob: file,
+    ...(typeof slot === "number" ? { slot } : {}),
+    ...(coverBlob ? { coverBlob } : {}),
   };
   await write(record);
   await localObjectUrl(record.id).catch(() => "");
+  if (coverBlob) await localCoverUrl(record.id).catch(() => "");
   announce(await listLocalTracks());
   return strip(record);
 }

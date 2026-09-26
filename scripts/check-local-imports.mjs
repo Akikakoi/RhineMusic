@@ -100,6 +100,12 @@ const read = () =>
       statusKind: document.querySelector("#local-library .local-status")?.dataset.kind ?? "",
       empty: Boolean(document.querySelector("#local-library .local-empty")),
       playerTitle: document.querySelector(".music-player .player-title")?.textContent?.trim() ?? "",
+      // 列表首行（即第一首导入曲目）占用的阵列槽位编号 RM-0xx。
+      localSlot: (() => {
+        const id = document.querySelector("#local-library .local-row")?.dataset.localId ?? "";
+        const slots = window.rhine?.stats?.().library?.slots ?? [];
+        return slots.find((slot) => slot.localId === id)?.id ?? "";
+      })(),
       detailLocal: document.querySelector("#playback-local")?.textContent?.trim() ?? "",
       detailLocalHidden: document.querySelector("#playback-local")?.hidden ?? null,
       mode: window.rhine?.stats?.().mode ?? "",
@@ -211,7 +217,7 @@ try {
   await shot("two-rows");
   await step("two-rows", second);
 
-  // 4. 刷新后仍在（IndexedDB 持久化），且照旧不进入阵列。
+  // 4. 刷新后仍在（IndexedDB 持久化），填充关系与阵列选择都不受影响。
   await closeSettings();
   await page.reload({ waitUntil: "networkidle2", timeout: 60000 });
   await page.waitForFunction(
@@ -229,15 +235,16 @@ try {
     reloaded.music?.tracks?.filter((track) => track.file.startsWith("local:")).length === 2,
     "刷新后播放列表也应包含两条本地曲目",
   );
+  // 导入不改动内置曲目的播放目标：MOTIF 仍在播，阵列选择仍停在它的方块上。
   expect(
     reloaded.selected === beforeSelected,
-    `本地曲目不得改变阵列选择，实际 ${reloaded.selected}（期望 ${beforeSelected}）`,
+    `刷新后（播放内置曲目时）阵列选择应与导入前一致，实际 ${reloaded.selected}（期望 ${beforeSelected}）`,
   );
   await shot("after-reload");
   await step("after-reload", reloaded);
-  report.checks.push("local tracks persist across reload and stay out of the array");
+  report.checks.push("local tracks persist across reload without disturbing the existing selection");
 
-  // 5. 播放本地曲目：进入播放链路。
+  // 5. 播放本地曲目：进入播放链路，阵列跟随到它所在的方块。
   const firstId = reloaded.rows[0]?.id ?? "";
   await page.click('#local-library .local-row [data-local-action="play"]');
   await wait(2000);
@@ -255,12 +262,12 @@ try {
     `迷你播放器应显示本地曲目，实际 ${playingFirst.playerTitle}`,
   );
   expect(
-    playingFirst.selected === beforeSelected,
-    `播放本地曲目不得移动阵列选择，实际 ${playingFirst.selected}`,
+    playingFirst.selected === playingFirst.localSlot,
+    `播放本地曲目时阵列应跟随到该曲目占用的方块（${playingFirst.localSlot}），实际 ${playingFirst.selected}`,
   );
   await shot("playing-local");
   await step("playing-local", playingFirst);
-  report.checks.push("local track plays through the shared audio chain");
+  report.checks.push("local track plays through the shared audio chain and the array follows its slot");
 
   // 6. 编辑元数据：列表与播放器标题同时更新，播放不中断。
   await page.click('#local-library .local-row [data-local-action="edit"]');
@@ -344,8 +351,8 @@ try {
     `删除正在播放的曲目应顺延到下一条本地曲目，实际 ${playingFile(afterDelete)}（期望 local:${secondId}）`,
   );
   expect(
-    afterDelete.selected === beforeSelected,
-    `删除本地曲目不得改变阵列选择，实际 ${afterDelete.selected}`,
+    afterDelete.selected === afterDelete.localSlot,
+    `删除正在播放的本地曲目后，阵列应跟随顺延到的曲目（${afterDelete.localSlot}），实际 ${afterDelete.selected}`,
   );
   await shot("after-delete");
   await step("after-delete", afterDelete);

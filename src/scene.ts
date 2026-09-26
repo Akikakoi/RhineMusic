@@ -33,7 +33,6 @@ import {
   type ArchiveCell,
   type ArchiveNavigation,
 } from "./archive-loop";
-import { labelMarkSvg } from "./brand";
 import { archiveFraming } from "./viewport-layout";
 import { ArchiveDrag, ArchivePlaneMomentum, type DragAxis, type DragProjection, type DragPosition } from "./archive-drag";
 import { assetUrl as publicAsset } from "./asset-url";
@@ -263,7 +262,12 @@ export class ArchiveScene {
   private loaded = false;
   private labelCanvas = document.createElement("canvas");
   private labelTexture?: THREE.CanvasTexture;
-  private labelMark = new Image();
+  /** 选中卡片正面右半区的封面图缓存（按 object URL 缓存），加载完成后重画标签。 */
+  private coverImages = new Map<string, HTMLImageElement>();
+  private coverLoading = new Set<string>();
+  /** 当前印刷面对应的曲目下标与封面状态；供重入绘制与 getStats 读取。 */
+  private labelIndex = 0;
+  private labelCover: "none" | "loading" | "ready" = "none";
   private reduced = false;
   private quality = normalizeQuality(undefined);
   private appliedQuality = "";
@@ -360,8 +364,6 @@ export class ArchiveScene {
     this.bindPointer();
   }
   async load(assetUrl = publicAsset("assets/vinyl-sleeve.glb")) {
-    this.labelMark.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(labelMarkSvg)}`;
-    await this.labelMark.decode();
     const gltf = await new GLTFLoader().loadAsync(
       assetUrl,
     );
@@ -808,6 +810,13 @@ export class ArchiveScene {
   setTrackLabels(visible: boolean) {
     if (this.tabMesh) this.tabMesh.visible = visible;
   }
+  /**
+   * 曲库内容变化（本地曲目覆盖或退出占位槽）后重画当前卡片的印刷面。
+   * 只刷新贴图，不动几何、抬起高度、选择与镜头。
+   */
+  refreshRecord() {
+    this.drawLabel(fileAtSlot(this.selectedSlot));
+  }
   select(index: number, navigation?: ArchiveNavigation) {
     if (!this.navigatingDrag) this.cancelPointer();
     this.setHover(null);
@@ -871,52 +880,118 @@ export class ArchiveScene {
     }
     return lines;
   }
+  /** 单行文字压到指定宽度：放不下就逐字截断加省略号，字号由调用方设定。 */
+  private ellipsis(c: CanvasRenderingContext2D, text: string, maxWidth: number) {
+    if (c.measureText(text).width <= maxWidth) return text;
+    let trimmed = text;
+    while (trimmed.length > 1 && c.measureText(`${trimmed}…`).width > maxWidth)
+      trimmed = trimmed.slice(0, -1);
+    return `${trimmed}…`;
+  }
+  /**
+   * 滑套正面的曲目印刷：左半为编号、分类与曲目信息，右半为内嵌封面。
+   * 封面方图在右半居中留边（完整显示，不裁切）；没有封面时右半保持纸面留空。
+   */
   private drawLabel(index: number) {
     if (!this.labelTexture) return;
     const track = records[index];
     const c = this.labelCanvas.getContext("2d")!;
     const w = this.labelCanvas.width, h = this.labelCanvas.height;
+    const half = w / 2;
+    const pad = 24;
+    const leftWidth = half - pad * 2;
+    this.labelIndex = index;
+    // 纸面底 + 水平扫描线：左右两半同一张纸。
     c.fillStyle = "#e6e2d9";
     c.fillRect(0, 0, w, h);
     c.fillStyle = "rgba(23,23,19,.07)";
     for (let y = 0; y < h; y += 6) c.fillRect(0, y, w, 1);
-    c.fillStyle = "#171713";
-    c.fillRect(16, 16, w - 32, 5);
-    c.font = "bold 42px MiSans";
-    c.fillText("RHINE MUSIC", 20, 84);
-    c.font = "23px MiSans";
-    c.fillStyle = "#878476";
-    c.fillText("AUDIO ARCHIVE", 20, 120);
-    c.textAlign = "right";
-    c.fillStyle = "#171713";
-    c.font = "bold 42px MiSans";
-    c.fillText(`NO.${String(index + 1).padStart(3, "0")}`, w - 20, 84);
-    c.fillStyle = "#878476";
-    c.font = "23px MiSans";
-    c.fillText(track.category, w - 20, 120);
+    // 左半：编号、分类与曲目信息（放不下时缩行内文字并加省略号）。
     c.textAlign = "left";
-    c.fillStyle = "#c9a15c";
-    c.fillRect(20, 146, w - 40, 3);
-    // 淡淡的标志水印，避免与正文争视觉
-    c.globalAlpha = 0.1;
-    c.drawImage(this.labelMark, w - 340, 190, 300, 140);
-    c.globalAlpha = 1;
     c.fillStyle = "#171713";
-    c.font = "bold 64px MiSans";
-    const lines = this.wrapText(c, track.title, w - 60, 2);
-    lines.forEach((line, i) => c.fillText(line, 20, 268 + i * 78));
+    c.font = "bold 40px MiSans";
+    c.fillText("RHINE MUSIC", pad, 82);
+    c.fillStyle = "#878476";
+    c.font = "22px MiSans";
+    c.fillText("AUDIO ARCHIVE", pad, 114);
+    c.fillStyle = "#171713";
+    c.font = "bold 46px MiSans";
+    c.fillText(`NO.${String(index + 1).padStart(3, "0")}`, pad, 194);
+    c.fillStyle = "#878476";
+    c.font = "24px MiSans";
+    c.fillText(this.ellipsis(c, track.category, leftWidth), pad, 232);
+    c.fillStyle = "#c9a15c";
+    c.fillRect(pad, 258, leftWidth, 3);
+    c.fillStyle = "#171713";
+    c.font = "bold 46px MiSans";
+    const lines = this.wrapText(c, track.title, leftWidth, 2);
+    lines.forEach((line, i) => c.fillText(line, pad, 348 + i * 58));
     c.fillStyle = "#5f6159";
-    c.font = "30px MiSans";
-    c.fillText(track.artist, 20, 268 + lines.length * 78 + 16);
+    c.font = "28px MiSans";
+    c.fillText(
+      this.ellipsis(c, track.artist, leftWidth),
+      pad,
+      348 + lines.length * 58 + 6,
+    );
     c.fillStyle = "#171713";
     c.font = "bold 44px MiSans";
-    c.fillText(formatDuration(track.duration), 20, h - 34);
+    c.fillText(formatDuration(track.duration), pad, h - 30);
     c.textAlign = "right";
     c.fillStyle = track.pending ? "#a08a63" : "#5f6159";
-    c.font = "26px MiSans";
-    c.fillText(track.pending ? "PENDING · 待入库" : "READY · 本地音源", w - 20, h - 38);
+    c.font = "24px MiSans";
+    c.fillText(track.pending ? "PENDING · 待入库" : "READY · 本地音源", half - pad, h - 34);
     c.textAlign = "left";
+    this.drawLabelCover(c, track, half, w, h);
     this.labelTexture.needsUpdate = true;
+  }
+  /**
+   * 右半：内嵌封面居中留边。方图按原比例缩放到框内、四周留纸边，不裁切。
+   * 没有封面或尚未解码完成时右半留空；加载完成后自己重画一次。
+   */
+  private drawLabelCover(
+    c: CanvasRenderingContext2D,
+    track: (typeof records)[number],
+    left: number,
+    right: number,
+    h: number,
+  ) {
+    const url = track.coverUrl;
+    const image = url ? this.coverImages.get(url) : undefined;
+    const ready = Boolean(image && image.complete && image.naturalWidth);
+    this.labelCover = !url ? "none" : ready ? "ready" : "loading";
+    if (url && !ready && !this.coverLoading.has(url)) {
+      this.coverLoading.add(url);
+      const loading = new Image();
+      loading.decoding = "async";
+      loading.onload = () => {
+        this.coverImages.set(url, loading);
+        this.coverLoading.delete(url);
+        // 印刷面可能已经换人；只在仍是同一张封面时重画。
+        if (records[this.labelIndex]?.coverUrl === url) this.drawLabel(this.labelIndex);
+      };
+      loading.onerror = () => this.coverLoading.delete(url);
+      loading.src = url;
+    }
+    if (!ready || !image) return;
+    const pad = 24;
+    const boxX = left + pad;
+    const boxY = pad;
+    const boxWidth = right - left - pad * 2;
+    const boxHeight = h - pad * 2;
+    // 居中留边：整张封面按原比例放进框内，不裁切、不拉伸。
+    const scale = Math.min(boxWidth / image.naturalWidth, boxHeight / image.naturalHeight);
+    const drawWidth = image.naturalWidth * scale;
+    const drawHeight = image.naturalHeight * scale;
+    c.strokeStyle = "rgba(23,23,19,.5)";
+    c.lineWidth = 4;
+    c.strokeRect(boxX, boxY, boxWidth, boxHeight);
+    c.drawImage(
+      image,
+      boxX + (boxWidth - drawWidth) / 2,
+      boxY + (boxHeight - drawHeight) / 2,
+      drawWidth,
+      drawHeight,
+    );
   }
   private ensureInstanceCapacity(required: number) {
     if (required <= this.instanceCapacity) return;
@@ -1943,6 +2018,7 @@ export class ArchiveScene {
       presentation: this.presence,
       triangles: this.renderer.info.render.triangles,
       archiveCount: this.drawnCells.length,
+      label: { index: this.labelIndex, cover: this.labelCover },
       trackLabels: this.tabMesh
         ? {
             visible: this.tabMesh.visible,

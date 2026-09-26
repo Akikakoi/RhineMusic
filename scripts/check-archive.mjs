@@ -18,6 +18,15 @@ import {
 } from "../src/motion.ts";
 
 assert.equal(records.length, 40);
+assert.deepEqual(
+  records.map((record) => record.id),
+  Array.from({ length: 40 }, (_, i) => `RM-${String(i + 1).padStart(3, "0")}`),
+  "Stable RM-001…RM-040 numbering",
+);
+assert.ok(
+  records.every((record) => record.localId === undefined),
+  "tracks.json itself never carries local ids: the array is the static 40-slot grid",
+);
 const slots = new Set();
 for (let lane = 0; lane < archiveColumns.length; lane++) {
   const files = columnFiles(lane);
@@ -29,9 +38,23 @@ for (let lane = 0; lane < archiveColumns.length; lane++) {
     assert.ok(location.row >= 0 && location.row < 32);
     slots.add(location.slot);
     const record = records[index];
-    assert.ok(record.abstract.length > 70);
-    assert.equal(record.findings.length, 3);
-    assert.ok(new URL(record.source).protocol === "https:");
+    assert.equal(record.category, archiveColumns[lane], "Column membership follows the category");
+    assert.ok(record.title.trim().length > 0, `${record.id} has a title`);
+    assert.ok(record.artist.trim().length > 0, `${record.id} has an artist`);
+    // 已入库与占位必须互斥：占位没有音源与时长，已入库两者齐全。
+    if (record.pending) {
+      assert.equal(record.file, null, `${record.id} is a placeholder without a source`);
+      assert.equal(record.duration, null, `${record.id} is a placeholder without a duration`);
+    } else {
+      assert.ok(
+        typeof record.file === "string" && record.file.length > 0,
+        `${record.id} names its audio file`,
+      );
+      assert.ok(
+        Number.isFinite(record.duration) && record.duration > 0,
+        `${record.id} has a real duration`,
+      );
+    }
   }
 }
 assert.equal(slots.size, 40, "No two documents occupy the same slot");
@@ -95,7 +118,8 @@ assert.ok(Math.abs(coarse.value - fine.value) < 1e-9);
 console.log(
   JSON.stringify(
     {
-      documents: records.length,
+      tracks: records.length,
+      pendingSlots: records.filter((record) => record.pending).length,
       perColumn: 8,
       crestsAt760: crests,
       maxFrameDelta: maxDelta,

@@ -1,9 +1,19 @@
 # Rhine Lab UI
 
+## 本地曲目接入五列阵列（2026-09-23）
+
+- 用户要求：上一轮导入的本地曲目要真正进入主界面的波浪阵列，每一首成为阵列里的一个方块。
+- 范围与约束：`src/data.ts` 从静态常量改为运行时可更新的曲库层（新增 `applyLocalTracks` / `subscribeTracks` / `localSlotCapacity` / `localSlotState` / `nextLocalSlot`，`records` 长度与顺序不变、就地替换元素）；`src/local-tracks.ts` 的条目增加 `slot`；`src/scene.ts` 新增只重画贴图的 `refreshRecord()`；`src/main.ts` 接线；`src/audio-settings.ts` 与 `src/style.css` 出用量行文案与样式。`content/tracks.json`、`track-atlas.ts`、`archive-loop.ts` 未改动。沿用原生实现，本轮不启用前端设计/动效 Skill。
+- 已确认决策（2026-09-23，不可自行更改）：① 卡面不显示导入歌曲的曲名，维持 `scene.setTrackLabels(false)`，不为本地曲目开标签、不改烘焙图集；② 导入顺序依次填第一个空占位槽（34 个 pending 槽，按 `records` 顺序）；③ 占位槽用完后导入禁止并给出可读提示，不写入、不占位；④ 删除导入的歌时该槽位回到占位（PENDING、不可播），阵列当前选择不回退、循环不断。
+- 槽位继承：本地曲目填入 pending 槽时编号 `RM-0xx`、列归属与行坐标沿用该占位曲目，只换曲名、歌手、时长与音源（`file` 写成 `local:<id>`、`pending` 置 false），因此同一首歌总落在固定方块上，阵列几何与列归属都不动；播放链路按稳定标识自动命中，不再写第二套。槽位序号随条目持久保存（`LocalTrackEntry.slot`），删掉别的一首不会让剩下的歌换方块。
+- 启动竞态：IndexedDB 是异步的，`start()` 先 `await loadLocalLibrary()`（读回 + 覆盖占位槽）再建阵列，阵列首帧即最终内容，不会先摆满占位再错位或闪烁；同一段 await 内完成播放目标重映射，曲库回来时不会打断正在播放的曲目。曲库不可用时退化为全占位并给出可读说明。
+- 删除与超限：删除后槽位写回 `tracks.json` 的原始占位数据（编号、列、原曲名、PENDING、`file: null`）；播放中播放目标按曲目标识重映射并向前跟随（不按数组下标判断，顺延可能落在同一个下标上）。超限导入跳过该文件、不写 IndexedDB、不占位，并在设置面板说明「已导入 N 首 / M 项未导入」与首个被拒文件名；设置面板新增固定用量行「阵列占位槽已使用 x / 34」。
+- 验证：新增 `node scripts/check-local-array.mjs`（puppeteer-core 驱动系统 Edge 无头，自生成 35 个 WAV），证据在 `verification/local-array/`；实现要点、同步范围、已知限制与回归结论见 `verification/LOCAL-ARRAY.md`。本轮未提交、未推送。
+
 ## 本地曲库（2026-09-23）
 
 - 用户要求：设置面板可导入本机音频文件，持久保存、播放、编辑元数据、删除；所有 UI 与现有界面风格一致。
-- 范围与约束：新增 `src/local-tracks.ts`，设置面板新增「LOCAL LIBRARY / 本地曲库」区块（`src/audio-settings.ts` 出 markup、`src/main.ts` 接线、`src/style.css` 与 `src/responsive.css` 出样式）。导入的曲目进入播放链路（播放列表、迷你播放器、详情走带、上一首/下一首、播放记录），**不进入五列阵列**，不改动 scene、阵列几何与 track-atlas。沿用原生实现，本轮不启用前端设计/动效 Skill。
+- 范围与约束：新增 `src/local-tracks.ts`，设置面板新增「LOCAL LIBRARY / 本地曲库」区块（`src/audio-settings.ts` 出 markup、`src/main.ts` 接线、`src/style.css` 与 `src/responsive.css` 出样式）。导入的曲目进入播放链路（播放列表、迷你播放器、详情走带、上一首/下一首、播放记录），**当轮不进入五列阵列**（下一轮已接入，见本文件顶部），当轮不改动 scene、阵列几何与 track-atlas。沿用原生实现，本轮不启用前端设计/动效 Skill。
 - 已确认决策：文件名按「艺术家 - 曲名」解析（支持 `-`、`–`、`—`，无分隔符时整名作标题、歌手显示 UNKNOWN）；时长由音频实际解码读取；标题与歌手可在面板就地编辑。文件本体存 IndexedDB（库 `rhine-local-tracks`、对象仓 `tracks`），不用 localStorage 存音频；本地曲目以 `local:<id>` 作为 `MusicTrack.file`，由 `audio.ts` 解析成 object URL。
 - 索引重映射：`prefs.musicTrack` 与 `musicState().wanted / track` 都是播放列表下标。本地曲目一律追加在内置三轨与 `audio/manifest.json` 之后，因此已入库曲目的下标不变；本地曲目增删改后按稳定标识（本地 id / 文件名去掉 .ogg/.mp3）重映射，不按数组位置硬算。`main.ts` 的 `playlistIndex()` 改为按同一标识匹配曲库记录。
 - 删除正在播放的曲目：顺延到该位置的下一条（删的是最后一条则回绕到第一条）；只有删除后播放列表为空才回落到场景联动。导入与改名不打断当前播放，也不改变阵列选择。

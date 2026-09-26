@@ -20,6 +20,9 @@ __pycache__/
 
 reference/local-files-connection.js
 
+# 工作区临时文件（检查日志、脚本中间产物），不入库
+.cowork-temp/
+
 # Local integration checkout
 .main-integration/
 

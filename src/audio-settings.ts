@@ -17,6 +17,8 @@ export interface LocalLibraryUi {
   error: string;
   editing: string | null;
   confirming: string | null;
+  /** 五列阵列占位槽的占用情况；null 表示无法确定（存储不可用）。 */
+  slots?: { used: number; capacity: number; remaining: number } | null;
 }
 
 const localButtons = (
@@ -77,21 +79,29 @@ export function localLibraryMarkup(
   entries: LocalTrackEntry[],
   ui: LocalLibraryUi,
 ) {
+  const slots = ui.slots ?? null;
+  const used = slots ? `${slots.used} / ${slots.capacity}` : "";
+  const full = Boolean(slots && slots.remaining === 0);
+  const summary = `${entries.length} 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽`;
   const status = !ui.supported
     ? "本地曲库不可用：当前浏览器未开放本地存储（隐私模式或已禁用站点数据）。"
-    : ui.error;
-  const summary = `${entries.length} 首本地曲目 · 导入后进入播放列表，不占用五列阵列`;
+    : ui.error || summary;
+  // 用量行固定显示，不受错误提示影响；占位槽是本地曲目在阵列里的唯一开销。
+  const usageTag = slots && ui.supported
+    ? `<p class="local-usage">阵列占位槽已使用 <b>${used}</b>${slots.remaining > 0 ? `，剩 ${slots.remaining} 个空槽` : "（已用尽，删除已有本地曲目后可继续导入）"}</p>`
+    : "";
   return `<div class="local-head">
-    <div><strong>LOCAL LIBRARY</strong><span>本地曲库 · 导入本机音频文件，保存在此浏览器</span></div>
+    <div><strong>LOCAL LIBRARY</strong><span>本地曲库 · 导入本机音频文件，保存在此浏览器；导入后按顺序填入五列阵列的空占位槽</span></div>
     <div class="local-import-actions">
       <input id="local-import" type="file" accept="audio/*" multiple hidden/>
       <button type="button" class="local-import" data-local-action="import"${ui.supported && !ui.busy ? "" : " disabled"}>＋ IMPORT <span>导入</span></button>
     </div>
   </div>
-  <p class="local-status" data-kind="${status ? "error" : "info"}" role="status">${escapeHtml(status || summary)}</p>
+  <p class="local-status" data-kind="${!ui.supported || ui.error || full ? "error" : "info"}" role="status">${escapeHtml(status)}</p>
+  ${usageTag}
   ${entries.length
       ? `<div class="local-list">${entries.map((entry, index) => localRowMarkup(entry, index, ui)).join("")}</div>`
-      : `<p class="local-empty">尚无本地曲目。选择「导入」添加音频文件；文件名按「歌手 - 曲名」解析，导入后也可以手动编辑标题与歌手。</p>`}`;
+      : `<p class="local-empty">尚无本地曲目。选择「导入」添加音频文件；文件名按「歌手 - 曲名」解析，导入后依次填入五列阵列的第一个空占位槽，也可以手动编辑标题与歌手。</p>`}`;
 }
 
 export function audioSettingsMarkup(prefs: AudioPreferences, music?: MusicState) {

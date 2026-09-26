@@ -27,6 +27,10 @@ import {
   columnFiles,
   fileLocation,
   formatDuration,
+  applyLocalTracks,
+  subscribeTracks,
+  localSlotState,
+  nextLocalSlot,
 } from "./data";
 import { TerminalAudio, localIdOf, musicTrackKey } from "./audio";
 import { loadLyrics, activeLyric, formatLyricTime, type LyricLine } from "./lyrics";
@@ -571,12 +575,15 @@ function renderDetail() {
   tabTransition.cancel();
   const r = records[selected];
   const playable = !r.pending;
+  // 本地导入的曲目音源在 IndexedDB 里，file 是 local:<id>；面板上给出可读来源。
+  const source = r.localId ? "LOCAL LIBRARY · 本机导入" : (r.file ?? "");
+  const status = r.localId ? "可播放 · 本地曲库" : "可播放 · 本地音源";
   $("#object-id").textContent = "NO." + String(selected + 1).padStart(3, "0");
   $("#detail-content").innerHTML = `
   <div class="detail-kicker"><span>TRACK ${r.id}</span><span>${playable ? "READY" : "PENDING"}</span></div>
   <h2 class="${r.title.length > 16 ? "compact" : ""}">${escapeHtml(r.title)}</h2><div class="detail-title-cn">${escapeHtml(r.artist)}<span>${escapeHtml(r.category)}</span></div>
   <div class="detail-rule"></div>
-  <dl class="metadata"><div><dt>COLLECTION / 曲库分类</dt><dd>${escapeHtml(r.category)}</dd></div><div><dt>DURATION / 时长</dt><dd>${formatDuration(r.duration)}</dd></div><div><dt>SOURCE / 音源</dt><dd class="metadata-file" title="${playable ? escapeHtml(r.file ?? "") : ""}">${playable ? escapeHtml(r.file ?? "") : "尚未入库"}</dd></div><div><dt>STATUS / 状态</dt><dd><i></i>${playable ? "可播放 · 本地音源" : "占位曲目 · 待入库"}</dd></div></dl>
+  <dl class="metadata"><div><dt>COLLECTION / 曲库分类</dt><dd>${escapeHtml(r.category)}</dd></div><div><dt>DURATION / 时长</dt><dd>${formatDuration(r.duration)}</dd></div><div><dt>SOURCE / 音源</dt><dd class="metadata-file" title="${playable ? escapeHtml(r.file ?? "") : ""}">${playable ? escapeHtml(source) : "尚未入库"}</dd></div><div><dt>STATUS / 状态</dt><dd><i></i>${playable ? status : "占位曲目 · 待入库"}</dd></div></dl>
   <div class="detail-tabs" role="tablist"><button id="tab-overview" class="active" role="tab" aria-controls="tab-panel" aria-selected="true" data-tab="overview">01 <span>播放</span></button><button id="tab-notes" role="tab" aria-controls="tab-panel" aria-selected="false" data-tab="notes">02 <span>歌词</span></button><button id="tab-history" role="tab" aria-controls="tab-panel" aria-selected="false" data-tab="history">03 <span>播放记录</span></button><i class="tab-indicator" aria-hidden="true"></i></div>
   <div id="tab-panel" class="tab-panel" role="tabpanel">${overview()}</div>
   <div class="detail-actions"><button class="solid-button" data-action="bookmark">${saved.has(r.id) ? "− REMOVE FROM SAVED" : "＋ SAVE TRACK"}<span>${saved.has(r.id) ? "已收藏" : "收藏曲目"}</span></button>${playable ? `<button class="solid-button" data-action="play-track">${playingTrack() ? "❚❚ PAUSE" : "▶ PLAY"}<span>${playingTrack() ? "暂停" : "播放"}</span></button>` : `<button class="solid-button" disabled>▶ PENDING<span>尚未入库</span></button>`}</div>
@@ -617,7 +624,7 @@ function overview() {
     <button data-action="play-loop" aria-pressed="${prefs.musicLoop === "one"}" aria-label="循环模式">${prefs.musicLoop === "one" ? "↻ 单曲" : "↻ 列表"}</button>
   </div>
   <p id="playback-local" class="playback-local" hidden></p>
-  <p class="playback-note">${r.pending ? "占位曲目：音源尚未入库，等待后续补充真实文件与时长。" : "音源来自 public/audio，与设置中的迷你播放器共用同一条音频链路。"}</p>`;
+  <p class="playback-note">${r.pending ? "占位曲目：音源尚未入库，等待后续补充真实文件与时长。" : r.localId ? "音源来自本机导入的本地曲库（IndexedDB），与设置中的迷你播放器共用同一条音频链路。" : "音源来自 public/audio，与设置中的迷你播放器共用同一条音频链路。"}</p>`;
 }
 /** 把音频引擎的播放状态写回面板；播放列表里没有的曲目保持静默。 */
 function updatePlaybackPanel() {
@@ -692,7 +699,7 @@ function controlPlayback(action: string) {
 /** 歌词页签：有 LRC 时按播放进度高亮并滚动；没有则说明原因。 */
 function lyricsMarkup(track: (typeof records)[number]) {
   if (!track.lyrics)
-    return `<div class="panel-label">LYRICS / 歌词</div><p class="playback-note">${track.pending ? "占位曲目暂无歌词。" : "该曲目尚未关联歌词文件。在 content/tracks.json 里为曲目补上 lyrics 字段即可。"}</p>`;
+    return `<div class="panel-label">LYRICS / 歌词</div><p class="playback-note">${track.localId ? "本地导入的曲目没有歌词：LRC 只与 tracks.json 里登记的曲目配套。" : track.pending ? "占位曲目暂无歌词。" : "该曲目尚未关联歌词文件。在 content/tracks.json 里为曲目补上 lyrics 字段即可。"}</p>`;
   return `<div class="panel-label">LYRICS / 歌词</div><div id="lyrics-panel" class="lyrics-panel"><p class="playback-note">正在载入歌词…</p></div>`;
 }
 let lyricLines: LyricLine[] | null = null;
@@ -798,12 +805,14 @@ const playingLocalId = () => {
 function refreshLocalLibrary() {
   const host = document.querySelector<HTMLElement>("#local-library");
   if (!host) return;
+  const slots = localSlotState();
   const ui: LocalLibraryUi = {
     supported: localTracksSupported(),
     busy: localBusy,
     error: localError,
     editing: localPanel.editing,
     confirming: localPanel.confirming,
+    slots: { used: slots.used, capacity: slots.capacity, remaining: slots.remaining },
   };
   host.innerHTML = localLibraryMarkup(localEntries, ui);
   syncLocalPlaying();
@@ -830,7 +839,11 @@ function focusLocalEditor() {
   });
 }
 
-/** 导入不改变播放列表里的既有下标，也不动正在播放的曲目。 */
+/**
+ * 导入：按 records 顺序填第一个空占位槽（槽位随条目持久保存）。
+ * 占位槽用尽时不再写入 IndexedDB、也不占位；多选时部分成功、部分失败会分开说明。
+ * 导入不改变播放列表里的既有下标，也不动正在播放的曲目。
+ */
 async function importLocalFiles(files: File[]) {
   if (!localTracksSupported()) {
     localError = "本地曲库不可用：当前浏览器未开放本地存储。";
@@ -843,22 +856,35 @@ async function importLocalFiles(files: File[]) {
   refreshLocalLibrary();
   const failures: string[] = [];
   let added = 0;
+  const rejected: string[] = [];
   for (const file of files) {
+    const slot = nextLocalSlot();
+    if (slot === null) {
+      // 占位槽用尽：不写 IndexedDB、不占位，只记录并给出提示。
+      rejected.push(file.name);
+      continue;
+    }
     try {
-      await addLocalTrack(file);
+      await addLocalTrack(file, slot);
       added++;
     } catch (error) {
       failures.push(localMessage(error, `无法导入「${file.name}」。`));
     }
   }
   localBusy = false;
+  const slots = localSlotState();
+  if (rejected.length)
+    failures.push(
+      `阵列占位槽已用尽（${slots.used} / ${slots.capacity}）：${rejected.length} 个文件未导入（首个「${rejected[0]}」）；删除已有本地曲目后可以继续导入。`,
+    );
   localError = failures.join(" ");
   await refreshLocalTracks().catch((error) => {
     localError = localMessage(error, "本地曲库读取失败。");
   });
   refreshLocalLibrary();
   updateMusicPanel();
-  if (added) notify(`已导入 ${added} 首本地曲目`);
+  if (added && failures.length) notify(`已导入 ${added} 首，${failures.length} 项未导入`);
+  else if (added) notify(`已导入 ${added} 首本地曲目`);
   if (failures.length) notify(failures[0]);
 }
 
@@ -954,16 +980,27 @@ function handleLocalAction(button: HTMLElement) {
   } else if (action === "delete-confirm") void deleteLocal(id);
 }
 
+/**
+ * 曲库到位（或发生增删改）后同步阵列以外的一切：顶部标题、卡片状态、详情面板、
+ * 检索结果与播放面板。曲库覆盖本身由 data.ts 完成（槽位几何不变）。
+ */
+function syncTrackLibrary() {
+  updateSelection();
+  scene?.refreshRecord();
+  if (mode === "detail") renderDetail();
+  if (modal === "search" || modal === "saved") renderResults();
+  updatePlaybackPanel();
+}
+
 subscribeLocalTracks((next) => {
   localEntries = next;
   // 引擎按稳定标识重映射：导入/改名不打断播放，删除正在播放的曲目则顺延下一条。
   audio.setLocalTracks(next);
+  // 本地曲目覆盖占位槽：同一首永远落在同一个方块上。
+  applyLocalTracks(next);
   refreshLocalLibrary();
 });
-void refreshLocalTracks().catch((error) => {
-  localError = localMessage(error, "本地曲库不可用。");
-  refreshLocalLibrary();
-});
+subscribeTracks(syncTrackLibrary);
 
 function notify(message: string) {
   clearTimeout(toastTimer);
@@ -1129,40 +1166,33 @@ function updateMusicPanel() {
     if (!musicSeeking) seek.value = String(state.duration > 0 ? Math.round((state.time / state.duration) * 1000) : 0);
   }
 }
-let lastPlayedTrack = -1;
+let lastPlayedFile = "";
+let playbackWasActive = false;
 let followingPlayback = false;
 window.addEventListener("rhine-music-state", () => {
   updateMusicPanel();
   updatePlaybackPanel();
   syncLocalPlaying();
   const state = audio.musicState();
-  if (!state.playing || state.track < 0) {
-    // 停止后清空，便于再次播放同一曲目时重新记录、重新跟随。
-    lastPlayedTrack = -1;
+  const active = state.playing && state.track >= 0;
+  if (state.track < 0) {
+    // 播放列表或场景联动接管后清空，便于再次播放同一曲目时重新记录、重新跟随。
+    lastPlayedFile = "";
+    playbackWasActive = false;
     updateLyricsHighlight(state);
     return;
   }
-  // 只在「播放的曲目真的换了」时处理：否则选曲后音频尚未切换的那几帧，
-  // 每次状态刷新都会把选择拉回上一首，和用户的选择互相抢。
-  if (state.track === lastPlayedTrack) {
-    updateLyricsHighlight(state);
-    return;
-  }
-  lastPlayedTrack = state.track;
   const playing = state.tracks[state.track];
-  const localId = localIdOf(playing.file);
-  if (localId) {
-    // 本地曲目不进五列阵列：只记录播放与刷新面板，不动阵列选择。
-    const entry = localEntries.find((item) => item.id === localId);
-    appendPlayLog({
-      id: playing.file,
-      title: entry?.title ?? playing.title,
-      artist: displayArtist(entry?.artist ?? playing.subtitle),
-      at: Date.now(),
-    });
-    if (mode === "detail" && activeTab === "history") setTab("history", false);
+  const changed = playing.file !== lastPlayedFile;
+  // 暂停后重新起播也要处理（补记一次播放、重新跟随）。
+  const restarted = active && !playbackWasActive;
+  lastPlayedFile = playing.file;
+  playbackWasActive = active;
+  // 只在「播放目标真的换了」或「重新起播」时处理：否则选曲后音频尚未切换的
+  // 那几帧，每次状态刷新都会把选择拉回上一首，和用户的选择互相抢。
+  // 按曲目标识而不是下标判断：本地曲目被删后顺延可能落到同一个下标上。
+  if (!changed && !restarted) {
     updateLyricsHighlight(state);
-    updatePlaybackPanel();
     return;
   }
   const key = musicTrackKey(playing.file);
@@ -1170,11 +1200,27 @@ window.addEventListener("rhine-music-state", () => {
     (item) => !!item.file && musicTrackKey(item.file) === key,
   );
   if (index < 0) {
+    // 极端情况：本地条目还没落到阵列槽位（例如曲库读取晚于播放列表）。
+    // 只记录这次播放，不动阵列选择。
+    const localId = localIdOf(playing.file);
+    if (active && localId) {
+      const entry = localEntries.find((item) => item.id === localId);
+      appendPlayLog({
+        id: playing.file,
+        title: entry?.title ?? playing.title,
+        artist: displayArtist(entry?.artist ?? playing.subtitle),
+        at: Date.now(),
+      });
+      if (mode === "detail" && activeTab === "history") setTab("history", false);
+    }
     updateLyricsHighlight(state);
     return;
   }
-  appendPlayLog({ id: records[index].id, title: playing.title, artist: records[index].artist, at: Date.now() });
-  if (mode === "detail" && activeTab === "history") setTab("history", false);
+  // 只有真的起播才写播放记录：暂停状态下被删曲目的顺延只更新界面。
+  if (active) {
+    appendPlayLog({ id: records[index].id, title: playing.title, artist: records[index].artist, at: Date.now() });
+    if (mode === "detail" && activeTab === "history") setTab("history", false);
+  }
   // 播放列表切歌（面板上的上一首／下一首、设置里的迷你播放器）时，
   // 阵列选择、卡片封面与右栏一起跟随；在详情里就地替换，不把用户踢回阵列。
   if (index !== selected && !followingPlayback) {
@@ -1647,9 +1693,26 @@ async function toggleThree() {
   }
 }
 
+/**
+ * 启动时的曲库读取：IndexedDB 不可用（隐私模式等）时只记错误并继续，
+ * 阵列退化为全占位，其余功能不受影响。
+ */
+async function loadLocalLibrary() {
+  try {
+    await refreshLocalTracks();
+  } catch (error) {
+    localError = localMessage(error, "本地曲库不可用。");
+    refreshLocalLibrary();
+  }
+}
+
 async function start() {
   try {
     if (isWallpaper) await window.rhineWallpaperPropertiesReady;
+    // 本地曲库（IndexedDB）是异步的。先把曲库读回来并覆盖占位槽，再建阵列，
+    // 这样阵列只会按最终内容渲染一次：不会先摆满占位再错位或闪烁，
+    // 也不会发生「曲库回来时正在播放的曲目被打断」。
+    await loadLocalLibrary();
     if (!isWallpaper || wallpaperHost()?.properties.load3donstartup?.value !== false) {
       scene = new ArchiveScene($("#three-scene"));
       scene.setTheme(prefs.colorTheme === "dark", true);
@@ -1826,6 +1889,30 @@ Object.assign(window, {
       bootTime: mode === "boot" ? started ? (frozenTime ?? performance.now() / 1000 - bootStart) + 5 : 6.76 : null,
       selected: records[selected].id,
       saved: [...saved],
+      // 曲库覆盖后的槽位实况；供 check-local-array.mjs 这类检查读取。
+      library: {
+        ...localSlotState(),
+        entries: localEntries.map((entry) => ({
+          id: entry.id,
+          title: entry.title,
+          artist: entry.artist,
+          duration: entry.duration,
+          cover: Boolean(entry.cover),
+          slot: entry.slot ?? null,
+        })),
+        slots: records.map((record, index) => ({
+          index,
+          id: record.id,
+          title: record.title,
+          artist: record.artist,
+          category: record.category,
+          duration: record.duration,
+          file: record.file,
+          pending: record.pending,
+          cover: Boolean(record.coverUrl),
+          localId: record.localId ?? null,
+        })),
+      },
       audio: audio.stats(),
       wallpaper: isWallpaper ? wallpaperHost() : null,
     }),

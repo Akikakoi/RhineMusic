@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>方案 C 预览 · 三维氛围背景 + 2D 选歌</title>
+<style>
+  :root { --paper:#e8e5e1; --ink:#1b1d18; --muted:#888277; --line:#c9c4ba; --accent:#565c46; --amber:#ed821b; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--paper); color:var(--ink); font-family:"MiSans","Segoe UI",sans-serif; height:100vh; overflow:hidden; }
+  canvas { position:fixed; inset:0; width:100%; height:100%; }
+  .banner { position:fixed; top:28px; left:72px; z-index:3; font-size:11px; letter-spacing:2px; color:var(--muted); }
+  .banner b { color:var(--amber); }
+  /* 选歌仍在 2D 列表，但列表背后是随节拍起伏的三维感波场 */
+  .wrap { position:fixed; left:72px; top:96px; bottom:88px; width:520px; z-index:2; display:flex; flex-direction:column;
+    border:1px solid var(--line); border-radius:3px; background:rgba(232,229,225,.55); backdrop-filter:blur(10px); padding:18px 20px; }
+  .head { display:flex; justify-content:space-between; padding-bottom:10px; border-bottom:1px solid var(--line); font-size:10px; letter-spacing:1.5px; color:var(--muted); }
+  .list { flex:1; overflow-y:auto; min-height:0; }
+  .row { display:grid; grid-template-columns:40px 1fr auto; gap:12px; align-items:center; width:100%; padding:13px 8px; border:0; border-bottom:1px solid rgba(201,196,186,.45); background:transparent; text-align:left; cursor:pointer; color:var(--muted); font:inherit; transition:color .2s, background .2s; }
+  .row:hover, .row.active { color:var(--ink); background:rgba(86,92,70,.10); }
+  .no { font-size:11px; font-variant-numeric:tabular-nums; }
+  .nm { font-size:13px; }
+  .time { font-size:10px; color:var(--muted); }
+  .hud { position:fixed; left:660px; top:110px; z-index:2; }
+  .hud .label { font-size:10px; letter-spacing:2px; color:var(--muted); }
+  .hud .name { font-size:40px; font-weight:600; margin-top:8px; }
+  .hud .sub { font-size:11px; color:var(--muted); margin-top:6px; }
+  .tip { position:fixed; right:72px; bottom:36px; z-index:2; font-size:11px; color:var(--muted); text-align:right; line-height:1.8; }
+</style>
+</head>
+<body>
+  <canvas id="bg"></canvas>
+  <div class="banner">方案 C 预览 · <b>三维氛围背景 + 2D 选歌</b> — 背景波场随节拍起伏、随播放强度增强；选歌仍在左侧列表</div>
+  <div class="wrap">
+    <div class="head"><span>TRACK LIST ／ 曲目库</span><span>06 TRACKS</span></div>
+    <div class="list" id="list"></div>
+  </div>
+  <div class="hud">
+    <div class="label">NOW PLAYING ／ <span id="status">STANDBY</span></div>
+    <div class="name" id="npName">RHINE MUSIC</div>
+    <div class="sub" id="npSub">背景波场会随播放律动</div>
+  </div>
+  <div class="tip">点左侧行播放<br>对比方案 B：场景是活的，但交互在列表</div>
+<script>
+  const tracks = [
+    { no:"01", name:"AMBIENCE", time:"00:53" },
+    { no:"02", name:"MOTIF", time:"00:53" },
+    { no:"03", name:"PULSE", time:"00:53" },
+    { no:"04", name:"歌に形はないけれど", time:"05:32" },
+    { no:"05", name:"OBSERVATORY-PREVIEW", time:"00:53" },
+    { no:"06", name:"坏苹果（车载DJ版）", time:"07:39" },
+  ];
+  const list = document.getElementById("list");
+  list.innerHTML = tracks.map((t,i)=>`
+    <button class="row" data-i="${i}"><span class="no">${t.no}</span><span class="nm">${t.name}</span><span class="time">${t.time}</span></button>`).join("");
+  let level = 0, target = 0, active = -1;
+  list.addEventListener("click", e=>{
+    const row = e.target.closest(".row"); if(!row) return;
+    active = +row.dataset.i;
+    document.querySelectorAll(".row").forEach(r=>r.classList.toggle("active", +r.dataset.i===active));
+    document.getElementById("npName").textContent = tracks[active].name;
+    document.getElementById("status").textContent = "PLAYING";
+    document.getElementById("npSub").textContent = "波场强度 = 播放状态";
+    target = 1;
+  });
+  // 背景波场：伪三维网格线随节拍起伏（canvas 模拟透视波浪）
+  const cv = document.getElementById("bg"), ctx = cv.getContext("2d");
+  let W, H; const fit = ()=>{ W = cv.width = innerWidth; H = cv.height = innerHeight; };
+  addEventListener("resize", fit); fit();
+  const t0 = performance.now();
+  setInterval(()=>{ target = active>=0 ? 1 : Math.max(0, target-.15); }, 800);
+  (function draw(){
+    const t = (performance.now()-t0)/1000;
+    level += (target-level)*.04;
+    const beat = .5+.5*Math.sin(t*Math.PI*2/1.2);
+    ctx.clearRect(0,0,W,H);
+    // 透视网格：越远越密，随 beat 起伏
+    const rows = 26, cols = 30;
+    for (let r=0; r<rows; r++){
+      const depth = r/rows;                       // 0 近 1 远
+      const y0 = H*.42 + depth*H*.55;
+      ctx.beginPath();
+      for (let c=0; c<=cols; c++){
+        const x0 = (c/cols)*W*1.4 - W*.2;
+        const wave = Math.sin(t*2 + c*.45 + r*.6) * (10 + 46*level*beat) * (1-depth*.4);
+        c===0 ? ctx.moveTo(x0, y0+wave) : ctx.lineTo(x0, y0+wave);
+      }
+      ctx.strokeStyle = `rgba(86,92,70,${(.28-depth*.2)*(.5+.5*level)})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    requestAnimationFrame(draw);
+  })();
+</script>
+</body>
+</html>

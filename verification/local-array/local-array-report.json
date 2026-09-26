@@ -1,0 +1,2003 @@
+{
+  "url": "http://127.0.0.1:5173/?scene=archive",
+  "checks": [
+    "imported tracks fill the first free slots in records order and inherit id/column",
+    "slot assignment persists across reload",
+    "the filled slot is searchable in the track index",
+    "the filled slot can be raised into the detail panel with its real title/artist/duration",
+    "playback from the array slot uses the imported local source",
+    "deleting a local track restores its slot to the original placeholder",
+    "thirty-four imports fill every placeholder slot in order",
+    "imports beyond the placeholder slots are refused with a readable message",
+    "the full 34-slot assignment persists and the refused file is never stored",
+    "deleting the playing track restores its slot and advances playback forward"
+  ],
+  "shots": [
+    "check-01-slots-filled.png",
+    "check-02-search-hit.png",
+    "check-03-slot-selected.png",
+    "check-04-detail-local-slot.png",
+    "check-05-plays-local-source.png",
+    "check-06-slot-restored.png",
+    "check-07-slots-full.png",
+    "check-08-over-limit-rejected.png",
+    "check-09-playing-deleted.png"
+  ],
+  "steps": {
+    "slots-filled": {
+      "mode": "archive",
+      "selected": "RM-001",
+      "code": "001",
+      "title": "AMBIENCE",
+      "clearance": "READY",
+      "category": "观测室",
+      "heading": "",
+      "detailArtist": "",
+      "detailMeta": [],
+      "detailLocal": "",
+      "detailLocalHidden": null,
+      "status": "2 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
+      "usage": "阵列占位槽已使用 2 / 34，剩 32 个空槽",
+      "rows": 2,
+      "resultRows": [],
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:2538be615bbb4a46",
+            "title": "First Song",
+            "subtitle": "Alpha Artist",
+            "localId": "2538be615bbb4a46"
+          },
+          {
+            "file": "local:fb2d85bb8cff44da",
+            "title": "Second Song",
+            "subtitle": "Beta Artist",
+            "localId": "fb2d85bb8cff44da"
+          }
+        ],
+        "track": -1,
+        "wanted": -1,
+        "playing": false,
+        "paused": false,
+        "loop": "all",
+        "time": 0,
+        "duration": 53.333333333333336,
+        "error": ""
+      },
+      "library": {
+        "used": 2,
+        "capacity": 34,
+        "remaining": 32,
+        "filled": [
+          4,
+          5
+        ],
+        "entries": [
+          "0:First Song:2538be615bbb4a46",
+          "1:Second Song:fb2d85bb8cff44da"
+        ],
+        "slot4": {
+          "index": 4,
+          "id": "RM-005",
+          "title": "First Song",
+          "artist": "Alpha Artist",
+          "category": "观测室",
+          "duration": 25,
+          "file": "local:2538be615bbb4a46",
+          "pending": false,
+          "localId": "2538be615bbb4a46"
+        },
+        "slot5": {
+          "index": 5,
+          "id": "RM-006",
+          "title": "Second Song",
+          "artist": "Beta Artist",
+          "category": "观测室",
+          "duration": 30,
+          "file": "local:fb2d85bb8cff44da",
+          "pending": false,
+          "localId": "fb2d85bb8cff44da"
+        },
+        "slotLast": {
+          "index": 39,
+          "id": "RM-040",
+          "title": "尾声 · 归位",
+          "artist": "母带室",
+          "category": "特别收录",
+          "duration": null,
+          "file": null,
+          "pending": true,
+          "localId": null
+        },
+        "overflow": false
+      }
+    },
+    "after-reload": {
+      "mode": "archive",
+      "selected": "RM-001",
+      "code": "001",
+      "title": "AMBIENCE",
+      "clearance": "READY",
+      "category": "观测室",
+      "heading": "",
+      "detailArtist": "",
+      "detailMeta": [],
+      "detailLocal": "",
+      "detailLocalHidden": null,
+      "status": "",
+      "usage": "",
+      "rows": 0,
+      "resultRows": [],
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:2538be615bbb4a46",
+            "title": "First Song",
+            "subtitle": "Alpha Artist",
+            "localId": "2538be615bbb4a46"
+          },
+          {
+            "file": "local:fb2d85bb8cff44da",
+            "title": "Second Song",
+            "subtitle": "Beta Artist",
+            "localId": "fb2d85bb8cff44da"
+          }
+        ],
+        "track": -1,
+        "wanted": -1,
+        "playing": false,
+        "paused": false,
+        "loop": "all",
+        "time": 0,
+        "duration": 53.333333333333336,
+        "error": ""
+      },
+      "library": {
+        "used": 2,
+        "capacity": 34,
+        "remaining": 32,
+        "filled": [
+          4,
+          5
+        ],
+        "entries": [
+          "0:First Song:2538be615bbb4a46",
+          "1:Second Song:fb2d85bb8cff44da"
+        ],
+        "slot4": {
+          "index": 4,
+          "id": "RM-005",
+          "title": "First Song",
+          "artist": "Alpha Artist",
+          "category": "观测室",
+          "duration": 25,
+          "file": "local:2538be615bbb4a46",
+          "pending": false,
+          "localId": "2538be615bbb4a46"
+        },
+        "slot5": {
+          "index": 5,
+          "id": "RM-006",
+          "title": "Second Song",
+          "artist": "Beta Artist",
+          "category": "观测室",
+          "duration": 30,
+          "file": "local:fb2d85bb8cff44da",
+          "pending": false,
+          "localId": "fb2d85bb8cff44da"
+        },
+        "slotLast": {
+          "index": 39,
+          "id": "RM-040",
+          "title": "尾声 · 归位",
+          "artist": "母带室",
+          "category": "特别收录",
+          "duration": null,
+          "file": null,
+          "pending": true,
+          "localId": null
+        },
+        "overflow": false
+      }
+    },
+    "detail": {
+      "mode": "detail",
+      "selected": "RM-005",
+      "code": "005",
+      "title": "First Song",
+      "clearance": "READY",
+      "category": "观测室",
+      "heading": "First Song",
+      "detailArtist": "Alpha Artist观测室",
+      "detailMeta": [
+        "COLLECTION / 曲库分类=观测室",
+        "DURATION / 时长=00:25",
+        "SOURCE / 音源=LOCAL LIBRARY · 本机导入",
+        "STATUS / 状态=可播放 · 本地曲库"
+      ],
+      "detailLocal": "LOCAL LIBRARYFirst Song·Alpha Artist",
+      "detailLocalHidden": false,
+      "status": "",
+      "usage": "",
+      "rows": 0,
+      "resultRows": [],
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:2538be615bbb4a46",
+            "title": "First Song",
+            "subtitle": "Alpha Artist",
+            "localId": "2538be615bbb4a46"
+          },
+          {
+            "file": "local:fb2d85bb8cff44da",
+            "title": "Second Song",
+            "subtitle": "Beta Artist",
+            "localId": "fb2d85bb8cff44da"
+          }
+        ],
+        "track": 6,
+        "wanted": 6,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 1.852528,
+        "duration": 25,
+        "error": ""
+      },
+      "library": {
+        "used": 2,
+        "capacity": 34,
+        "remaining": 32,
+        "filled": [
+          4,
+          5
+        ],
+        "entries": [
+          "0:First Song:2538be615bbb4a46",
+          "1:Second Song:fb2d85bb8cff44da"
+        ],
+        "slot4": {
+          "index": 4,
+          "id": "RM-005",
+          "title": "First Song",
+          "artist": "Alpha Artist",
+          "category": "观测室",
+          "duration": 25,
+          "file": "local:2538be615bbb4a46",
+          "pending": false,
+          "localId": "2538be615bbb4a46"
+        },
+        "slot5": {
+          "index": 5,
+          "id": "RM-006",
+          "title": "Second Song",
+          "artist": "Beta Artist",
+          "category": "观测室",
+          "duration": 30,
+          "file": "local:fb2d85bb8cff44da",
+          "pending": false,
+          "localId": "fb2d85bb8cff44da"
+        },
+        "slotLast": {
+          "index": 39,
+          "id": "RM-040",
+          "title": "尾声 · 归位",
+          "artist": "母带室",
+          "category": "特别收录",
+          "duration": null,
+          "file": null,
+          "pending": true,
+          "localId": null
+        },
+        "overflow": false
+      }
+    },
+    "slot-restored": {
+      "mode": "archive",
+      "selected": "RM-005",
+      "code": "005",
+      "title": "First Song",
+      "clearance": "READY",
+      "category": "观测室",
+      "heading": "First Song",
+      "detailArtist": "Alpha Artist观测室",
+      "detailMeta": [
+        "COLLECTION / 曲库分类=观测室",
+        "DURATION / 时长=00:25",
+        "SOURCE / 音源=LOCAL LIBRARY · 本机导入",
+        "STATUS / 状态=可播放 · 本地曲库"
+      ],
+      "detailLocal": "LOCAL LIBRARYFirst Song·Alpha Artist",
+      "detailLocalHidden": false,
+      "status": "1 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
+      "usage": "阵列占位槽已使用 1 / 34，剩 33 个空槽",
+      "rows": 1,
+      "resultRows": [],
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:2538be615bbb4a46",
+            "title": "First Song",
+            "subtitle": "Alpha Artist",
+            "localId": "2538be615bbb4a46"
+          }
+        ],
+        "track": 6,
+        "wanted": 6,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 8.013474,
+        "duration": 25,
+        "error": ""
+      },
+      "library": {
+        "used": 1,
+        "capacity": 34,
+        "remaining": 33,
+        "filled": [
+          4
+        ],
+        "entries": [
+          "0:First Song:2538be615bbb4a46"
+        ],
+        "slot4": {
+          "index": 4,
+          "id": "RM-005",
+          "title": "First Song",
+          "artist": "Alpha Artist",
+          "category": "观测室",
+          "duration": 25,
+          "file": "local:2538be615bbb4a46",
+          "pending": false,
+          "localId": "2538be615bbb4a46"
+        },
+        "slot5": {
+          "index": 5,
+          "id": "RM-006",
+          "title": "玻璃与光",
+          "artist": "RHINE LAB AUDIO",
+          "category": "观测室",
+          "duration": null,
+          "file": null,
+          "pending": true,
+          "localId": null
+        },
+        "slotLast": {
+          "index": 39,
+          "id": "RM-040",
+          "title": "尾声 · 归位",
+          "artist": "母带室",
+          "category": "特别收录",
+          "duration": null,
+          "file": null,
+          "pending": true,
+          "localId": null
+        },
+        "overflow": false
+      }
+    },
+    "slots-full": {
+      "mode": "archive",
+      "selected": "RM-005",
+      "code": "005",
+      "title": "First Song",
+      "clearance": "READY",
+      "category": "观测室",
+      "heading": "First Song",
+      "detailArtist": "Alpha Artist观测室",
+      "detailMeta": [
+        "COLLECTION / 曲库分类=观测室",
+        "DURATION / 时长=00:25",
+        "SOURCE / 音源=LOCAL LIBRARY · 本机导入",
+        "STATUS / 状态=可播放 · 本地曲库"
+      ],
+      "detailLocal": "LOCAL LIBRARYFirst Song·Alpha Artist",
+      "detailLocalHidden": false,
+      "status": "34 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
+      "usage": "阵列占位槽已使用 34 / 34（已用尽，删除已有本地曲目后可继续导入）",
+      "rows": 34,
+      "resultRows": [],
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:2538be615bbb4a46",
+            "title": "First Song",
+            "subtitle": "Alpha Artist",
+            "localId": "2538be615bbb4a46"
+          },
+          {
+            "file": "local:01ef2e0f4fdd4288",
+            "title": "Bulk Track 01",
+            "subtitle": "Bulk Artist",
+            "localId": "01ef2e0f4fdd4288"
+          },
+          {
+            "file": "local:70c012b942f746c1",
+            "title": "Bulk Track 02",
+            "subtitle": "Bulk Artist",
+            "localId": "70c012b942f746c1"
+          },
+          {
+            "file": "local:be07ff2550314dd1",
+            "title": "Bulk Track 03",
+            "subtitle": "Bulk Artist",
+            "localId": "be07ff2550314dd1"
+          },
+          {
+            "file": "local:e344b6fb32204b45",
+            "title": "Bulk Track 04",
+            "subtitle": "Bulk Artist",
+            "localId": "e344b6fb32204b45"
+          },
+          {
+            "file": "local:4951d880f6fb47fb",
+            "title": "Bulk Track 05",
+            "subtitle": "Bulk Artist",
+            "localId": "4951d880f6fb47fb"
+          },
+          {
+            "file": "local:e9042dcef9a4493e",
+            "title": "Bulk Track 06",
+            "subtitle": "Bulk Artist",
+            "localId": "e9042dcef9a4493e"
+          },
+          {
+            "file": "local:b7bd5d9d075f4d04",
+            "title": "Bulk Track 07",
+            "subtitle": "Bulk Artist",
+            "localId": "b7bd5d9d075f4d04"
+          },
+          {
+            "file": "local:8f530f11cd964923",
+            "title": "Bulk Track 08",
+            "subtitle": "Bulk Artist",
+            "localId": "8f530f11cd964923"
+          },
+          {
+            "file": "local:08626fd45096498c",
+            "title": "Bulk Track 09",
+            "subtitle": "Bulk Artist",
+            "localId": "08626fd45096498c"
+          },
+          {
+            "file": "local:722c6a8dbd554ef6",
+            "title": "Bulk Track 10",
+            "subtitle": "Bulk Artist",
+            "localId": "722c6a8dbd554ef6"
+          },
+          {
+            "file": "local:fd14e9fa2b1443a1",
+            "title": "Bulk Track 11",
+            "subtitle": "Bulk Artist",
+            "localId": "fd14e9fa2b1443a1"
+          },
+          {
+            "file": "local:8d39522deb234357",
+            "title": "Bulk Track 12",
+            "subtitle": "Bulk Artist",
+            "localId": "8d39522deb234357"
+          },
+          {
+            "file": "local:7dffdd18271640b0",
+            "title": "Bulk Track 13",
+            "subtitle": "Bulk Artist",
+            "localId": "7dffdd18271640b0"
+          },
+          {
+            "file": "local:ee1cf6dbbb8e4457",
+            "title": "Bulk Track 14",
+            "subtitle": "Bulk Artist",
+            "localId": "ee1cf6dbbb8e4457"
+          },
+          {
+            "file": "local:5f3f5e37e0d54eba",
+            "title": "Bulk Track 15",
+            "subtitle": "Bulk Artist",
+            "localId": "5f3f5e37e0d54eba"
+          },
+          {
+            "file": "local:c1d7d1019e684fb6",
+            "title": "Bulk Track 16",
+            "subtitle": "Bulk Artist",
+            "localId": "c1d7d1019e684fb6"
+          },
+          {
+            "file": "local:34d456ddcec64e57",
+            "title": "Bulk Track 17",
+            "subtitle": "Bulk Artist",
+            "localId": "34d456ddcec64e57"
+          },
+          {
+            "file": "local:5551b6193fe94b7d",
+            "title": "Bulk Track 18",
+            "subtitle": "Bulk Artist",
+            "localId": "5551b6193fe94b7d"
+          },
+          {
+            "file": "local:f58e20a0644f4921",
+            "title": "Bulk Track 19",
+            "subtitle": "Bulk Artist",
+            "localId": "f58e20a0644f4921"
+          },
+          {
+            "file": "local:2c0824bbffdb4307",
+            "title": "Bulk Track 20",
+            "subtitle": "Bulk Artist",
+            "localId": "2c0824bbffdb4307"
+          },
+          {
+            "file": "local:c4547ff8b7724577",
+            "title": "Bulk Track 21",
+            "subtitle": "Bulk Artist",
+            "localId": "c4547ff8b7724577"
+          },
+          {
+            "file": "local:bdcf2b872248410c",
+            "title": "Bulk Track 22",
+            "subtitle": "Bulk Artist",
+            "localId": "bdcf2b872248410c"
+          },
+          {
+            "file": "local:2e01fcc9dfa346ed",
+            "title": "Bulk Track 23",
+            "subtitle": "Bulk Artist",
+            "localId": "2e01fcc9dfa346ed"
+          },
+          {
+            "file": "local:f0a9273f3fa54b8f",
+            "title": "Bulk Track 24",
+            "subtitle": "Bulk Artist",
+            "localId": "f0a9273f3fa54b8f"
+          },
+          {
+            "file": "local:7f7dc2068acb48d9",
+            "title": "Bulk Track 25",
+            "subtitle": "Bulk Artist",
+            "localId": "7f7dc2068acb48d9"
+          },
+          {
+            "file": "local:663821aa6614491b",
+            "title": "Bulk Track 26",
+            "subtitle": "Bulk Artist",
+            "localId": "663821aa6614491b"
+          },
+          {
+            "file": "local:1d606bf234514970",
+            "title": "Bulk Track 27",
+            "subtitle": "Bulk Artist",
+            "localId": "1d606bf234514970"
+          },
+          {
+            "file": "local:3769d7bd043c4cef",
+            "title": "Bulk Track 28",
+            "subtitle": "Bulk Artist",
+            "localId": "3769d7bd043c4cef"
+          },
+          {
+            "file": "local:eef0ee65de04439d",
+            "title": "Bulk Track 29",
+            "subtitle": "Bulk Artist",
+            "localId": "eef0ee65de04439d"
+          },
+          {
+            "file": "local:27aafc6284984a05",
+            "title": "Bulk Track 30",
+            "subtitle": "Bulk Artist",
+            "localId": "27aafc6284984a05"
+          },
+          {
+            "file": "local:80e987e7323a4524",
+            "title": "Bulk Track 31",
+            "subtitle": "Bulk Artist",
+            "localId": "80e987e7323a4524"
+          },
+          {
+            "file": "local:f0633f8443684608",
+            "title": "Bulk Track 32",
+            "subtitle": "Bulk Artist",
+            "localId": "f0633f8443684608"
+          },
+          {
+            "file": "local:fbeda76fd3a14df4",
+            "title": "Bulk Track 33",
+            "subtitle": "Bulk Artist",
+            "localId": "fbeda76fd3a14df4"
+          }
+        ],
+        "track": 6,
+        "wanted": 6,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 10.05398,
+        "duration": 25,
+        "error": ""
+      },
+      "library": {
+        "used": 34,
+        "capacity": 34,
+        "remaining": 0,
+        "filled": [
+          4,
+          5,
+          6,
+          7,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39
+        ],
+        "entries": [
+          "0:First Song:2538be615bbb4a46",
+          "1:Bulk Track 01:01ef2e0f4fdd4288",
+          "2:Bulk Track 02:70c012b942f746c1",
+          "3:Bulk Track 03:be07ff2550314dd1",
+          "4:Bulk Track 04:e344b6fb32204b45",
+          "5:Bulk Track 05:4951d880f6fb47fb",
+          "6:Bulk Track 06:e9042dcef9a4493e",
+          "7:Bulk Track 07:b7bd5d9d075f4d04",
+          "8:Bulk Track 08:8f530f11cd964923",
+          "9:Bulk Track 09:08626fd45096498c",
+          "10:Bulk Track 10:722c6a8dbd554ef6",
+          "11:Bulk Track 11:fd14e9fa2b1443a1",
+          "12:Bulk Track 12:8d39522deb234357",
+          "13:Bulk Track 13:7dffdd18271640b0",
+          "14:Bulk Track 14:ee1cf6dbbb8e4457",
+          "15:Bulk Track 15:5f3f5e37e0d54eba",
+          "16:Bulk Track 16:c1d7d1019e684fb6",
+          "17:Bulk Track 17:34d456ddcec64e57",
+          "18:Bulk Track 18:5551b6193fe94b7d",
+          "19:Bulk Track 19:f58e20a0644f4921",
+          "20:Bulk Track 20:2c0824bbffdb4307",
+          "21:Bulk Track 21:c4547ff8b7724577",
+          "22:Bulk Track 22:bdcf2b872248410c",
+          "23:Bulk Track 23:2e01fcc9dfa346ed",
+          "24:Bulk Track 24:f0a9273f3fa54b8f",
+          "25:Bulk Track 25:7f7dc2068acb48d9",
+          "26:Bulk Track 26:663821aa6614491b",
+          "27:Bulk Track 27:1d606bf234514970",
+          "28:Bulk Track 28:3769d7bd043c4cef",
+          "29:Bulk Track 29:eef0ee65de04439d",
+          "30:Bulk Track 30:27aafc6284984a05",
+          "31:Bulk Track 31:80e987e7323a4524",
+          "32:Bulk Track 32:f0633f8443684608",
+          "33:Bulk Track 33:fbeda76fd3a14df4"
+        ],
+        "slot4": {
+          "index": 4,
+          "id": "RM-005",
+          "title": "First Song",
+          "artist": "Alpha Artist",
+          "category": "观测室",
+          "duration": 25,
+          "file": "local:2538be615bbb4a46",
+          "pending": false,
+          "localId": "2538be615bbb4a46"
+        },
+        "slot5": {
+          "index": 5,
+          "id": "RM-006",
+          "title": "Bulk Track 01",
+          "artist": "Bulk Artist",
+          "category": "观测室",
+          "duration": 15,
+          "file": "local:01ef2e0f4fdd4288",
+          "pending": false,
+          "localId": "01ef2e0f4fdd4288"
+        },
+        "slotLast": {
+          "index": 39,
+          "id": "RM-040",
+          "title": "Bulk Track 33",
+          "artist": "Bulk Artist",
+          "category": "特别收录",
+          "duration": 15,
+          "file": "local:fbeda76fd3a14df4",
+          "pending": false,
+          "localId": "fbeda76fd3a14df4"
+        },
+        "overflow": false
+      }
+    },
+    "over-limit-rejected": {
+      "mode": "archive",
+      "selected": "RM-005",
+      "code": "005",
+      "title": "First Song",
+      "clearance": "READY",
+      "category": "观测室",
+      "heading": "First Song",
+      "detailArtist": "Alpha Artist观测室",
+      "detailMeta": [
+        "COLLECTION / 曲库分类=观测室",
+        "DURATION / 时长=00:25",
+        "SOURCE / 音源=LOCAL LIBRARY · 本机导入",
+        "STATUS / 状态=可播放 · 本地曲库"
+      ],
+      "detailLocal": "LOCAL LIBRARYFirst Song·Alpha Artist",
+      "detailLocalHidden": false,
+      "status": "阵列占位槽已用尽（34 / 34）：1 个文件未导入（首个「Overflow Artist - Overflow Song.wav」）；删除已有本地曲目后可以继续导入。",
+      "usage": "阵列占位槽已使用 34 / 34（已用尽，删除已有本地曲目后可继续导入）",
+      "rows": 34,
+      "resultRows": [],
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:2538be615bbb4a46",
+            "title": "First Song",
+            "subtitle": "Alpha Artist",
+            "localId": "2538be615bbb4a46"
+          },
+          {
+            "file": "local:01ef2e0f4fdd4288",
+            "title": "Bulk Track 01",
+            "subtitle": "Bulk Artist",
+            "localId": "01ef2e0f4fdd4288"
+          },
+          {
+            "file": "local:70c012b942f746c1",
+            "title": "Bulk Track 02",
+            "subtitle": "Bulk Artist",
+            "localId": "70c012b942f746c1"
+          },
+          {
+            "file": "local:be07ff2550314dd1",
+            "title": "Bulk Track 03",
+            "subtitle": "Bulk Artist",
+            "localId": "be07ff2550314dd1"
+          },
+          {
+            "file": "local:e344b6fb32204b45",
+            "title": "Bulk Track 04",
+            "subtitle": "Bulk Artist",
+            "localId": "e344b6fb32204b45"
+          },
+          {
+            "file": "local:4951d880f6fb47fb",
+            "title": "Bulk Track 05",
+            "subtitle": "Bulk Artist",
+            "localId": "4951d880f6fb47fb"
+          },
+          {
+            "file": "local:e9042dcef9a4493e",
+            "title": "Bulk Track 06",
+            "subtitle": "Bulk Artist",
+            "localId": "e9042dcef9a4493e"
+          },
+          {
+            "file": "local:b7bd5d9d075f4d04",
+            "title": "Bulk Track 07",
+            "subtitle": "Bulk Artist",
+            "localId": "b7bd5d9d075f4d04"
+          },
+          {
+            "file": "local:8f530f11cd964923",
+            "title": "Bulk Track 08",
+            "subtitle": "Bulk Artist",
+            "localId": "8f530f11cd964923"
+          },
+          {
+            "file": "local:08626fd45096498c",
+            "title": "Bulk Track 09",
+            "subtitle": "Bulk Artist",
+            "localId": "08626fd45096498c"
+          },
+          {
+            "file": "local:722c6a8dbd554ef6",
+            "title": "Bulk Track 10",
+            "subtitle": "Bulk Artist",
+            "localId": "722c6a8dbd554ef6"
+          },
+          {
+            "file": "local:fd14e9fa2b1443a1",
+            "title": "Bulk Track 11",
+            "subtitle": "Bulk Artist",
+            "localId": "fd14e9fa2b1443a1"
+          },
+          {
+            "file": "local:8d39522deb234357",
+            "title": "Bulk Track 12",
+            "subtitle": "Bulk Artist",
+            "localId": "8d39522deb234357"
+          },
+          {
+            "file": "local:7dffdd18271640b0",
+            "title": "Bulk Track 13",
+            "subtitle": "Bulk Artist",
+            "localId": "7dffdd18271640b0"
+          },
+          {
+            "file": "local:ee1cf6dbbb8e4457",
+            "title": "Bulk Track 14",
+            "subtitle": "Bulk Artist",
+            "localId": "ee1cf6dbbb8e4457"
+          },
+          {
+            "file": "local:5f3f5e37e0d54eba",
+            "title": "Bulk Track 15",
+            "subtitle": "Bulk Artist",
+            "localId": "5f3f5e37e0d54eba"
+          },
+          {
+            "file": "local:c1d7d1019e684fb6",
+            "title": "Bulk Track 16",
+            "subtitle": "Bulk Artist",
+            "localId": "c1d7d1019e684fb6"
+          },
+          {
+            "file": "local:34d456ddcec64e57",
+            "title": "Bulk Track 17",
+            "subtitle": "Bulk Artist",
+            "localId": "34d456ddcec64e57"
+          },
+          {
+            "file": "local:5551b6193fe94b7d",
+            "title": "Bulk Track 18",
+            "subtitle": "Bulk Artist",
+            "localId": "5551b6193fe94b7d"
+          },
+          {
+            "file": "local:f58e20a0644f4921",
+            "title": "Bulk Track 19",
+            "subtitle": "Bulk Artist",
+            "localId": "f58e20a0644f4921"
+          },
+          {
+            "file": "local:2c0824bbffdb4307",
+            "title": "Bulk Track 20",
+            "subtitle": "Bulk Artist",
+            "localId": "2c0824bbffdb4307"
+          },
+          {
+            "file": "local:c4547ff8b7724577",
+            "title": "Bulk Track 21",
+            "subtitle": "Bulk Artist",
+            "localId": "c4547ff8b7724577"
+          },
+          {
+            "file": "local:bdcf2b872248410c",
+            "title": "Bulk Track 22",
+            "subtitle": "Bulk Artist",
+            "localId": "bdcf2b872248410c"
+          },
+          {
+            "file": "local:2e01fcc9dfa346ed",
+            "title": "Bulk Track 23",
+            "subtitle": "Bulk Artist",
+            "localId": "2e01fcc9dfa346ed"
+          },
+          {
+            "file": "local:f0a9273f3fa54b8f",
+            "title": "Bulk Track 24",
+            "subtitle": "Bulk Artist",
+            "localId": "f0a9273f3fa54b8f"
+          },
+          {
+            "file": "local:7f7dc2068acb48d9",
+            "title": "Bulk Track 25",
+            "subtitle": "Bulk Artist",
+            "localId": "7f7dc2068acb48d9"
+          },
+          {
+            "file": "local:663821aa6614491b",
+            "title": "Bulk Track 26",
+            "subtitle": "Bulk Artist",
+            "localId": "663821aa6614491b"
+          },
+          {
+            "file": "local:1d606bf234514970",
+            "title": "Bulk Track 27",
+            "subtitle": "Bulk Artist",
+            "localId": "1d606bf234514970"
+          },
+          {
+            "file": "local:3769d7bd043c4cef",
+            "title": "Bulk Track 28",
+            "subtitle": "Bulk Artist",
+            "localId": "3769d7bd043c4cef"
+          },
+          {
+            "file": "local:eef0ee65de04439d",
+            "title": "Bulk Track 29",
+            "subtitle": "Bulk Artist",
+            "localId": "eef0ee65de04439d"
+          },
+          {
+            "file": "local:27aafc6284984a05",
+            "title": "Bulk Track 30",
+            "subtitle": "Bulk Artist",
+            "localId": "27aafc6284984a05"
+          },
+          {
+            "file": "local:80e987e7323a4524",
+            "title": "Bulk Track 31",
+            "subtitle": "Bulk Artist",
+            "localId": "80e987e7323a4524"
+          },
+          {
+            "file": "local:f0633f8443684608",
+            "title": "Bulk Track 32",
+            "subtitle": "Bulk Artist",
+            "localId": "f0633f8443684608"
+          },
+          {
+            "file": "local:fbeda76fd3a14df4",
+            "title": "Bulk Track 33",
+            "subtitle": "Bulk Artist",
+            "localId": "fbeda76fd3a14df4"
+          }
+        ],
+        "track": 6,
+        "wanted": 6,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 12.369132,
+        "duration": 25,
+        "error": ""
+      },
+      "library": {
+        "used": 34,
+        "capacity": 34,
+        "remaining": 0,
+        "filled": [
+          4,
+          5,
+          6,
+          7,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39
+        ],
+        "entries": [
+          "0:First Song:2538be615bbb4a46",
+          "1:Bulk Track 01:01ef2e0f4fdd4288",
+          "2:Bulk Track 02:70c012b942f746c1",
+          "3:Bulk Track 03:be07ff2550314dd1",
+          "4:Bulk Track 04:e344b6fb32204b45",
+          "5:Bulk Track 05:4951d880f6fb47fb",
+          "6:Bulk Track 06:e9042dcef9a4493e",
+          "7:Bulk Track 07:b7bd5d9d075f4d04",
+          "8:Bulk Track 08:8f530f11cd964923",
+          "9:Bulk Track 09:08626fd45096498c",
+          "10:Bulk Track 10:722c6a8dbd554ef6",
+          "11:Bulk Track 11:fd14e9fa2b1443a1",
+          "12:Bulk Track 12:8d39522deb234357",
+          "13:Bulk Track 13:7dffdd18271640b0",
+          "14:Bulk Track 14:ee1cf6dbbb8e4457",
+          "15:Bulk Track 15:5f3f5e37e0d54eba",
+          "16:Bulk Track 16:c1d7d1019e684fb6",
+          "17:Bulk Track 17:34d456ddcec64e57",
+          "18:Bulk Track 18:5551b6193fe94b7d",
+          "19:Bulk Track 19:f58e20a0644f4921",
+          "20:Bulk Track 20:2c0824bbffdb4307",
+          "21:Bulk Track 21:c4547ff8b7724577",
+          "22:Bulk Track 22:bdcf2b872248410c",
+          "23:Bulk Track 23:2e01fcc9dfa346ed",
+          "24:Bulk Track 24:f0a9273f3fa54b8f",
+          "25:Bulk Track 25:7f7dc2068acb48d9",
+          "26:Bulk Track 26:663821aa6614491b",
+          "27:Bulk Track 27:1d606bf234514970",
+          "28:Bulk Track 28:3769d7bd043c4cef",
+          "29:Bulk Track 29:eef0ee65de04439d",
+          "30:Bulk Track 30:27aafc6284984a05",
+          "31:Bulk Track 31:80e987e7323a4524",
+          "32:Bulk Track 32:f0633f8443684608",
+          "33:Bulk Track 33:fbeda76fd3a14df4"
+        ],
+        "slot4": {
+          "index": 4,
+          "id": "RM-005",
+          "title": "First Song",
+          "artist": "Alpha Artist",
+          "category": "观测室",
+          "duration": 25,
+          "file": "local:2538be615bbb4a46",
+          "pending": false,
+          "localId": "2538be615bbb4a46"
+        },
+        "slot5": {
+          "index": 5,
+          "id": "RM-006",
+          "title": "Bulk Track 01",
+          "artist": "Bulk Artist",
+          "category": "观测室",
+          "duration": 15,
+          "file": "local:01ef2e0f4fdd4288",
+          "pending": false,
+          "localId": "01ef2e0f4fdd4288"
+        },
+        "slotLast": {
+          "index": 39,
+          "id": "RM-040",
+          "title": "Bulk Track 33",
+          "artist": "Bulk Artist",
+          "category": "特别收录",
+          "duration": 15,
+          "file": "local:fbeda76fd3a14df4",
+          "pending": false,
+          "localId": "fbeda76fd3a14df4"
+        },
+        "overflow": false
+      }
+    },
+    "after-reload-full": {
+      "mode": "archive",
+      "selected": "RM-001",
+      "code": "001",
+      "title": "AMBIENCE",
+      "clearance": "READY",
+      "category": "观测室",
+      "heading": "",
+      "detailArtist": "",
+      "detailMeta": [],
+      "detailLocal": "",
+      "detailLocalHidden": null,
+      "status": "",
+      "usage": "",
+      "rows": 0,
+      "resultRows": [],
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:2538be615bbb4a46",
+            "title": "First Song",
+            "subtitle": "Alpha Artist",
+            "localId": "2538be615bbb4a46"
+          },
+          {
+            "file": "local:01ef2e0f4fdd4288",
+            "title": "Bulk Track 01",
+            "subtitle": "Bulk Artist",
+            "localId": "01ef2e0f4fdd4288"
+          },
+          {
+            "file": "local:70c012b942f746c1",
+            "title": "Bulk Track 02",
+            "subtitle": "Bulk Artist",
+            "localId": "70c012b942f746c1"
+          },
+          {
+            "file": "local:be07ff2550314dd1",
+            "title": "Bulk Track 03",
+            "subtitle": "Bulk Artist",
+            "localId": "be07ff2550314dd1"
+          },
+          {
+            "file": "local:e344b6fb32204b45",
+            "title": "Bulk Track 04",
+            "subtitle": "Bulk Artist",
+            "localId": "e344b6fb32204b45"
+          },
+          {
+            "file": "local:4951d880f6fb47fb",
+            "title": "Bulk Track 05",
+            "subtitle": "Bulk Artist",
+            "localId": "4951d880f6fb47fb"
+          },
+          {
+            "file": "local:e9042dcef9a4493e",
+            "title": "Bulk Track 06",
+            "subtitle": "Bulk Artist",
+            "localId": "e9042dcef9a4493e"
+          },
+          {
+            "file": "local:b7bd5d9d075f4d04",
+            "title": "Bulk Track 07",
+            "subtitle": "Bulk Artist",
+            "localId": "b7bd5d9d075f4d04"
+          },
+          {
+            "file": "local:8f530f11cd964923",
+            "title": "Bulk Track 08",
+            "subtitle": "Bulk Artist",
+            "localId": "8f530f11cd964923"
+          },
+          {
+            "file": "local:08626fd45096498c",
+            "title": "Bulk Track 09",
+            "subtitle": "Bulk Artist",
+            "localId": "08626fd45096498c"
+          },
+          {
+            "file": "local:722c6a8dbd554ef6",
+            "title": "Bulk Track 10",
+            "subtitle": "Bulk Artist",
+            "localId": "722c6a8dbd554ef6"
+          },
+          {
+            "file": "local:fd14e9fa2b1443a1",
+            "title": "Bulk Track 11",
+            "subtitle": "Bulk Artist",
+            "localId": "fd14e9fa2b1443a1"
+          },
+          {
+            "file": "local:8d39522deb234357",
+            "title": "Bulk Track 12",
+            "subtitle": "Bulk Artist",
+            "localId": "8d39522deb234357"
+          },
+          {
+            "file": "local:7dffdd18271640b0",
+            "title": "Bulk Track 13",
+            "subtitle": "Bulk Artist",
+            "localId": "7dffdd18271640b0"
+          },
+          {
+            "file": "local:ee1cf6dbbb8e4457",
+            "title": "Bulk Track 14",
+            "subtitle": "Bulk Artist",
+            "localId": "ee1cf6dbbb8e4457"
+          },
+          {
+            "file": "local:5f3f5e37e0d54eba",
+            "title": "Bulk Track 15",
+            "subtitle": "Bulk Artist",
+            "localId": "5f3f5e37e0d54eba"
+          },
+          {
+            "file": "local:c1d7d1019e684fb6",
+            "title": "Bulk Track 16",
+            "subtitle": "Bulk Artist",
+            "localId": "c1d7d1019e684fb6"
+          },
+          {
+            "file": "local:34d456ddcec64e57",
+            "title": "Bulk Track 17",
+            "subtitle": "Bulk Artist",
+            "localId": "34d456ddcec64e57"
+          },
+          {
+            "file": "local:5551b6193fe94b7d",
+            "title": "Bulk Track 18",
+            "subtitle": "Bulk Artist",
+            "localId": "5551b6193fe94b7d"
+          },
+          {
+            "file": "local:f58e20a0644f4921",
+            "title": "Bulk Track 19",
+            "subtitle": "Bulk Artist",
+            "localId": "f58e20a0644f4921"
+          },
+          {
+            "file": "local:2c0824bbffdb4307",
+            "title": "Bulk Track 20",
+            "subtitle": "Bulk Artist",
+            "localId": "2c0824bbffdb4307"
+          },
+          {
+            "file": "local:c4547ff8b7724577",
+            "title": "Bulk Track 21",
+            "subtitle": "Bulk Artist",
+            "localId": "c4547ff8b7724577"
+          },
+          {
+            "file": "local:bdcf2b872248410c",
+            "title": "Bulk Track 22",
+            "subtitle": "Bulk Artist",
+            "localId": "bdcf2b872248410c"
+          },
+          {
+            "file": "local:2e01fcc9dfa346ed",
+            "title": "Bulk Track 23",
+            "subtitle": "Bulk Artist",
+            "localId": "2e01fcc9dfa346ed"
+          },
+          {
+            "file": "local:f0a9273f3fa54b8f",
+            "title": "Bulk Track 24",
+            "subtitle": "Bulk Artist",
+            "localId": "f0a9273f3fa54b8f"
+          },
+          {
+            "file": "local:7f7dc2068acb48d9",
+            "title": "Bulk Track 25",
+            "subtitle": "Bulk Artist",
+            "localId": "7f7dc2068acb48d9"
+          },
+          {
+            "file": "local:663821aa6614491b",
+            "title": "Bulk Track 26",
+            "subtitle": "Bulk Artist",
+            "localId": "663821aa6614491b"
+          },
+          {
+            "file": "local:1d606bf234514970",
+            "title": "Bulk Track 27",
+            "subtitle": "Bulk Artist",
+            "localId": "1d606bf234514970"
+          },
+          {
+            "file": "local:3769d7bd043c4cef",
+            "title": "Bulk Track 28",
+            "subtitle": "Bulk Artist",
+            "localId": "3769d7bd043c4cef"
+          },
+          {
+            "file": "local:eef0ee65de04439d",
+            "title": "Bulk Track 29",
+            "subtitle": "Bulk Artist",
+            "localId": "eef0ee65de04439d"
+          },
+          {
+            "file": "local:27aafc6284984a05",
+            "title": "Bulk Track 30",
+            "subtitle": "Bulk Artist",
+            "localId": "27aafc6284984a05"
+          },
+          {
+            "file": "local:80e987e7323a4524",
+            "title": "Bulk Track 31",
+            "subtitle": "Bulk Artist",
+            "localId": "80e987e7323a4524"
+          },
+          {
+            "file": "local:f0633f8443684608",
+            "title": "Bulk Track 32",
+            "subtitle": "Bulk Artist",
+            "localId": "f0633f8443684608"
+          },
+          {
+            "file": "local:fbeda76fd3a14df4",
+            "title": "Bulk Track 33",
+            "subtitle": "Bulk Artist",
+            "localId": "fbeda76fd3a14df4"
+          }
+        ],
+        "track": -1,
+        "wanted": 6,
+        "playing": false,
+        "paused": false,
+        "loop": "all",
+        "time": 0,
+        "duration": 53.333333333333336,
+        "error": ""
+      },
+      "library": {
+        "used": 34,
+        "capacity": 34,
+        "remaining": 0,
+        "filled": [
+          4,
+          5,
+          6,
+          7,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39
+        ],
+        "entries": [
+          "0:First Song:2538be615bbb4a46",
+          "1:Bulk Track 01:01ef2e0f4fdd4288",
+          "2:Bulk Track 02:70c012b942f746c1",
+          "3:Bulk Track 03:be07ff2550314dd1",
+          "4:Bulk Track 04:e344b6fb32204b45",
+          "5:Bulk Track 05:4951d880f6fb47fb",
+          "6:Bulk Track 06:e9042dcef9a4493e",
+          "7:Bulk Track 07:b7bd5d9d075f4d04",
+          "8:Bulk Track 08:8f530f11cd964923",
+          "9:Bulk Track 09:08626fd45096498c",
+          "10:Bulk Track 10:722c6a8dbd554ef6",
+          "11:Bulk Track 11:fd14e9fa2b1443a1",
+          "12:Bulk Track 12:8d39522deb234357",
+          "13:Bulk Track 13:7dffdd18271640b0",
+          "14:Bulk Track 14:ee1cf6dbbb8e4457",
+          "15:Bulk Track 15:5f3f5e37e0d54eba",
+          "16:Bulk Track 16:c1d7d1019e684fb6",
+          "17:Bulk Track 17:34d456ddcec64e57",
+          "18:Bulk Track 18:5551b6193fe94b7d",
+          "19:Bulk Track 19:f58e20a0644f4921",
+          "20:Bulk Track 20:2c0824bbffdb4307",
+          "21:Bulk Track 21:c4547ff8b7724577",
+          "22:Bulk Track 22:bdcf2b872248410c",
+          "23:Bulk Track 23:2e01fcc9dfa346ed",
+          "24:Bulk Track 24:f0a9273f3fa54b8f",
+          "25:Bulk Track 25:7f7dc2068acb48d9",
+          "26:Bulk Track 26:663821aa6614491b",
+          "27:Bulk Track 27:1d606bf234514970",
+          "28:Bulk Track 28:3769d7bd043c4cef",
+          "29:Bulk Track 29:eef0ee65de04439d",
+          "30:Bulk Track 30:27aafc6284984a05",
+          "31:Bulk Track 31:80e987e7323a4524",
+          "32:Bulk Track 32:f0633f8443684608",
+          "33:Bulk Track 33:fbeda76fd3a14df4"
+        ],
+        "slot4": {
+          "index": 4,
+          "id": "RM-005",
+          "title": "First Song",
+          "artist": "Alpha Artist",
+          "category": "观测室",
+          "duration": 25,
+          "file": "local:2538be615bbb4a46",
+          "pending": false,
+          "localId": "2538be615bbb4a46"
+        },
+        "slot5": {
+          "index": 5,
+          "id": "RM-006",
+          "title": "Bulk Track 01",
+          "artist": "Bulk Artist",
+          "category": "观测室",
+          "duration": 15,
+          "file": "local:01ef2e0f4fdd4288",
+          "pending": false,
+          "localId": "01ef2e0f4fdd4288"
+        },
+        "slotLast": {
+          "index": 39,
+          "id": "RM-040",
+          "title": "Bulk Track 33",
+          "artist": "Bulk Artist",
+          "category": "特别收录",
+          "duration": 15,
+          "file": "local:fbeda76fd3a14df4",
+          "pending": false,
+          "localId": "fbeda76fd3a14df4"
+        },
+        "overflow": false
+      }
+    },
+    "playing-deleted": {
+      "mode": "archive",
+      "selected": "RM-006",
+      "code": "006",
+      "title": "Bulk Track 01",
+      "clearance": "READY",
+      "category": "观测室",
+      "heading": "",
+      "detailArtist": "",
+      "detailMeta": [],
+      "detailLocal": "",
+      "detailLocalHidden": null,
+      "status": "33 首本地曲目 · 导入后进入播放列表，并依次填入五列阵列的空占位槽",
+      "usage": "阵列占位槽已使用 33 / 34，剩 1 个空槽",
+      "rows": 33,
+      "resultRows": [],
+      "music": {
+        "tracks": [
+          {
+            "file": "atmosphere",
+            "title": "AMBIENCE",
+            "subtitle": "观测室 · 氛围"
+          },
+          {
+            "file": "motif",
+            "title": "MOTIF",
+            "subtitle": "主题动机"
+          },
+          {
+            "file": "pulse",
+            "title": "PULSE",
+            "subtitle": "脉冲"
+          },
+          {
+            "file": "doriko、初音ミク - 歌に形はないけれど.mp3",
+            "title": "DORIKO、初音ミク - 歌に形はないけれど",
+            "subtitle": ""
+          },
+          {
+            "file": "observatory-preview.mp3",
+            "title": "OBSERVATORY-PREVIEW",
+            "subtitle": ""
+          },
+          {
+            "file": "坏苹果（车载dj版）.mp3",
+            "title": "坏苹果（车载DJ版）",
+            "subtitle": ""
+          },
+          {
+            "file": "local:01ef2e0f4fdd4288",
+            "title": "Bulk Track 01",
+            "subtitle": "Bulk Artist",
+            "localId": "01ef2e0f4fdd4288"
+          },
+          {
+            "file": "local:70c012b942f746c1",
+            "title": "Bulk Track 02",
+            "subtitle": "Bulk Artist",
+            "localId": "70c012b942f746c1"
+          },
+          {
+            "file": "local:be07ff2550314dd1",
+            "title": "Bulk Track 03",
+            "subtitle": "Bulk Artist",
+            "localId": "be07ff2550314dd1"
+          },
+          {
+            "file": "local:e344b6fb32204b45",
+            "title": "Bulk Track 04",
+            "subtitle": "Bulk Artist",
+            "localId": "e344b6fb32204b45"
+          },
+          {
+            "file": "local:4951d880f6fb47fb",
+            "title": "Bulk Track 05",
+            "subtitle": "Bulk Artist",
+            "localId": "4951d880f6fb47fb"
+          },
+          {
+            "file": "local:e9042dcef9a4493e",
+            "title": "Bulk Track 06",
+            "subtitle": "Bulk Artist",
+            "localId": "e9042dcef9a4493e"
+          },
+          {
+            "file": "local:b7bd5d9d075f4d04",
+            "title": "Bulk Track 07",
+            "subtitle": "Bulk Artist",
+            "localId": "b7bd5d9d075f4d04"
+          },
+          {
+            "file": "local:8f530f11cd964923",
+            "title": "Bulk Track 08",
+            "subtitle": "Bulk Artist",
+            "localId": "8f530f11cd964923"
+          },
+          {
+            "file": "local:08626fd45096498c",
+            "title": "Bulk Track 09",
+            "subtitle": "Bulk Artist",
+            "localId": "08626fd45096498c"
+          },
+          {
+            "file": "local:722c6a8dbd554ef6",
+            "title": "Bulk Track 10",
+            "subtitle": "Bulk Artist",
+            "localId": "722c6a8dbd554ef6"
+          },
+          {
+            "file": "local:fd14e9fa2b1443a1",
+            "title": "Bulk Track 11",
+            "subtitle": "Bulk Artist",
+            "localId": "fd14e9fa2b1443a1"
+          },
+          {
+            "file": "local:8d39522deb234357",
+            "title": "Bulk Track 12",
+            "subtitle": "Bulk Artist",
+            "localId": "8d39522deb234357"
+          },
+          {
+            "file": "local:7dffdd18271640b0",
+            "title": "Bulk Track 13",
+            "subtitle": "Bulk Artist",
+            "localId": "7dffdd18271640b0"
+          },
+          {
+            "file": "local:ee1cf6dbbb8e4457",
+            "title": "Bulk Track 14",
+            "subtitle": "Bulk Artist",
+            "localId": "ee1cf6dbbb8e4457"
+          },
+          {
+            "file": "local:5f3f5e37e0d54eba",
+            "title": "Bulk Track 15",
+            "subtitle": "Bulk Artist",
+            "localId": "5f3f5e37e0d54eba"
+          },
+          {
+            "file": "local:c1d7d1019e684fb6",
+            "title": "Bulk Track 16",
+            "subtitle": "Bulk Artist",
+            "localId": "c1d7d1019e684fb6"
+          },
+          {
+            "file": "local:34d456ddcec64e57",
+            "title": "Bulk Track 17",
+            "subtitle": "Bulk Artist",
+            "localId": "34d456ddcec64e57"
+          },
+          {
+            "file": "local:5551b6193fe94b7d",
+            "title": "Bulk Track 18",
+            "subtitle": "Bulk Artist",
+            "localId": "5551b6193fe94b7d"
+          },
+          {
+            "file": "local:f58e20a0644f4921",
+            "title": "Bulk Track 19",
+            "subtitle": "Bulk Artist",
+            "localId": "f58e20a0644f4921"
+          },
+          {
+            "file": "local:2c0824bbffdb4307",
+            "title": "Bulk Track 20",
+            "subtitle": "Bulk Artist",
+            "localId": "2c0824bbffdb4307"
+          },
+          {
+            "file": "local:c4547ff8b7724577",
+            "title": "Bulk Track 21",
+            "subtitle": "Bulk Artist",
+            "localId": "c4547ff8b7724577"
+          },
+          {
+            "file": "local:bdcf2b872248410c",
+            "title": "Bulk Track 22",
+            "subtitle": "Bulk Artist",
+            "localId": "bdcf2b872248410c"
+          },
+          {
+            "file": "local:2e01fcc9dfa346ed",
+            "title": "Bulk Track 23",
+            "subtitle": "Bulk Artist",
+            "localId": "2e01fcc9dfa346ed"
+          },
+          {
+            "file": "local:f0a9273f3fa54b8f",
+            "title": "Bulk Track 24",
+            "subtitle": "Bulk Artist",
+            "localId": "f0a9273f3fa54b8f"
+          },
+          {
+            "file": "local:7f7dc2068acb48d9",
+            "title": "Bulk Track 25",
+            "subtitle": "Bulk Artist",
+            "localId": "7f7dc2068acb48d9"
+          },
+          {
+            "file": "local:663821aa6614491b",
+            "title": "Bulk Track 26",
+            "subtitle": "Bulk Artist",
+            "localId": "663821aa6614491b"
+          },
+          {
+            "file": "local:1d606bf234514970",
+            "title": "Bulk Track 27",
+            "subtitle": "Bulk Artist",
+            "localId": "1d606bf234514970"
+          },
+          {
+            "file": "local:3769d7bd043c4cef",
+            "title": "Bulk Track 28",
+            "subtitle": "Bulk Artist",
+            "localId": "3769d7bd043c4cef"
+          },
+          {
+            "file": "local:eef0ee65de04439d",
+            "title": "Bulk Track 29",
+            "subtitle": "Bulk Artist",
+            "localId": "eef0ee65de04439d"
+          },
+          {
+            "file": "local:27aafc6284984a05",
+            "title": "Bulk Track 30",
+            "subtitle": "Bulk Artist",
+            "localId": "27aafc6284984a05"
+          },
+          {
+            "file": "local:80e987e7323a4524",
+            "title": "Bulk Track 31",
+            "subtitle": "Bulk Artist",
+            "localId": "80e987e7323a4524"
+          },
+          {
+            "file": "local:f0633f8443684608",
+            "title": "Bulk Track 32",
+            "subtitle": "Bulk Artist",
+            "localId": "f0633f8443684608"
+          },
+          {
+            "file": "local:fbeda76fd3a14df4",
+            "title": "Bulk Track 33",
+            "subtitle": "Bulk Artist",
+            "localId": "fbeda76fd3a14df4"
+          }
+        ],
+        "track": 6,
+        "wanted": 6,
+        "playing": true,
+        "paused": false,
+        "loop": "all",
+        "time": 1.869686,
+        "duration": 15,
+        "error": ""
+      },
+      "library": {
+        "used": 33,
+        "capacity": 34,
+        "remaining": 1,
+        "filled": [
+          5,
+          6,
+          7,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39
+        ],
+        "entries": [
+          "1:Bulk Track 01:01ef2e0f4fdd4288",
+          "2:Bulk Track 02:70c012b942f746c1",
+          "3:Bulk Track 03:be07ff2550314dd1",
+          "4:Bulk Track 04:e344b6fb32204b45",
+          "5:Bulk Track 05:4951d880f6fb47fb",
+          "6:Bulk Track 06:e9042dcef9a4493e",
+          "7:Bulk Track 07:b7bd5d9d075f4d04",
+          "8:Bulk Track 08:8f530f11cd964923",
+          "9:Bulk Track 09:08626fd45096498c",
+          "10:Bulk Track 10:722c6a8dbd554ef6",
+          "11:Bulk Track 11:fd14e9fa2b1443a1",
+          "12:Bulk Track 12:8d39522deb234357",
+          "13:Bulk Track 13:7dffdd18271640b0",
+          "14:Bulk Track 14:ee1cf6dbbb8e4457",
+          "15:Bulk Track 15:5f3f5e37e0d54eba",
+          "16:Bulk Track 16:c1d7d1019e684fb6",
+          "17:Bulk Track 17:34d456ddcec64e57",
+          "18:Bulk Track 18:5551b6193fe94b7d",
+          "19:Bulk Track 19:f58e20a0644f4921",
+          "20:Bulk Track 20:2c0824bbffdb4307",
+          "21:Bulk Track 21:c4547ff8b7724577",
+          "22:Bulk Track 22:bdcf2b872248410c",
+          "23:Bulk Track 23:2e01fcc9dfa346ed",
+          "24:Bulk Track 24:f0a9273f3fa54b8f",
+          "25:Bulk Track 25:7f7dc2068acb48d9",
+          "26:Bulk Track 26:663821aa6614491b",
+          "27:Bulk Track 27:1d606bf234514970",
+          "28:Bulk Track 28:3769d7bd043c4cef",
+          "29:Bulk Track 29:eef0ee65de04439d",
+          "30:Bulk Track 30:27aafc6284984a05",
+          "31:Bulk Track 31:80e987e7323a4524",
+          "32:Bulk Track 32:f0633f8443684608",
+          "33:Bulk Track 33:fbeda76fd3a14df4"
+        ],
+        "slot4": {
+          "index": 4,
+          "id": "RM-005",
+          "title": "低温循环",
+          "artist": "RHINE LAB AUDIO",
+          "category": "观测室",
+          "duration": null,
+          "file": null,
+          "pending": true,
+          "localId": null
+        },
+        "slot5": {
+          "index": 5,
+          "id": "RM-006",
+          "title": "Bulk Track 01",
+          "artist": "Bulk Artist",
+          "category": "观测室",
+          "duration": 15,
+          "file": "local:01ef2e0f4fdd4288",
+          "pending": false,
+          "localId": "01ef2e0f4fdd4288"
+        },
+        "slotLast": {
+          "index": 39,
+          "id": "RM-040",
+          "title": "Bulk Track 33",
+          "artist": "Bulk Artist",
+          "category": "特别收录",
+          "duration": 15,
+          "file": "local:fbeda76fd3a14df4",
+          "pending": false,
+          "localId": "fbeda76fd3a14df4"
+        },
+        "overflow": false
+      }
+    }
+  },
+  "failures": [],
+  "errors": [],
+  "passed": true
+}

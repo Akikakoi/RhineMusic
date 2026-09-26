@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>方案 A 预览 · 曲目列表选取动效</title>
+<style>
+  :root { --paper:#e8e5e1; --ink:#1b1d18; --muted:#888277; --line:#c9c4ba; --accent:#565c46; --amber:#a67d48; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--paper); color:var(--ink); font-family:"MiSans","Segoe UI",sans-serif; height:100vh; overflow:hidden; display:flex; flex-direction:column; padding:48px 72px; }
+  .banner { font-size:11px; letter-spacing:2px; color:var(--muted); margin-bottom:20px; }
+  .banner b { color:var(--amber); }
+  .wrap { display:grid; grid-template-columns:5fr 4fr; gap:28px; flex:1; min-height:0; }
+  .panel { border:1px solid var(--line); border-radius:3px; background:rgba(255,255,255,.35); backdrop-filter:blur(8px); padding:18px 20px 20px; display:flex; flex-direction:column; min-height:0; }
+  .head { display:flex; justify-content:space-between; padding-bottom:10px; border-bottom:1px solid var(--line); font-size:10px; letter-spacing:1.5px; color:var(--muted); }
+  /* 列表：进场逐行揭示 */
+  .list { flex:1; overflow-y:auto; min-height:0; }
+  .row { position:relative; display:grid; grid-template-columns:44px 1fr auto auto; gap:14px; align-items:center; width:100%; padding:14px 10px; border:0; border-bottom:1px solid rgba(201,196,186,.5); background:transparent; text-align:left; cursor:pointer; color:var(--muted); font:inherit; overflow:hidden;
+    opacity:0; transform:translateY(14px); animation:reveal .5s cubic-bezier(.2,.7,.3,1) forwards; transition:color .25s, background-color .25s, transform .18s ease; }
+  .row::after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(105deg, transparent 30%, rgba(166,125,72,.16) 50%, transparent 70%); transform:translateX(-110%); }
+  .row:hover { color:var(--ink); background:rgba(86,92,70,.08); transform:translateY(-2px); }
+  .row:hover::after { animation:scan .6s ease; }
+  @keyframes scan { to { transform:translateX(110%); } }
+  @keyframes reveal { to { opacity:1; transform:translateY(0); } }
+  .row.active { color:var(--ink); background:rgba(86,92,70,.14); box-shadow:inset 3px 0 0 var(--accent); }
+  .no { font-size:11px; font-variant-numeric:tabular-nums; letter-spacing:1px; }
+  /* 悬停时轨道号翻牌 */
+  .row:hover .no { animation:flip .35s ease; }
+  @keyframes flip { 0%{ transform:rotateX(0);} 50%{ transform:rotateX(90deg); opacity:.4;} 100%{ transform:rotateX(0);} }
+  .name { display:grid; gap:3px; font-size:13px; }
+  .sub { font-size:10px; color:var(--muted); }
+  .time { font-size:10px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .eq { display:inline-flex; align-items:flex-end; gap:2px; height:12px; width:16px; }
+  .eq i { width:3px; height:3px; background:currentColor; opacity:.3; }
+  .row.playing .eq i { opacity:1; background:var(--accent); animation:eq 1s ease-in-out infinite; }
+  .row.playing .eq i:nth-child(2){ animation-delay:.18s; } .row.playing .eq i:nth-child(3){ animation-delay:.36s; }
+  @keyframes eq { 0%,100%{height:3px;} 50%{height:12px;} }
+  /* NOW PLAYING：切曲运镜 */
+  .np { gap:16px; justify-content:center; }
+  .np .eyebrow { font-size:10px; letter-spacing:1.5px; color:var(--muted); }
+  .np .title { font-size:clamp(26px,3.4vw,44px); font-weight:600; line-height:1.15; min-height:110px; display:flex; align-items:center; }
+  #npText { display:inline-block; }
+  #npText.swap { animation:swap .55s cubic-bezier(.2,.7,.3,1); }
+  @keyframes swap { 0%{ opacity:0; transform:translateY(24px) scale(.97); filter:blur(4px);} 100%{ opacity:1; transform:translateY(0) scale(1); filter:blur(0);} }
+  .np .sub { font-size:11px; color:var(--muted); }
+  .np .bar { height:2px; background:var(--line); margin-top:8px; position:relative; overflow:hidden; }
+  .np .bar i { position:absolute; left:0; top:0; bottom:0; width:36%; background:var(--accent); transition:width .4s linear; }
+  .np .controls { display:flex; gap:10px; margin-top:14px; }
+  .np button { border:1px solid var(--line); background:transparent; color:var(--ink); width:42px; height:34px; cursor:pointer; font-size:13px; transition:border-color .2s, transform .12s; }
+  .np button:hover { border-color:var(--accent); }
+  .np button:active { transform:scale(.94); }
+  .tip { font-size:11px; color:var(--muted); margin-top:18px; }
+</style>
+</head>
+<body>
+  <div class="banner">方案 A 预览 · <b>纯 2D 曲目列表选取动效</b> — 悬停行会轻抬并扫过一道扫描线、轨道号翻牌；点行切歌，右侧标题运镜切换</div>
+  <div class="wrap">
+    <div class="panel">
+      <div class="head"><span>TRACK LIST ／ 曲目库</span><span id="count">06 TRACKS</span></div>
+      <div class="list" id="list"></div>
+    </div>
+    <div class="panel np">
+      <div class="eyebrow">NOW PLAYING ／ <span id="status">STANDBY</span></div>
+      <div class="title"><span id="npText">RHINE MUSIC</span></div>
+      <div class="sub" id="npSub">RHINE LAB INTERNAL AUDIO LIBRARY</div>
+      <div class="bar"><i id="barFill"></i></div>
+      <div class="controls">
+        <button>⏮</button><button id="toggle">▶</button><button>⏭</button><button style="width:auto;padding:0 12px;font-size:10px;letter-spacing:1px;">↻ ALL</button>
+      </div>
+      <div class="tip">所有动效为纯 CSS/JS，鼠标悬停行、点击行试试。</div>
+    </div>
+  </div>
+<script>
+  const tracks = [
+    { no:"01", name:"AMBIENCE", sub:"观测室 · 氛围", time:"00:53" },
+    { no:"02", name:"MOTIF", sub:"主题动机", time:"00:53" },
+    { no:"03", name:"PULSE", sub:"脉冲", time:"00:53" },
+    { no:"04", name:"歌に形はないけれど", sub:"doriko、初音ミク", time:"05:32" },
+    { no:"05", name:"OBSERVATORY-PREVIEW", sub:"", time:"00:53" },
+    { no:"06", name:"坏苹果（车载DJ版）", sub:"", time:"07:39" },
+  ];
+  const list = document.getElementById("list");
+  list.innerHTML = tracks.map((t,i)=>`
+    <button class="row" data-i="${i}" style="animation-delay:${.08*i}s">
+      <span class="no">${t.no}</span>
+      <span class="name">${t.name}${t.sub?`<span class="sub">${t.sub}</span>`:""}</span>
+      <span class="eq"><i></i><i></i><i></i></span>
+      <span class="time">${t.time}</span>
+    </button>`).join("");
+  let playing = -1, progress = 0, timer = null;
+  const npText = document.getElementById("npText"), status = document.getElementById("status"),
+        npSub = document.getElementById("npSub"), barFill = document.getElementById("barFill"),
+        toggle = document.getElementById("toggle");
+  function setPlaying(i){
+    playing = i;
+    document.querySelectorAll(".row").forEach(r=>{
+      const idx = +r.dataset.i;
+      r.classList.toggle("active", idx===i);
+      r.classList.toggle("playing", idx===i && i>=0);
+    });
+    const t = tracks[i];
+    npText.classList.remove("swap"); void npText.offsetWidth; npText.classList.add("swap");
+    npText.textContent = t ? t.name : "RHINE MUSIC";
+    npSub.textContent = t ? (t.sub ? t.sub+" · " : "") + "RHINE LAB AUDIO LIBRARY" : "STANDBY";
+    status.textContent = i>=0 ? "PLAYING" : "STANDBY";
+    toggle.textContent = "⏸";
+    progress = 0;
+    clearInterval(timer);
+    if (i>=0) timer = setInterval(()=>{
+      progress = (progress + .5/ (i===5?459: i===3?332:53));
+      barFill.style.width = Math.min(100, progress*100)+"%";
+    }, 500);
+  }
+  list.addEventListener("click", e=>{
+    const row = e.target.closest(".row"); if(!row) return;
+    setPlaying(+row.dataset.i === playing && playing>=0 ? -1 : +row.dataset.i);
+    if (playing<0){ toggle.textContent="▶"; status.textContent="STANDBY"; clearInterval(timer); }
+  });
+</script>
+</body>
+</html>
